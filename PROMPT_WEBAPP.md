@@ -13,19 +13,95 @@
 - **WDK**: `@tether/wdk` for wallet creation + signing
 - **State**: Zustand (global wallet/user state), React Query (server state)
 - **Animations**: Framer Motion
+- **Bridge**: Across Protocol SDK (`@across-protocol/app-sdk`) for cross-chain USDT deposits
 - **Design**: Install and follow the `design-taste-frontend` skill before writing any UI code
 
-> **Install design skill first**: Read `.agents/skills/design-taste-frontend/SKILL.md` and apply its audit-first approach. The design must feel premium, sports-themed (dark background, electric green accent, bold typography), not generic SaaS.
+> **Install design skill first**: Read `.agents/skills/design-taste-frontend/SKILL.md` and apply its audit-first approach. The design must feel precision-engineered and premium — a fintech app built by Tether, not a generic SaaS UI.
 
 ---
 
-## Design Direction
-- **Theme**: Dark. Deep navy/charcoal (`#0a0e1a`) background. Electric green (`#00e676`) as the primary action color. Gold (`#ffd700`) for winners. Red (`#ff4444`) for losers.
-- **Font**: Outfit (headings) + Inter (body) from Google Fonts
-- **Feel**: Bloomberg meets Stake.com meets Duolingo. Data-rich but human. Every bet should feel exciting, not clinical.
-- **Key motif**: The live match ticker at the top of every page. Always show what's happening right now.
+## Design System — Tether Wallet Style
+
+> This app must look and feel like it was built **by Tether**. Study the reference screenshots from `wallet.tether.io`. High precision, high fidelity, premium. Not a startup side project. A Tether product.
+
+### Color Palette
+
+| Role | Value | Usage |
+|---|---|---|
+| **Background primary** | `#0A0A0A` | Page backgrounds, cards |
+| **Background elevated** | `#111111` | Modal surfaces, navbar |
+| **Background subtle** | `#1A1A1A` | Input fields, secondary cards |
+| **Border** | `#2A2A2A` | Card borders, dividers |
+| **Silver/Muted** | `#888888` | Secondary text, labels, icons |
+| **White** | `#F2F1EF` | Primary text (exactly the color Tether uses) |
+| **Orange accent** | `#F7931A` | Primary CTAs, winning states, highlights |
+| **Orange dim** | `#C27315` | Hover states on orange buttons |
+| **Silver accent** | `#C0C0C0` | Secondary buttons, outlines |
+| **Error** | `#E84142` | Errors, failed states |
+| **Success** | `#26A17B` | Claimed, settled, confirmed |
+
+### Typography — Sharp Grotesk (Tether's Actual Font)
+
+Tether wallet.tether.io uses **Sharp Grotesk** (confirmed from source HTML). This is a licensed font — use Google Fonts alternatives that match exactly:
+
+```css
+/* Option A: Self-host Sharp Grotesk if licensed (ask client) */
+@font-face {
+  font-family: 'SharpGrotesk';
+  src: url('/fonts/SharpGrotesk-Bold20.otf') format('opentype');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'SharpGrotesk';
+  src: url('/fonts/SharpGrotesk-Medium20.otf') format('opentype');
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'SharpGrotesk';
+  src: url('/fonts/SharpGrotesk-Book20.otf') format('opentype');
+  font-weight: 400;
+}
+
+/* Option B: Google Fonts closest match (free alternative) */
+/* Use 'Schibsted Grotesk' — also loaded by wallet.tether.io */
+@import url('https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
+```
+
+**Font usage rules** (matching Tether exactly):
+- **Display/Hero headings**: Sharp Grotesk Bold, very large (48px–72px), tight letter-spacing (`-0.02em`), white `#F2F1EF`
+- **Section headings**: Sharp Grotesk Bold, 28px–36px, tight tracking
+- **Body / labels**: Schibsted Grotesk Regular 400, 14px–16px, silver `#888888`
+- **Numbers (amounts)**: Sharp Grotesk Bold, tabular-nums (`font-variant-numeric: tabular-nums`), white
+- **UI labels / captions**: Schibsted Grotesk 500, 11px–13px, uppercase + wide tracking for secondary labels
+- **Never use**: Inter, Outfit, or any round geometric sans. The Tether aesthetic is angular, precise, high-contrast.
+
+### Design Language
+
+**Studied from wallet.tether.io and Tether wallet app UI:**
+
+- **Background**: Pure black `#0A0A0A`. No gradients on background. The darkness is absolute.
+- **Cards**: Slightly elevated `#111111` with a `1px` border in `#2A2A2A`. Rounded corners: `12px`.
+- **Buttons (primary)**: Solid orange `#F7931A`, full-width where appropriate, `height: 52px`, `border-radius: 10px`, bold label in black. On hover: darken to `#C27315`. The Tether wallet app uses this exact orange CTA pattern.
+- **Buttons (secondary)**: `1px` border `#888888`, transparent fill, white text. Pill or rounded-rect shape.
+- **Inputs**: `background: #1A1A1A`, `border: 1px solid #2A2A2A`, `border-radius: 10px`, white text. On focus: border becomes `#F7931A`.
+- **Numbers**: Extremely large for amounts (the Tether wallet "$1,583.70" hero number style). Use tabular lining figures. Left-align amounts always.
+- **Status badges**: Small pill — `Pending` (silver outline), `Won` (green fill), `Lost` (red fill), `Refunded` (silver fill), `Disputed` (orange fill).
+- **Spacing**: Generous. 24px inner card padding minimum. 16px between list items. 40px section gaps.
+- **Icons**: Thin-line style (stroke: 1.5px), white or silver. No filled icon sets.
+- **Micro-animations**: Subtle. Number counting animation on balance change. Pulse dot for live status. Framer Motion `spring` transitions. Nothing bouncy or playful — this is a precision financial app.
+- **QR codes**: White on black background, with the Tether Arena logo overlaid in the center (referencing the Tether wallet QR UI).
+
+### Do Not / Anti-Patterns
+- ❌ No electric green — that was the old design. This is orange, silver, white, black.
+- ❌ No glassmorphism or frosted backgrounds.
+- ❌ No rounded pill buttons for primary actions (use `border-radius: 10px`, not `9999px`).
+- ❌ No colorful gradients on backgrounds.
+- ❌ No Inter or Outfit fonts.
+- ❌ No blue accent colors.
+- ✅ Precision, weight, darkness, and orange as the single accent color.
 
 ---
+
 
 ## Pages & Routes
 
@@ -104,15 +180,40 @@
 - Chain/token table: USDT on Celo
 - Deposit detection: poll balance every 10s, animate confirmation when received
 
-**Option B — Cross-Chain Bridge (LI.FI):**
-- Embed LI.FI widget or use LI.FI SDK
-- Source chains: Ethereum, Base, BNB Smart Chain, Arbitrum, Polygon
-- Source tokens: USDT, USDC (LI.FI routes to Celo USDT automatically)
-- User selects source chain + token + amount, approves once on source chain, bridge handles the rest
-- Show estimated time + bridge fee before confirmation
-- On completion: animated USDT arrival in Celo balance
+**Option B — Cross-Chain Bridge (Across Protocol):**
+- Use Across Protocol SDK (`@across-protocol/app-sdk`) — the fastest, most capital-efficient bridge
+- Across uses intent-based bridging: typically settles in under 2 minutes
+- Source chains: Ethereum, Base, Arbitrum, Optimism, Polygon
+- Source tokens: USDT, USDC → auto-routes to Celo USDT
+- Integration: call `AcrossClient.create()` → `getQuote()` → display fee + estimated time → `executeQuote()` on user approval
+- Show estimated bridge time ("~60 seconds") + relay fee before confirmation
+- On completion: animated USDT arrival notification
 
-**ENV required**: `NEXT_PUBLIC_LIFI_API_KEY`, `NEXT_PUBLIC_LIFI_INTEGRATOR` (your integrator key from li.fi/sdk)
+**Across SDK quickstart:**
+```typescript
+import { AcrossClient } from '@across-protocol/app-sdk';
+
+const client = AcrossClient.create({
+  chains: [mainnet, base, arbitrum, optimism, celo],
+  integratorId: process.env.NEXT_PUBLIC_ACROSS_INTEGRATOR_ID,
+});
+
+// Get a quote: USDT from Ethereum → USDT on Celo
+const quote = await client.getQuote({
+  route: {
+    originChainId: 1,        // Ethereum
+    destinationChainId: 42220, // Celo
+    inputToken: ETHEREUM_USDT,
+    outputToken: CELO_USDT,
+  },
+  inputAmount: parseUnits(amount, 6),
+});
+// Quote returns: outputAmount, estimatedTime, relayerFee
+// Show to user, then:
+await client.executeQuote({ walletClient, deposit: quote.deposit });
+```
+
+**ENV required**: `NEXT_PUBLIC_ACROSS_INTEGRATOR_ID` (register at across.to/integrators)
 
 ---
 

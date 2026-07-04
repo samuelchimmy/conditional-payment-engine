@@ -60,7 +60,7 @@ Copy your Celo wallet address (or scan the QR code) and send USDT directly from 
 Deposits appear in your dashboard within 30 seconds of on-chain confirmation.
 
 ### Option B — Cross-Chain Bridge
-Already have USDT or USDC on another chain? Tap **"Bridge from another chain"**. The built-in bridge (powered by LI.FI) lets you move funds from:
+Already have USDT or USDC on another chain? Tap **"Bridge from another chain"**. The built-in bridge (powered by **Across Protocol** — intent-based, typically under 2 minutes) lets you move funds from:
 
 | From Chain | Token |
 |---|---|
