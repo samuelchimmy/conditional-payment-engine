@@ -1,172 +1,103 @@
 # Tether Developers Cup Hackathon Proposal: "Tether Arena P2P"
-## Architectural Upgrade Blueprint (WDK + QVAC + Pears)
+## Architectural Upgrade Blueprint (WDK + Pears P2P Stack)
 
-This document provides a comprehensive technical blueprint to upgrade our existing **Conditional Sports P2P** and **MagicPay IOU Registry** engines into a premium, multi-track Web3 + AI entry for the **Tether Developers Cup**.
-
-By fusing **WDK (Self-Custodial Wallets)**, **QVAC (Local, On-Device AI)**, and **Pears (P2P Serverless Sync)**, we eliminate central servers, remove cloud API keys, ensure absolute financial self-custody, and deliver a seamless, high-performance experience for football fans worldwide.
+This document details the technical upgrade design for **Tether Arena P2P**. We are moving away from our legacy centralized architecture (which relied on central servers, databases, and cron workers) to a fully decentralized model built on the **Pears P2P Stack** and **Tether's Wallet Development Kit (WDK)**.
 
 ---
 
 ## 1. System Architecture
 
 ```text
-  +-------------------------------------------------------------------------+
-  |                             FAN DEVICE (PWA / Desktop)                  |
-  |                                                                         |
-  |  +--------------------+             +--------------------------------+  |
-  |  |   USER INTERFACE   |             |            QVAC SDK            |  |
-  |  |                    |             |     (Local 1B-3B LLM Engine)   |  |
-  |  | - Chat / Match     |             |                                |  |
-  |  |   Watch Party      |             | 1. Natural Language Intent     |  |
-  |  | - Prediction Feed  |────────────▶|    "Send 20 USDt to @sam..."   |  |
-  |  | - WDK Dashboard    |             |                                |  |
-  |  +---------┬----------+             | 2. Local RAG Match Predictor   |  |
-  |            │                        +───────────────┬────────────────+  |
-  |            │                                        │                   |
-  |            ▼                                        ▼                   |
-  |  +--------------------------------------------------+                   |
-  |  |                     WDK CLIENT                   |                   |
-  |  |           (Wallet Development Kit SDK)           |                   |
-  |  |                                                  |                   |
-  |  |  - Seed Phrase Generation & Secure Key Storage   |                   |
-  |  |  - Native USDt / USAt Balance & Accounts         |                   |
-  |  |  - EIP-712 / Transaction Signing & Broadcasting  |                   |
-  |  +-------------------------┬────────────────────────+                   |
-  |                            │                                            |
-  +----------------------------┼--------------------------------------------+
-                               │ (P2P Intent / Signed Bet)
-                               ▼
-  +-------------------------------------------------------------------------+
-  |                        PEARS SERVERLESS NETWORK                         |
-  |                                                                         |
-  |   +--------------------------+       +------------------------------+   |
-  |   |        HYPERSWARM        |       |          HYPERCORE           |   |
-  |   |                          |       |     (Replicated Bet Log)     |   |
-  |   |  - P2P Watch-Party Chat  |◀─────▶|                              |   |
-  |   |  - Peer-to-Peer Tipping  |       |  - Append-only prediction log|   |
-  |   |  - Oracle Coordination   |       |  - Shared states (no central |   |
-  |   +────────────┬─────────────+       |    database server)          |   |
-  |                │                     +──────────────┬───────────────+   |
-  |                │                                    │                   |
-  +────────────────┼────────────────────────────────────┼───────────────────+
-                   │ (P2P Oracle Consensus)             │ (State Changes)
-                   ▼                                    ▼
-  +-------------------------------------------------------------------------+
-  |                          CONCENSUS ORACLE PEERS                         |
-  |                                                                         |
-  |  - Monitor match streams.                                               |
-  |  - 2-of-3 Oracle Agreement (football-data, API-Football, openfootball). |
-  |  - Write settled scores directly to the P2P Hypercore Log.              |
-  +-------------------------------------------------------------------------+
+  +-----------------------------------------------------------------------------+
+  |                           FAN DEVICE (PWA / Desktop client)                 |
+  |                                                                             |
+  |  +---------------------------+             +-----------------------------+  |
+  |  |      USER INTERFACE       |             |         WDK CLIENT          |  |
+  |  |                           |             | (Wallet Development Kit)    |  |
+  |  |  - P2P Watch-Party Chat   |             |                             |  |
+  |  |  - Active Predictions Feed│◀───────────▶│ - Seed & Key Storage        |  |
+  |  |  - USDt Balance & Taps    |             | - Local Tx signing (USDt)   |  |
+  |  +─────────────┬─────────────+             +──────────────┬──────────────+  |
+  |                │                                          │                 |
+  +────────────────┼──────────────────────────────────────────┼─────────────────+
+                   │ (Direct P2P Replicated Swarm)            │ (Broadcasts)
+                   ▼                                          ▼
+  +-----------------------------------------------------------------------------+
+  |                          PEARS SERVERLESS NETWORK                           |
+  |                                                                             |
+  |   +--------------------------+       +----------------------------------+   |
+  |   |        HYPERSWARM        |       |            HYPERCORE             |   |
+  |   |                          |       |        (Distributed Log)         |   |
+  |   |  - Serverless connection |◀─────▶|                                  |   |
+  |   |    between fans          |       | - Replicated append-only log of  |   |
+  |   |  - P2P chat transmission |       |   predictions and agreements     |   |
+  |   +────────────┬─────────────+       +────────────────┬─────────────────+   |
+  |                │                                      │                     |
+  +────────────────┼──────────────────────────────────────┼─────────────────────+
+                   │ (P2P Consensus)                      │ (Settle blocks)
+                   ▼                                      ▼
+  +-----------------------------------------------------------------------------+
+  |                        PEARS CONSENSUS ORACLE PEERS                         |
+  |                                                                             |
+  |  - Listen to match end events.                                              |
+  |  - 2-of-3 score consensus (football-data.org, API-Football, openfootball).  |
+  |  - Write settled scores directly to the replicated Hypercore log.           |
+  +-----------------------------------------------------------------------------+
 ```
 
 ---
 
-## 2. Track 1: WDK Integration (Self-Custodial Wallets)
+## 2. Pears (P2P Stack) Explained: What It Replaces
 
-Under the current system, MoniPay manages non-custodial wallets by encrypting private keys locally with the user's PIN (AES-256-GCM) and relaying transactions through a central paymaster. In the upgraded **Tether Arena P2P**, we leverage Tether's **Wallet Development Kit (WDK)** to establish native self-custody.
+In our legacy app, all core operations are brokered by central servers. In **Tether Arena P2P**, we leverage the Pears Stack building blocks (**Hyperswarm**, **Hypercore**, and **Autobase**) to eliminate centralized points of failure.
 
-### Key Implementations
-1. **Direct Seed Management**: WDK handles secure wallet generation, key derivation, and storage directly on-device. Senders control their private keys and sign all payment and prediction intents locally.
-2. **On-Chain USDt Settlement**: All prediction stakes and P2P tips settle in USDt on Celo, Base, BSC, or Ink. The client queries balances, retrieves account statistics, and handles gas estimation directly using WDK APIs.
-3. **WDK-based MagicPay**:
-   * Senders can lock USDt into the `IOURegistry` contract for Web2 recipients (e.g. `@username` on X/Twitter or Telegram) who do not yet have a wallet.
-   * If a social user claims their USDt, WDK generates a clean, self-custodial account derived from their social identity credentials. The claim is submitted by the Vault relayer, and WDK imports this newly created account gaslessly, giving the user immediate, self-custodial ownership of their USDt.
+Here is a breakdown of what the Pears Stack is replacing:
 
-### WDK Conditional Payment Code Snippet (Example)
-```typescript
-import { WalletClient, TokenClient } from '@tether/wdk';
+### A. Replacing the Central Database (Supabase PostgreSQL)
+* **Legacy System**: Senders, receivers, and transactions are stored in a centralized Supabase relational database. The prediction jobs (`scheduled_jobs` table) live in PostgreSQL.
+* **Pears Replacement (Hypercore)**: We use **Hypercore**, a secure, distributed, append-only log. 
+  * When a user creates a sports prediction (e.g. *"I stake 10 USDt that Nigeria beats Germany"*), this record is appended to a local Hypercore.
+  * Hypercore cryptographically signs every block. The log is replicated directly between the sender and receiver devices peer-to-peer. There is no databases server.
 
-// Initialize self-custodial WDK client
-const wallet = new WalletClient({
-  mnemonic: localStorage.getItem('wdk_mnemonic'),
-  network: 'base'
-});
+### B. Replacing Centralized Relayers & Worker Daemons (Cron Jobs)
+* **Legacy System**: A centralized Node.js worker daemon (`worker-bot`) runs constantly in the background. It uses a scheduler to query Supabase tables, check if matches are finished, evaluate conditions, and trigger blockchain calls.
+* **Pears Replacement (Autobase & Event Listeners)**: We use **Autobase** to merge the Hypercores of the sender, recipient, and oracle consensus nodes into a single, linearized view of the prediction state.
+  * The user's local WDK client runs a peer-to-peer event listener on the Autobase stream.
+  * When the local client detects that a verified match settlement block has been written to the log, it evaluates the prediction locally and prompts execution. No centralized relayer is needed.
 
-// Approve USDt spending to the IOURegistry contract
-async function approveIOURegistry(amount: number) {
-  const token = new TokenClient(wallet, 'USDT_ADDRESS');
-  const tx = await token.approve({
-    spender: 'IOU_REGISTRY_V2_ADDRESS',
-    amount: amount
-  });
-  console.log(`WDK Approved USDt: ${tx.hash}`);
-}
-```
+### C. Replacing Centralized Web2 Message APIs
+* **Legacy System**: Fans interact by posting tweets on Twitter or messaging on Discord/Telegram, which the bots poll via central Web2 APIs.
+* **Pears Replacement (Hyperswarm)**: We use **Hyperswarm** to establish direct peer-to-peer connections.
+  * Fans create P2P watch rooms. A room is represented by a 32-byte public key.
+  * Peers find each other via DHT (Distributed Hash Table) and open direct streams. All chat messages, prediction intents, and tipping requests are swarmed directly between devices.
 
----
-
-## 3. Track 2: QVAC Integration (Local AI Intent Parser)
-
-To make the user experience seamless, fans should not write raw transaction inputs. They interact with our **AI Commentary and Prediction Agent** using natural language. 
-
-By integrating **QVAC (Local AI)**, all inference runs directly on the fan's device (desktop or mobile) with **no cloud API keys**, protecting privacy and working offline.
-
-### Key Implementations
-1. **Natural Language Processing (NLP)**: A quantized 1B-3B parameters model (e.g. Llama-3-8B-Instruct-Q4 or Gemma-2-2B-IT running via the QVAC engine) parses natural language bet statements.
-   * *User Input*: "I'm sending 50 USDt to @WallstreetJade on Celo if Nigeria beats Argentina in Group L."
-   * *QVAC Local Parsing*:
-     ```json
-     {
-       "action": "CREATE_CONDITIONAL_P2P",
-       "amount": 50,
-       "token": "USDT",
-       "chain": "celo",
-       "recipient": "WallstreetJade",
-       "platform": "twitter",
-       "condition": {
-         "team1": "Nigeria",
-         "team2": "Argentina",
-         "outcome": "team1_wins"
-       }
-     }
-     ```
-2. **Offline AI Football Analyst**: Fans can ask the local QVAC model for advice: `"How has Germany performed against England in past knockout stages?"`.
-   * The local QVAC engine queries a compiled, offline SQLite database of team histories, head-to-heads, and tournament regulations (Retrieval-Augmented Generation / RAG).
-   * It generates a probability profile and aids the fan in constructing their conditional payment parameters.
+### D. Replacing Centralized Oracle Feeds
+* **Legacy System**: A centralized relayer server queries sports APIs and writes the result to a central DB.
+* **Pears Replacement (Swarmed P2P Oracles)**:
+  * A collection of volunteer/consensus nodes run on the Pears runtime.
+  * When a match ends, these nodes fetch the score, share it with each other over Hyperswarm, check for a 2-of-3 agreement, and collectively sign a match result block.
+  * This signed block is broadcasted directly to the swarm, updating the shared Hypercore.
 
 ---
 
-## 4. Track 3: Pears Integration (Serverless P2P Network)
+## 3. WDK Integration (Self-Custodial Wallets)
 
-Our current system relies on a centralized PostgreSQL database in Supabase to track `scheduled_jobs` and a Deno cron worker to sync match fixtures. In **Tether Arena P2P**, we deploy on the **Pears Stack (P2P)** to achieve a fully serverless, distributed architecture.
+To make Tether Arena P2P a true Web3 product, we integrate **Tether's Wallet Development Kit (WDK)**. WDK handles the wallet lifecycle locally on the client.
 
-### Key Implementations
-1. **Hyperswarm Watch Parties**: Fans join decentralized watch rooms by sharing a room key (a Hyperswarm public key). Senders and receivers establish WebRTC-like P2P connections to chat, share commentary, and send direct tips without central signaling servers.
-2. **Replicated Hypercore Bet Log**: 
-   * A shared **Hypercore** (an append-only log) tracks prediction entries. Senders append their signed conditional payment logs.
-   * This log is replicated across all participants in the P2P room. There is no central server; the network is peer-to-peer.
-3. **Decentralized 3-Source Consensus Oracle**:
-   * A set of validator peers running Pear runtime run the `syncMatchResults()` oracle code.
-   * When a match ends, each validator queries the three feeds (`football-data.org`, `API-Football`, `openfootball`).
-   * Validators coordinate via Hyperswarm to reach consensus on the final score. Once $\ge 2$ agree, they append a signed score block to the shared Hypercore.
-   * Senders' local WDK wallets listen to the Hypercore updates. When they detect a settled match block matching their active predictions, they execute the payout (calling WDK's transfer function) or cancel the authorization.
-
-### Hypercore Bet Logging Schema (Example)
-```javascript
-import Hypercore from 'hypercore';
-import Hyperswarm from 'hyperswarm';
-
-const feed = new Hypercore('./tether-arena-bets', { valueEncoding: 'json' });
-await feed.ready();
-
-// Publish a prediction job to the P2P swarm
-async function publishPredictionJob(jobData) {
-  await feed.append(jobData);
-  console.log(`[Pears] Appended bet: ${feed.length - 1}`);
-}
-```
+### Core Functions
+1. **Self-Custodial Balance Management**: WDK generates seed phrases on-device and manages accounts. Senders' private keys never leave their browser/device.
+2. **On-Chain USDt Settlement**: Stakes are stored in the `IOURegistryV2` contract in USDt. WDK clients sign authorization messages (EIP-712 typed signatures) locally to approve transaction locking.
+3. **Decentralized MagicPay Claims**:
+   * If a sender locks USDt for a social user who doesn't have a wallet, WDK creates an escrow in the `IOURegistry` contract.
+   * When the recipient claims it, WDK handles the generation of their self-custodial wallet derived from their social logins. The backend vault wallet calls `batchClaim` on-chain, releasing the USDt to the user's new self-custodial wallet.
 
 ---
 
-## 5. Technical Ambition & Hackathon Win Strategy
+## 4. Technical Ambition & Hackathon Win Strategy
 
-To secure the **Cup Champion** prize (5,000 USDt), we are not simply building a generic interface. We are integrating all three tracks into a coherent, high-performance product:
-
-| Track | Integration Point | Winning Technical Details |
+| Centralized Legacy Component | Pears P2P Replacement | Technical Benefit |
 |---|---|---|
-| **WDK (Wallets)** | Self-Custodial Execution | Core WDK wallet integration on-device. Multi-chain support (Base, BSC, Celo, Ink). social key derivation. |
-| **QVAC (Local AI)** | Offline Intent & Analyst | Zero-cloud local LLM execution. Local RAG over offline stats databases. Translates natural language to WDK transaction payloads. |
-| **Pears (P2P)** | Serverless Ledger & Oracle | Replace server databases with Hypercore log replication. Hyperswarm P2P room syncing. Decentralized consensus oracle feeds. |
-
-By delivering a fully functional, mobile-first PWA where a user can download the app, run AI commentary locally (QVAC), create a wallet (WDK), and chat/place predictions with friends in a room (Pears) completely independent of a central host, we showcase the ultimate power of the Tether stack.
+| **Supabase DB** | Hypercore Replicated Log | Tamper-proof, serverless event log stored locally and shared peer-to-peer. |
+| **Worker Cron Server** | Autobase & Local Client Listeners | Decentralized execution. Senders' clients listen to P2P logs and trigger local actions. |
+| **Centralized Chat Server** | Hyperswarm DHT | Serverless watch rooms, direct peer communication, and zero network logging. |
+| **Centralized Oracle Server** | Swarmed P2P Consensus Nodes | Protects predictions against single-point-of-failure API issues. |
