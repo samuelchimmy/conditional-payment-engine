@@ -181,39 +181,47 @@ Tether wallet.tether.io uses **Sharp Grotesk** (confirmed from source HTML). Thi
 - Deposit detection: poll balance every 10s, animate confirmation when received
 
 **Option B — Cross-Chain Bridge (Across Protocol):**
-- Use Across Protocol SDK (`@across-protocol/app-sdk`) — the fastest, most capital-efficient bridge
-- Across uses intent-based bridging: typically settles in under 2 minutes
-- Source chains: Ethereum, Base, Arbitrum, Optimism, Polygon
-- Source tokens: USDT, USDC → auto-routes to Celo USDT
-- Integration: call `AcrossClient.create()` → `getQuote()` → display fee + estimated time → `executeQuote()` on user approval
-- Show estimated bridge time ("~60 seconds") + relay fee before confirmation
-- On completion: animated USDT arrival notification
 
-**Across SDK quickstart:**
-```typescript
-import { AcrossClient } from '@across-protocol/app-sdk';
+> **Port directly from MoniPay** — the complete reference implementation is in `paytag-duo-flow/src/components/FundWalletModal/CrossChainDeposit.tsx`. Use that file as-is, adapted to the Tether Arena theme. Key details below.
 
-const client = AcrossClient.create({
-  chains: [mainnet, base, arbitrum, optimism, celo],
-  integratorId: process.env.NEXT_PUBLIC_ACROSS_INTEGRATOR_ID,
-});
+**How it works** (MoniPay's exact implementation):
+- Uses the **Across REST API directly** (`https://app.across.to/api`) — no SDK dependency
+- `GET /api/swap/approval?tradeType=exactInput&inputToken=...&outputToken=CELO_USDT&originChainId=...&destinationChainId=42220&amount=...&depositor=...&recipient=CELO_WALLET`
+- Response includes: `approvalTxns[]` (ERC-20 approvals, if needed), `swapTx` (the bridge tx), `expectedOutput`, `estimatedFillTimeSec`
+- Execute: send approvals first → send bridge tx → poll `GET /api/deposit/status?depositTxHash=...&originChainId=...` until `status === 'filled'`
+- Polling: 2-second interval, max 60 iterations (~2 minutes), then show success anyway (funds in transit)
 
-// Get a quote: USDT from Ethereum → USDT on Celo
-const quote = await client.getQuote({
-  route: {
-    originChainId: 1,        // Ethereum
-    destinationChainId: 42220, // Celo
-    inputToken: ETHEREUM_USDT,
-    outputToken: CELO_USDT,
-  },
-  inputAmount: parseUnits(amount, 6),
-});
-// Quote returns: outputAmount, estimatedTime, relayerFee
-// Show to user, then:
-await client.executeQuote({ walletClient, deposit: quote.deposit });
+**15 source chains supported** (copy token map from MoniPay):
+Ethereum, Arbitrum, Optimism, Base, BNB Chain, Polygon, zkSync Era, Mode, World Chain, Blast, Linea, Scroll, Lisk, Ink, Zora
+
+**Destination**: always Celo mainnet (chainId `42220`), token = `0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e` (native USDT on Celo)
+
+**Wagmi setup** (same as MoniPay):
+- `useAccount` / `useConnect` / `useDisconnect` from wagmi for external wallet connection
+- `sendTransaction` + `waitForTransactionReceipt` from `@wagmi/core` for execution
+- `switchChain` to auto-switch to the correct source chain before bridging
+- Show wallet picker (MetaMask, Rabby, Phantom, WalletConnect, Coinbase, Trust) with `@web3icons/react` icons
+
+**Step machine** (replicate exactly from MoniPay):
+```
+'select' → 'connect-wallet' → 'review' → 'executing' → 'success' | 'error'
 ```
 
-**ENV required**: `NEXT_PUBLIC_ACROSS_INTEGRATOR_ID` (register at across.to/integrators)
+**3-phase execution progress UI** (during `executing` step):
+```
+[ Approving ✓ ] → [ Bridging Assets ⟳ ] → [ Confirming ]
+```
+Each phase has an icon and active/done state. Tether Arena theme: use orange `#F7931A` for active phase pill, green `#26A17B` for completed.
+
+**Quote display** (in `review` step):
+```
+Send:       100 USDC   (from Arbitrum)
+Bridge Fee: ~$0.42
+You Receive: ~99.58 USDT (on Celo)
+Est. Time:  ~5s ⚡
+```
+
+**ENV required**: none — uses the public Across API. No API key needed.
 
 ---
 
