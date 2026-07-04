@@ -1,6 +1,8 @@
 # Build Prompt — Web App (Next.js)
 ## Tether Arena — Fan Conditional Payment Interface
 
+> **Wallet UX principle**: Wallet creation is the primary, recommended entry point. Google Drive encrypted backup (AES-GCM, `appDataFolder`) fires automatically right after PIN creation. This is what makes "sign in with Google" work seamlessly on any new device — the encrypted blob is fetched and decrypted with the user's PIN. Model this exactly on the MoniPay implementation.
+
 ---
 
 ## Stack
@@ -71,13 +73,60 @@
 
 ---
 
+### `/connect` — Wallet Creation & Onboarding
+**Purpose**: The primary wallet entry point. Present wallet creation prominently as the recommended path.
+
+**Layout** (recommended-first design):
+- **Hero CTA (top, large)**: "Create your wallet" — described as "30 seconds. No crypto experience needed."
+- Below: small secondary link: "Connect existing Celo wallet"
+
+**Wallet creation wizard:**
+1. **Set PIN** — 6-digit numeric. Warning: "This encrypts your wallet. There is no reset."
+2. **Back up to Google Drive** — Large green primary button: "Back up now". Subtitle: "Sign in with Google once. Restore your wallet on any device, anytime." This fires immediately after PIN creation. Encrypts with AES-256-GCM using PIN-derived key, uploads to `appDataFolder`. On success show: "✅ Backed up to Google Drive".
+3. **Recovery phrase** — Shown as a fallback step AFTER Drive backup. "Here's your 12-word backup phrase. Store it offline."
+4. **USDT Allowance** — Approve IOURegistryV3 to spend USDT. One-time. Done.
+
+**Returning user (Google restore flow):**
+- User visits on a new device, taps "Sign in with Google"
+- App fetches the encrypted blob from their Drive `appDataFolder`
+- Prompts for PIN only
+- Wallet decrypted and restored — no seed phrase needed
+
+**Critical UX**: The Google Drive backup step must feel like a feature, not a warning. Copy: "Your wallet, safe in your Google Drive. Restore instantly on any device."
+
+---
+
+### `/deposit` — Fund Wallet
+**Purpose**: Get USDT into the user's Celo wallet. Two paths.
+
+**Option A — Direct Deposit:**
+- Show Celo wallet address + QR code
+- Chain/token table: USDT on Celo
+- Deposit detection: poll balance every 10s, animate confirmation when received
+
+**Option B — Cross-Chain Bridge (LI.FI):**
+- Embed LI.FI widget or use LI.FI SDK
+- Source chains: Ethereum, Base, BNB Smart Chain, Arbitrum, Polygon
+- Source tokens: USDT, USDC (LI.FI routes to Celo USDT automatically)
+- User selects source chain + token + amount, approves once on source chain, bridge handles the rest
+- Show estimated time + bridge fee before confirmation
+- On completion: animated USDT arrival in Celo balance
+
+**ENV required**: `NEXT_PUBLIC_LIFI_API_KEY`, `NEXT_PUBLIC_LIFI_INTEGRATOR` (your integrator key from li.fi/sdk)
+
+---
+
 ### `/claim` — MagicPay Claim Flow
 **Purpose**: Let someone who has never used crypto claim USDT sent to their social identity.
 
 **Steps** (wizard UI):
 1. **"You have USDT waiting"** — shows amount + from whom + condition that was met. CTA: "Claim Now".
 2. **"Verify it's really you"** — Twitter OAuth / Discord OAuth button. After auth, backend confirms the social ID matches the `recipientId` hash stored in the contract.
-3. **"Create your wallet"** (if no WDK wallet exists) — WDK wallet creation: generate mnemonic, show 12-word phrase, confirm 3 random words. Or: "I already have a Celo wallet" → paste address.
+3. **"Create your wallet"** (if no wallet exists) — **This is the primary recommended path. Present it prominently.**
+   - User sets a **6-digit PIN** (AES-256-GCM key derivation — shown with a clear warning: "No PIN reset. Don't forget this.")
+   - **Immediately after PIN**: prompt Google Drive backup. Button: "Back up to Google Drive" (large, green, primary CTA). This uploads the AES-GCM encrypted wallet blob to the user's private `appDataFolder`. This is what allows seamless restore on any device by signing in with Google + entering PIN.
+   - After Drive backup confirmed: show 12-word recovery phrase as a secondary fallback option.
+   - Or: "I already have a Celo wallet" → paste/connect address (secondary option, shown below the create path).
 4. **"Claiming..."** — loading screen while edge function calls `claimConditional` on-chain. Shows transaction hash with CeloScan link (optional).
 5. **"Claimed! 🎉"** — confetti animation. Shows balance. Option to send to another platform or keep in app.
 
@@ -102,7 +151,9 @@
 - Time: "Resolves ~July 9"
 - Action button: "Refund" (if eligible) or "View on CeloScan"
 
-**Refund eligibility indicator**: If sender won → "Refund available ✅". If recipient won and < 7 days → show countdown: "Refund available in 4d 12h". If > 7 days unclaimed → "Refund available ✅".
+**Refund eligibility indicator**: If sender won → show **"Refund" button** (green, prominent). If recipient won and < 7 days → show countdown: "Refund available in 4d 12h" (disabled button, timer ticking). If > 7 days unclaimed → show **"Refund" button** (green).
+
+**Refund is always user-initiated via this dashboard button** — never auto-triggered. This keeps the user in control and makes the USDT-denominated gas cost (CIP-64) visible and explicit before they confirm. The button calls the `refund-conditional` edge function which pre-checks eligibility before submitting the on-chain transaction.
 
 **Live updates**: Supabase realtime subscription on `scheduled_jobs` filtered by `sender_id`.
 
