@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -36,7 +36,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract IOURegistryV3 is
     Initializable,
     ReentrancyGuardUpgradeable,
-    OwnableUpgradeable,
+    Ownable2StepUpgradeable,
     PausableUpgradeable,
     UUPSUpgradeable
 {
@@ -87,6 +87,8 @@ contract IOURegistryV3 is
     uint256 public holdDuration;    // Standard IOU hold before refund (default 3 days)
 
     uint256 public nextId;
+
+    uint256 public executorMaxTxAmount;
 
     bool public globalFeeExempt;
     mapping(address => bool) public isFeeExempt;
@@ -160,7 +162,9 @@ contract IOURegistryV3 is
     error NotVault();
     error NotExecutor();
     error AmountTooSmall();
+    error AmountExceedsLimit();
     error InvalidAddress();
+    error InvalidWinnerFlag();
     error MismatchedRecipient();
     error MismatchedToken();
     error InvalidBatchSize();
@@ -211,6 +215,7 @@ contract IOURegistryV3 is
     ) public initializer {
         __ReentrancyGuard_init();
         __Ownable_init(msg.sender);
+        __Ownable2Step_init();
         __Pausable_init();
         __UUPSUpgradeable_init();
 
@@ -269,6 +274,7 @@ contract IOURegistryV3 is
         if (from == address(0)) revert InvalidAddress();
         if (!supportedTokens[token]) revert UnsupportedToken();
         if (netAmount == 0) revert AmountTooSmall();
+        if (executorMaxTxAmount > 0 && netAmount > executorMaxTxAmount) revert AmountExceedsLimit();
 
         uint64 expiry = uint64(block.timestamp + holdDuration);
         uint256 fee = _lockFunds(from, token, netAmount);
@@ -401,6 +407,7 @@ contract IOURegistryV3 is
         if (from == address(0)) revert InvalidAddress();
         if (!supportedTokens[token]) revert UnsupportedToken();
         if (netAmount == 0) revert AmountTooSmall();
+        if (executorMaxTxAmount > 0 && netAmount > executorMaxTxAmount) revert AmountExceedsLimit();
         if (expirySeconds < 1 days || expirySeconds > 90 days) revert InvalidDuration();
 
         uint64 expiry = uint64(block.timestamp + expirySeconds);
@@ -443,7 +450,7 @@ contract IOURegistryV3 is
         if (!iou.isConditional) revert NotConditional();
         if (iou.claimed || iou.refunded) revert AlreadySettled();
         if (iou.resolvedAt != 0) revert AlreadySettled();
-        if (winnerFlag != uint8(SENDER_WIN) && winnerFlag != uint8(RECIPIENT_WIN)) revert InvalidAddress();
+        if (winnerFlag != uint8(SENDER_WIN) && winnerFlag != uint8(RECIPIENT_WIN)) revert InvalidWinnerFlag();
 
         iou.resolvedAt     = uint64(block.timestamp);
         iou.resolvedInFavor = winnerFlag;
@@ -641,6 +648,10 @@ contract IOURegistryV3 is
 
     function setExecutor(address executor, bool status) external onlyOwner {
         executors[executor] = status;
+    }
+
+    function setExecutorMaxTxAmount(uint256 _maxAmount) external onlyOwner {
+        executorMaxTxAmount = _maxAmount;
     }
 
     function setFees(uint256 _feeBps, uint256 _minFee) external onlyOwner {
