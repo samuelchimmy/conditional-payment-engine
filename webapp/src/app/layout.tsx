@@ -22,11 +22,11 @@ export default function RootLayout({
     <html lang="en" className={`${schibsted.variable} antialiased`}>
       <body className="flex flex-col min-h-screen text-text-primary">
         {/* Global Nav / Header */}
-        <header className="w-full flex justify-center py-6">
+        <header className="w-full flex justify-center pt-10 pb-2">
           <div className="flex items-baseline gap-0.5">
-            <span className="font-[800] text-text-primary text-[20px] tracking-tight">tether</span>
-            <span className="font-[800] text-text-secondary text-[20px]">.</span>
-            <span className="font-[400] text-text-primary text-[20px] tracking-tight">arena</span>
+            <span className="font-[800] text-text-primary text-[32px] tracking-tight">tether</span>
+            <span className="font-[800] text-text-secondary text-[32px]">.</span>
+            <span className="font-[400] text-text-primary text-[32px] tracking-tight">arena</span>
           </div>
         </header>
 

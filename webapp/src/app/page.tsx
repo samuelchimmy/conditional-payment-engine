@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="w-full max-w-[520px] flex flex-col items-center text-center mt-4">
+    <div className="w-full max-w-[520px] flex flex-col items-center text-center mt-0">
       {/* Tagline right below the layout wordmark */}
-      <p className="text-text-secondary text-[15px] font-bold mb-20">
+      <p className="text-text-secondary text-[15px] font-bold mb-16">
         The Conditional Payment Engine
       </p>
 
@@ -14,7 +14,7 @@ export default function Home() {
           Banter, backed by escrow.
         </p>
 
-        <h1 className="text-text-primary text-[56px] font-[800] leading-[1.1] tracking-tight mb-6">
+        <h1 className="text-text-primary text-[36px] font-[800] leading-[1.1] tracking-tight mb-6">
           Put your money<br />where your mouth is.
         </h1>
 
@@ -24,10 +24,10 @@ export default function Home() {
 
         <div className="w-full max-w-[280px] flex flex-col gap-4">
           <Link 
-            href="/place" 
+            href="/connect" 
             className="w-full h-[54px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity"
           >
-            Place a Bet
+            Get started
           </Link>
           <Link 
             href="/how-it-works" 
