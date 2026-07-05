@@ -14,6 +14,7 @@ AI powered Conditional USDT payments for football fans, settled onchain.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Chain: Celo](https://img.shields.io/badge/Chain-Celo-35D07F)](https://celo.org)
 [![Token: USDT](https://img.shields.io/badge/Token-USDT-26A17B)](https://tether.to)
+[![Wallet: WDK](https://img.shields.io/badge/Wallet-WDK-26A17B)](https://wdk.tether.io)
 [![Built for: Tether Developers Cup](https://img.shields.io/badge/Built%20for-Tether%20Developers%20Cup-green)](https://cup.tether.io)
 
 ---
