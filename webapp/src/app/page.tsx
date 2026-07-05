@@ -62,10 +62,10 @@ export default function Home() {
       <AnimatePresence>
         {showHowItWorks && (
           <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="w-full overflow-hidden flex flex-col items-center"
           >
             <HowItWorksSection id="how-it-works" onClose={() => {
