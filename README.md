@@ -1,7 +1,10 @@
-# Tether Arena ⚽
+<div align="center">
+⚽
+# Tether Arena 
 
-> **Say it. Lock it. Win it.**
-> Conditional USDT payments for football fans — powered by AI, settled on Celo.
+> **Put Your Money
+Where Your Mouth Is..**
+> AI powered Conditional USDT payments for football fans, settled onchain.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Chain: Celo](https://img.shields.io/badge/Chain-Celo-35D07F)](https://celo.org)
@@ -10,7 +13,10 @@
 
 ---
 
+</div>
+
 ## What Is Tether Arena?
+**Tether Arena** is the first AI-powered conditional payment engine for football. A fan types a bet in plain language on X, Discord, or Telegram, and the money locks in USDT escrow instantly, settles automatically when the match ends, and pays the winner without either party touching a wallet.
 
 Tether Arena lets football fans make conditional USDT payments in plain language — on X, Discord, or Telegram — and the money moves automatically when the match settles.
 
