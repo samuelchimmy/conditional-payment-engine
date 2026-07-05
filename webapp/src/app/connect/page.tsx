@@ -15,10 +15,8 @@ export default function ConnectWallet() {
       <div className="flex flex-col gap-4 mb-4">
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21.2 5.3l-2.4 1.7 1.3 4.2-1.9 1.4 1.1 5.4-4.8-1.5-2.5 3.5-2.5-3.5-4.8 1.5 1.1-5.4-1.9-1.4 1.3-4.2-2.4-1.7 3.3 4.8 2.3-3.6 3.6 3.4 3.6-3.4 2.3 3.6z"/>
-              </svg>
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain" />
             </div>
             <span className="text-text-primary text-[16px] font-bold">MetaMask or browser wallet</span>
           </div>
@@ -29,10 +27,8 @@ export default function ConnectWallet() {
 
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 40 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8.598 12.378C14.896 6.297 25.104 6.297 31.402 12.378l1.411 1.362c.414.4.414 1.05 0 1.45l-3.327 3.212c-.198.192-.521.192-.72 0l-1.468-1.418c-3.993-3.856-10.468-3.856-14.461 0l-1.341 1.295c-.21.203-.55.203-.76 0L7.41 15.191c-.413-.4-.413-1.049 0-1.45l1.188-1.147zm26.969 8.232l3.327 3.212c.414.4.414 1.05 0 1.45l-8.239 7.957c-.414.4-1.085.4-1.5 0l-8.777-8.476c-.21-.202-.55-.202-.76 0l-8.776 8.476c-.414.4-1.086.4-1.5 0l-8.24-7.957c-.413-.4-.413-1.05 0-1.45l3.328-3.212c.198-.192.521-.192.72 0l7.531 7.273c.198.192.521.192.72 0l8.776-8.476c.414-.4 1.086-.4 1.5 0l8.777 8.476c.198.192.521.192.72 0l7.532-7.273c.198-.192.521-.192.72 0z"/>
-              </svg>
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img src="/walletconnect.svg" alt="WalletConnect" className="w-7 h-7 object-contain" />
             </div>
             <span className="text-text-primary text-[16px] font-bold">WalletConnect</span>
           </div>
@@ -43,7 +39,7 @@ export default function ConnectWallet() {
 
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-border-emphasis flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
               <img src="/wdk-logo.svg" alt="WDK" className="h-[14px] w-auto ml-1 grayscale opacity-90 brightness-0 dark:brightness-200 dark:invert-0" style={{ filter: "brightness(0) dark:brightness(200)" }} />
             </div>
             <div className="flex flex-col items-start">
