@@ -1,0 +1,39 @@
+import type { Metadata } from "next";
+import { Schibsted_Grotesk } from "next/font/google";
+import "./globals.css";
+import React from "react";
+
+const schibsted = Schibsted_Grotesk({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "tether.arena",
+  description: "The Conditional Payment Engine",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className={`${schibsted.variable} antialiased`}>
+      <body className="flex flex-col min-h-screen text-text-primary">
+        {/* Global Nav / Header */}
+        <header className="w-full flex justify-center py-6">
+          <div className="flex items-baseline gap-0.5">
+            <span className="font-[800] text-text-primary text-[20px] tracking-tight">tether</span>
+            <span className="font-[800] text-text-secondary text-[20px]">.</span>
+            <span className="font-[400] text-text-primary text-[20px] tracking-tight">arena</span>
+          </div>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center px-4">
+          {children}
+        </main>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,42 @@
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <div className="w-full max-w-[520px] flex flex-col items-center text-center mt-4">
+      {/* Tagline right below the layout wordmark */}
+      <p className="text-text-secondary text-[15px] font-bold mb-20">
+        The Conditional Payment Engine
+      </p>
+
+      {/* Hero Content */}
+      <div className="flex flex-col items-center">
+        <p className="text-text-secondary font-bold text-[14px] uppercase tracking-[0.08em] mb-4">
+          Banter, backed by escrow.
+        </p>
+
+        <h1 className="text-text-primary text-[56px] font-[800] leading-[1.1] tracking-tight mb-6">
+          Put your money<br />where your mouth is.
+        </h1>
+
+        <p className="text-text-muted text-[16px] font-medium leading-[1.6] max-w-[520px] mb-12">
+          AI powered conditional tipping engine. Tweet a tip at any username based on match outcomes. Talk in plain language, and the money moves automatically when the match settles. Available on Discord and Telegram.
+        </p>
+
+        <div className="w-full max-w-[280px] flex flex-col gap-4">
+          <Link 
+            href="/place" 
+            className="w-full h-[54px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity"
+          >
+            Place a Bet
+          </Link>
+          <Link 
+            href="/how-it-works" 
+            className="w-full h-[54px] bg-transparent text-text-primary border border-border rounded-[10px] flex items-center justify-center hover:bg-surface transition-colors"
+          >
+            How it works
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
