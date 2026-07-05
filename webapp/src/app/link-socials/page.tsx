@@ -38,10 +38,23 @@ export default function LinkSocials() {
           </div>
           <span className="text-text-secondary text-[14px] group-hover:text-text-primary transition-colors">Link</span>
         </Link>
+
+        {/* Telegram Connect Row */}
+        <Link href="/deposit" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8C16.49 10.2 15.82 14.11 15.48 15.91C15.34 16.67 15.06 16.93 14.79 16.96C14.19 17.01 13.73 16.56 13.16 16.19C12.26 15.6 11.75 15.24 10.88 14.67C9.88 14.01 10.53 13.65 11.12 13.04C11.27 12.89 13.88 10.51 13.93 10.3C13.94 10.27 13.94 10.16 13.88 10.1C13.82 10.04 13.73 10.06 13.66 10.08C13.56 10.1 11.96 11.16 8.85 13.26C8.39 13.57 7.98 13.72 7.6 13.71C7.19 13.7 6.4 13.48 5.81 13.28C5.09 13.04 4.51 12.91 4.56 12.51C4.59 12.3 4.8 12.08 5.2 11.85C9.04 10.18 11.6 9.08 12.89 8.54C16.58 7.01 17.35 6.74 17.85 6.73C17.96 6.73 18.21 6.76 18.37 6.89C18.5 7 18.53 7.18 18.55 7.3C18.54 7.4 18.56 7.6 18.55 7.7Z" fill="#F2F1EF"/>
+              </svg>
+            </div>
+            <span className="text-text-primary text-[16px] font-bold">Connect Telegram</span>
+          </div>
+          <span className="text-text-secondary text-[14px] group-hover:text-text-primary transition-colors">Link</span>
+        </Link>
       </div>
 
-      <p className="text-text-muted text-[13px] text-center sm:text-left mb-10">
-        Linking allows you to talk in plain language to place and claim bets directly from social platforms. At least 1 is required.
+      <p className="text-text-muted text-[13px] text-center sm:text-left mb-10 leading-relaxed">
+        Linking allows you to tip any username conditionally in plain language directly on social platforms where tether.arena is available. At least 1 is required.
       </p>
 
     </div>

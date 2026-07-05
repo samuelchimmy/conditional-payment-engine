@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="w-full max-w-[520px] flex flex-col items-center text-center mt-0">
       {/* Tagline right below the layout wordmark */}
-      <p className="text-text-secondary text-[15px] font-bold mb-16">
+      <p className="text-text-secondary text-[15px] font-bold mb-10">
         The Conditional Payment Engine
       </p>
 
@@ -15,7 +15,7 @@ export default function Home() {
         </p>
 
         <h1 className="text-text-primary text-[36px] font-[800] leading-[1.1] tracking-tight mb-6">
-          Put your money<br />where your mouth is.
+          Put Your Money<br />Where Your Mouth Is.
         </h1>
 
         <p className="text-text-muted text-[16px] font-medium leading-[1.6] max-w-[520px] mb-12">
