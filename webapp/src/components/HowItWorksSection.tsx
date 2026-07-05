@@ -66,6 +66,7 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
   const maxSteps = steps.length;
 
   const [isDesktop, setIsDesktop] = useState(true);
+  const touchStartY = useRef(0);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
