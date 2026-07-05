@@ -1,12 +1,9 @@
-import { GlobalHeader } from "@/components/GlobalHeader";
 import Link from "next/link";
 
 export default function Support() {
   return (
-    <div className="w-full max-w-[640px] flex flex-col pt-8 pb-24 px-4 mx-auto">
-      <GlobalHeader />
-      
-      <div className="mt-12 bg-surface border border-border rounded-[16px] p-8 md:p-12 prose prose-invert max-w-none">
+    <div className="w-full max-w-[800px] flex flex-col pt-8 pb-24 px-4 mx-auto">
+      <div className="mt-4 sm:mt-12 bg-surface border border-border rounded-[16px] p-5 sm:p-8 md:p-12 prose prose-invert max-w-none">
         <h1 className="text-text-primary text-[32px] font-[800] mb-8">Support</h1>
 
         <section className="mb-8">

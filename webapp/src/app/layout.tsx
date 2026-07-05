@@ -38,12 +38,6 @@ export default function RootLayout({
 
           {/* Global Footer */}
           <footer className="w-full py-8 mt-auto flex flex-col items-center justify-center border-t border-divider gap-8">
-            <div className="flex gap-6 text-[13px] font-medium text-text-muted">
-              <Link href="/terms" className="hover:text-text-primary transition-colors">Terms of Service</Link>
-              <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy Policy</Link>
-              <Link href="/support" className="hover:text-text-primary transition-colors">Support</Link>
-            </div>
-
             <div className="flex flex-col items-center gap-3">
               <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em]">Powered by</span>
               <div className="flex items-center gap-6 transition-all duration-300">
@@ -59,6 +53,12 @@ export default function RootLayout({
                   <path d="M16.6603 102.956L78.8242 50.1925C79.0488 49.9947 79.1751 49.7122 79.1751 49.4155V17.7998C79.1751 17.2488 78.7259 16.7968 78.1786 16.7968H65.6447C65.4061 16.7968 65.1815 16.8815 64.9991 17.0369L15.355 59.4173C15.1304 59.615 15.0041 59.8976 15.0041 60.1801V102.165C15.0041 103.027 16.0006 103.493 16.6603 102.942V102.956Z" fill="#FF4E00"/>
                 </svg>
               </div>
+            </div>
+
+            <div className="flex gap-6 text-[13px] font-medium text-text-muted">
+              <Link href="/terms" className="hover:text-text-primary transition-colors">Terms of Service</Link>
+              <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy Policy</Link>
+              <Link href="/support" className="hover:text-text-primary transition-colors">Support</Link>
             </div>
           </footer>
         </ThemeProvider>
