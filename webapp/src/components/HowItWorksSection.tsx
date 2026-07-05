@@ -322,10 +322,10 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
             <div className="w-full bg-surface border border-border rounded-[10px] p-6">
               <h3 className="text-text-primary text-[16px] font-bold mb-4">Command examples</h3>
               <div className="text-text-muted text-[14px] flex flex-col gap-3 font-mono">
-                <div className="bg-[#050505] p-4 rounded-md border border-border text-text-primary break-words">
+                <div className="bg-bg-center p-4 rounded-md border border-border text-text-primary break-words">
                   @tether.arena send 50 USDT to @user if Spain wins the Euro finals
                 </div>
-                <div className="bg-[#050505] p-4 rounded-md border border-border text-text-primary break-words">
+                <div className="bg-bg-center p-4 rounded-md border border-border text-text-primary break-words">
                   @tether.arena tip 10 USDT to @user if Alcaraz wins Wimbledon
                 </div>
               </div>

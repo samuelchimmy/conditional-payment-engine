@@ -46,7 +46,7 @@ export default function RootLayout({
 
             <div className="flex flex-col items-center gap-3">
               <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em]">Powered by</span>
-              <div className="flex items-center gap-6 opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+              <div className="flex items-center gap-6 transition-all duration-300">
                 <img src="/tether-logo.svg" alt="Tether" className="h-[22px] w-auto" />
                 <img src="/wdk-logo.svg" alt="WDK" className="h-[20px] w-auto" />
               </div>
