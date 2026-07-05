@@ -14,6 +14,20 @@
   --accent-text: #000000;
 }
 
+.light {
+  --bg-center: #F2F1EF;
+  --bg-edge: #EAE9E7;
+  --surface: #FFFFFF;
+  --border: #D1D1D1;
+  --border-emphasis: #A5A5A3;
+  --divider: #EAE9E7;
+  --text-primary: #050505;
+  --text-secondary: #5A5A5A;
+  --text-muted: #797977;
+  --accent: #D53131;
+  --accent-text: #FFFFFF;
+}
+
 @theme inline {
   --color-bg-center: var(--bg-center);
   --color-bg-edge: var(--bg-edge);

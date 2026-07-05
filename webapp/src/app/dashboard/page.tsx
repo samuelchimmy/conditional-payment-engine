@@ -5,46 +5,67 @@ import { useState } from "react";
 import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { DepositModal } from "@/components/DepositModal";
+import { SettingsModal } from "@/components/SettingsModal";
 
 export default function Dashboard() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   return (
     <div className="w-full max-w-[640px] flex flex-col pt-8">
-      {/* Top Address & Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-16 gap-6">
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsModalOpen} 
+        onClose={() => setIsSettingsModalOpen(false)} 
+      />
+
+      {/* Top Header: Address & Settings */}
+      <div className="flex items-start justify-between mb-12">
         <div className="flex flex-col">
           <span className="text-text-secondary text-[11px] font-normal uppercase tracking-[0.1em]">
             DASHBOARD / MY BETS
           </span>
           <div className="mt-4">
-            <span className="font-mono text-[13px] text-text-secondary bg-surface px-3 py-1.5 rounded-full border border-border">
+            <span className="font-mono text-[13px] text-text-primary bg-surface px-4 py-2 rounded-[8px] border border-border inline-flex items-center gap-2 cursor-pointer hover:border-border-emphasis transition-colors">
+              <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
               0x4f2a...9c3b
             </span>
           </div>
         </div>
         
-        {/* Balance Card & Buttons */}
-        <div className="flex flex-col items-start sm:items-end">
-          <div className="bg-surface border border-border rounded-[10px] px-6 py-4 min-w-[200px] flex flex-col mb-3 w-full sm:w-auto">
-            <span className="text-text-secondary text-[12px] uppercase tracking-wider mb-1">Balance</span>
-            <span className="text-text-primary text-[24px] font-[800] tracking-tight">0.00 <span className="text-text-secondary text-[16px] font-normal">USDT</span></span>
-          </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <button 
-              onClick={() => setIsWithdrawModalOpen(true)}
-              className="flex-1 sm:flex-none h-[42px] px-6 bg-transparent border border-border text-text-primary rounded-[8px] font-bold text-[14px] hover:bg-surface transition-colors"
-            >
-              Withdraw
-            </button>
-            <button 
-              onClick={() => setIsDepositModalOpen(true)}
-              className="flex-1 sm:flex-none h-[42px] px-6 bg-accent text-accent-text rounded-[8px] font-bold text-[14px] flex items-center justify-center hover:opacity-90 transition-opacity"
-            >
-              Deposit
-            </button>
-          </div>
+        <button 
+          onClick={() => setIsSettingsModalOpen(true)}
+          className="w-[42px] h-[42px] mt-4 flex items-center justify-center rounded-[8px] border border-border hover:bg-surface transition-colors text-text-primary"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+
+      {/* Large Centered Balance Card */}
+      <div className="flex flex-col items-center justify-center mb-16 mt-4">
+        <span className="text-text-muted text-[13px] uppercase tracking-[0.1em] mb-2 font-bold">Total Balance</span>
+        <div className="flex items-baseline gap-2 mb-8">
+          <span className="text-text-primary text-[56px] font-[800] leading-none tracking-tight">0.00</span>
+          <span className="text-text-secondary text-[24px] font-bold">USDT</span>
+        </div>
+        
+        <div className="flex items-center gap-3 w-full max-w-[320px]">
+          <button 
+            onClick={() => setIsWithdrawModalOpen(true)}
+            className="flex-1 h-[52px] bg-transparent border border-border text-text-primary rounded-[10px] font-bold text-[15px] hover:bg-surface transition-colors"
+          >
+            Withdraw
+          </button>
+          <button 
+            onClick={() => setIsDepositModalOpen(true)}
+            className="flex-1 h-[52px] bg-accent text-accent-text rounded-[10px] font-bold text-[15px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg"
+          >
+            Deposit
+          </button>
         </div>
       </div>
 
