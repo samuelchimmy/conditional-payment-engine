@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 const steps = [
@@ -37,20 +36,23 @@ const steps = [
   }
 ];
 
+// Classic SVG soccer ball icon
+const FootballIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M12 7l-2.5 3.5h5L12 7z"/>
+    <path d="M12 7V2.5"/>
+    <path d="M9.5 10.5L4.5 9"/>
+    <path d="M14.5 10.5L19.5 9"/>
+    <path d="M9.5 10.5l1.5 5.5h2l1.5-5.5"/>
+    <path d="M11 16l-3.5 5.5"/>
+    <path d="M13 16l3.5 5.5"/>
+  </svg>
+);
+
 export function HowItWorksSection({ id }: { id?: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Track the scroll position relative to this container
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start center", "end center"],
-  });
-
-  const ballY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  const ballRotate = useTransform(scrollYProgress, [0, 1], [0, 1440]);
-
   return (
-    <div id={id} className="w-full flex flex-col items-center pt-8 pb-32">
+    <div id={id} className="w-full flex flex-col items-center pt-8 pb-32 overflow-hidden">
       <div className="mb-24 text-center snap-center">
         <h1 className="text-text-primary text-[36px] font-[800] tracking-tight">
           How it works
@@ -60,40 +62,34 @@ export function HowItWorksSection({ id }: { id?: string }) {
         </p>
       </div>
 
-      <div 
-        ref={containerRef} 
-        className="relative flex flex-col gap-[20vh] max-w-[500px] w-full items-start pl-8 sm:pl-0 sm:items-center pb-20"
-      >
-        <div className="absolute left-[39px] sm:left-1/2 top-0 bottom-0 w-[2px] bg-border sm:-translate-x-1/2 z-0" />
-
-        <motion.div 
-          style={{ top: ballY, rotate: ballRotate }}
-          className="absolute left-[28px] sm:left-1/2 sm:-translate-x-1/2 w-7 h-7 z-10 -mt-3.5"
-        >
-          <div 
-            className="w-full h-full rounded-full border-[2px] border-[#000] overflow-hidden flex shadow-lg relative bg-accent"
-            style={{
-              backgroundImage: `repeating-conic-gradient(from 0deg, transparent 0deg 45deg, rgba(0,0,0,0.85) 45deg 90deg)`,
-              backgroundSize: '100% 100%'
-            }}
-          >
-            <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-black rounded-full" />
-          </div>
-        </motion.div>
-
+      <div className="relative flex flex-col max-w-[500px] w-full items-start pl-8 sm:pl-0 sm:items-center">
         {steps.map((step, i) => {
           const isEven = i % 2 === 0;
+          const isLast = i === steps.length - 1;
 
           return (
-            <div key={i} className={`relative flex w-full justify-start ${isEven ? "sm:justify-end" : "sm:justify-start"} z-20 snap-center py-10`}>
-              {/* Tightened the viewport amount so it only reveals exactly when it reaches the center */}
-              <motion.div 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.6 }}
-                transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-                className={`w-full sm:w-[calc(50%-48px)] flex flex-col pl-16 sm:pl-0 ${isEven ? "sm:text-left" : "sm:text-right"}`}
-              >
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.6 }} // Strict reveal threshold
+              transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+              className="relative flex w-full min-h-[200px] sm:min-h-[240px] justify-start sm:justify-center snap-center z-20"
+            >
+              {/* Center spine: Ball + Broken Line */}
+              <div className="absolute left-[39px] sm:left-1/2 sm:-translate-x-1/2 top-0 bottom-0 flex flex-col items-center">
+                {/* The Ball */}
+                <div className="w-[34px] h-[34px] rounded-full bg-white flex items-center justify-center z-10 shadow-lg shrink-0 mt-6 sm:mt-12">
+                  <FootballIcon />
+                </div>
+                {/* The connecting line, breaks perfectly before the next step */}
+                {!isLast && (
+                  <div className="w-[2px] flex-1 bg-border mt-4 mb-4" />
+                )}
+              </div>
+
+              {/* Step Content */}
+              <div className={`w-full sm:w-1/2 flex flex-col mt-6 sm:mt-12 pl-16 sm:pl-0 ${isEven ? "sm:pr-12 sm:text-right self-start sm:-translate-x-full" : "sm:pl-12 sm:text-left self-start"}`}>
                 <div className="text-text-secondary text-[11px] font-mono tracking-widest uppercase mb-2">
                   Step {step.num}
                 </div>
@@ -103,13 +99,13 @@ export function HowItWorksSection({ id }: { id?: string }) {
                 <p className="text-text-muted text-[14px] leading-relaxed">
                   {step.desc}
                 </p>
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
           );
         })}
       </div>
 
-      <div className="mt-20 w-full max-w-[280px] snap-center">
+      <div className="mt-12 w-full max-w-[280px] snap-center">
         <Link 
           href="/connect" 
           className="w-full h-[54px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg"
