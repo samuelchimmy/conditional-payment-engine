@@ -6,8 +6,8 @@
 # Tether Arena
 
 </div>
-**Put Your Money
-Where Your Mouth Is..**
+**Put Your Money Where Your Mouth Is..** 
+
 AI powered Conditional USDT payments for football fans, settled onchain.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
