@@ -21,11 +21,11 @@ export default function Home() {
   }, [isHeroInView, showHowItWorks]);
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full flex-1 flex flex-col items-center">
       {/* Centered Hero Container */}
       <div 
         ref={heroRef}
-        className="w-full min-h-[calc(100vh-100px)] flex flex-col items-center justify-center snap-center"
+        className="w-full flex-1 flex flex-col items-center justify-center snap-center py-12"
       >
         {/* Render GlobalHeader inline here so it centers dynamically with the hero text */}
         <div className="mb-10">
