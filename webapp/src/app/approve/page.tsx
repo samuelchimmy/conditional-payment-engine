@@ -15,21 +15,11 @@ export default function ApproveAllowance() {
       <div className="w-full flex flex-col gap-6 mb-8">
         <div className="flex flex-col gap-2">
           <label className="text-text-secondary text-[12px]">Amount to approve (USDT)</label>
-          <div className="relative">
-            <input 
-              type="number" 
-              placeholder="Unlimited" 
-              className="w-full bg-surface border border-border rounded-[10px] h-[52px] pl-4 pr-24 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
-            />
-            <div className="absolute right-2 top-0 bottom-0 flex items-center">
-              <button className="h-[36px] px-3 bg-transparent text-text-primary font-bold text-[12px] rounded-[6px] hover:bg-border transition-colors">
-                Unlimited
-              </button>
-            </div>
-          </div>
-          <p className="text-text-muted text-[11px] mt-1">
-            Approving unlimited saves you from having to pay network fees for future bets.
-          </p>
+          <input 
+            type="number" 
+            placeholder="0.00" 
+            className="w-full bg-surface border border-border rounded-[10px] h-[52px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
+          />
         </div>
       </div>
 
