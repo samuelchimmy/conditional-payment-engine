@@ -24,13 +24,13 @@ AI powered Conditional USDT payments for football fans, settled onchain.
 ## What Is Tether Arena?
 **Tether Arena** is the first AI-powered conditional payment engine for football. A fan types a bet in plain language on X, Discord, or Telegram, and the money locks in USDT escrow instantly, settles automatically when the match ends, and pays the winner without either party touching a wallet.
 
-Tether Arena lets football fans make conditional USDT payments in plain language — on X, Discord, or Telegram — and the money moves automatically when the match settles.
+Tether Arena lets football fans make conditional USDT payments in plain language on X, Discord, or Telegram and the money moves automatically when the match settles.
 
 ```
 @TetherArena send 15 USDT to @jade if Nigeria beats Brazil
 ```
 
-That's it. The AI agent parses the intent, locks 15 USDT in escrow on Celo, waits for Nigeria vs Brazil to finish, and — if Nigeria wins — pays @jade automatically. If Nigeria loses, the 15 USDT goes back to the sender immediately.
+That's it. The AI agent parses the intent, locks 15 USDT in escrow on Celo, waits for Nigeria vs Brazil to finish, and if Nigeria wins pays @jade automatically. If Nigeria loses, the 15 USDT goes back to the sender immediately.
 
 No prediction markets. No liquidity pools. No odds. No blockchain knowledge needed. Just conditional escrow and an AI agent living in your social feed.
 
@@ -42,7 +42,7 @@ No prediction markets. No liquidity pools. No odds. No blockchain knowledge need
 Lock USDT against a match outcome. The contract holds funds; the oracle verifies the result from 3 independent sources; funds move automatically.
 
 ### 2. MagicPay (Social Escrow)
-If the recipient has no wallet, funds are locked under their social identity hash (`keccak256("twitter:user_id")`). They claim it later by verifying their account — their first-ever USDT, no prior crypto experience needed.
+If the recipient has no wallet, funds are locked under their social identity hash (`keccak256("twitter:user_id")`). They claim it later by verifying their account their first-ever USDT, no prior crypto experience needed.
 
 ### 3. AI-Powered Intent Parsing
 Users talk naturally. Gemini 2.5 Flash extracts structured intent, routes it to the correct condition plugin, and the agent confirms or asks a clarifying question. English, Pidgin, Spanish, French — all supported.
@@ -243,6 +243,24 @@ The recipient has no wallet? No problem.
 5. Vault calls `claimConditional` → USDT lands in their wallet
 6. This may be their first-ever crypto. They didn't need to buy CELO or understand gas.
 
+### 🔐 Social Account Verification
+
+To prevent profile hijacking, linking a social account requires verified cryptographic proof from the platform:
+
+| Platform | Verification Method |
+|----------|-------------------|
+| **Telegram** | Server-side HMAC verification — callback payloads from Telegram's widget are signed with the Bot Token's SHA-256 hash and verified by the social-identity edge function before registration |
+| **Twitter/X** | OAuth 2.0 with PKCE directly against X's official identity endpoints |
+| **Discord** | Confidential Client OAuth 2.0 — authorization code exchanged server-side via the `discord-oauth` edge function using a hidden client secret |
+#### Hijack & Duplication Protection
+
+Every linking request validates that the active wallet session owns the profile database row. The backend enforces unique social handle mappings across both database contexts (`profiles` and `wallet_profiles`) to prevent double-linking.
+
+#### Data Transit & Encryption
+
+- All client-to-edge-function requests are encrypted in transit over **HTTPS/TLS 1.3**
+- Profile metadata is isolated using **PostgreSQL Row-Level Security (RLS)** policies
+- Database records are accessible only by verified profile owners
 ---
 
 ## Repository Structure
