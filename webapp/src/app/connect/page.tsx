@@ -17,7 +17,7 @@ export default function ConnectWallet() {
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
-              <img src="/wdk-logo.svg" alt="WDK" className="h-[14px] w-auto ml-1 grayscale invert dark:invert-0 opacity-90" />
+              <img src="/wdk-logo.svg" alt="WDK" className="h-[14px] w-auto ml-1 opacity-90 transition-all duration-300 theme-logo-wdk" />
             </div>
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export default function ConnectWallet() {
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center">
-              <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain grayscale dark:invert opacity-90" />
+              <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain opacity-90 transition-all duration-300 theme-logo-mm" />
             </div>
             <span className="text-text-primary text-[16px] font-bold">MetaMask or browser wallet</span>
           </div>
@@ -49,7 +49,7 @@ export default function ConnectWallet() {
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center">
-              <img src="/walletconnect.svg" alt="WalletConnect" className="w-7 h-7 object-contain invert dark:invert-0 opacity-90" />
+              <img src="/walletconnect.svg" alt="WalletConnect" className="w-7 h-7 object-contain opacity-90 transition-all duration-300 theme-logo-wc" />
             </div>
             <span className="text-text-primary text-[16px] font-bold">WalletConnect</span>
           </div>

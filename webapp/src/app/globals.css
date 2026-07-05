@@ -61,6 +61,21 @@ body {
   scrollbar-width: none;
 }
 
+/* Theme-aware Logo Filters */
+.theme-logo-wdk, .theme-logo-wc {
+  filter: none;
+}
+.light .theme-logo-wdk, .light .theme-logo-wc {
+  filter: invert(1) brightness(0.25);
+}
+
+.theme-logo-mm {
+  filter: none;
+}
+.light .theme-logo-mm {
+  filter: grayscale(1) brightness(0.6) contrast(1.2);
+}
+
 html { scroll-behavior: smooth; }
 
 
