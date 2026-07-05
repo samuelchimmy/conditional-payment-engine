@@ -7,33 +7,43 @@ import { useEffect, useState, useRef } from "react";
 const steps = [
   {
     num: "1",
-    title: "Create Your Wallet",
+    title: "Create Wallet",
     desc: "Connect securely. A wallet is instantly created and backed up to your Google Drive. No seed phrases needed."
   },
   {
     num: "2",
-    title: "Deposit USDT",
-    desc: "Send USDT directly on Celo or use our built-in cross-chain bridge from Ethereum, Base, Polygon, or Arbitrum."
+    title: "Link Social Accounts",
+    desc: "Link your X (Twitter), Discord, or Telegram account so the engine knows who you are when you tip."
   },
   {
     num: "3",
+    title: "Deposit",
+    desc: "Send USDT directly on Celo or use our built-in cross-chain bridge from Ethereum, Base, Polygon, or Arbitrum."
+  },
+  {
+    num: "4",
+    title: "Approve Spending Allowance",
+    desc: "Grant the Tether Arena engine permission to move your USDT only when your specific bet conditions are met."
+  },
+  {
+    num: "5",
     title: "Place a Conditional Bet",
     desc: "Talk in plain language on X, Discord, or Telegram. 'Send 15 USDT to @user if Nigeria beats Brazil'. Your funds are locked safely in escrow."
   },
   {
-    num: "4",
+    num: "6",
     title: "Wait for the Match",
     desc: "Tether Arena's oracle monitors multiple independent sports data sources to ensure verified score accuracy."
   },
   {
-    num: "5",
+    num: "7",
     title: "Outcome",
     desc: "If your condition is met, the winner is paid automatically. If not, your funds unlock for immediate 1-tap refund."
   },
   {
-    num: "6",
+    num: "8",
     title: "Claiming",
-    desc: "Winners without a wallet get a DM to claim. They just sign in, their wallet is created, and the USDT is there."
+    desc: "Winners get credited instantly to their tether.arena wallet, winners without a wallet get a mentioned in the thread to claim. They just create a tether.arena wallet, link their social account and the USDT is there to claim securedly."
   }
 ];
 
