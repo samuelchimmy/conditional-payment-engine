@@ -1,24 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
-import { AnimatePresence, motion, useInView } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { GlobalHeader } from "@/components/GlobalHeader";
 
 export default function Home() {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
-  
-  // Detect if the hero section is almost entirely in view
-  const isHeroInView = useInView(heroRef, { amount: 0.7 });
-
-  useEffect(() => {
-    // If we scroll back up and the hero comes into view, automatically hide the timeline
-    if (isHeroInView && showHowItWorks) {
-      setShowHowItWorks(false);
-    }
-  }, [isHeroInView, showHowItWorks]);
 
   return (
     <div className="w-full flex-1 flex flex-col items-center">

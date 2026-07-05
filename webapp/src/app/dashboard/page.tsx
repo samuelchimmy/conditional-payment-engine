@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
+import { DepositModal } from "@/components/DepositModal";
 
 export default function Dashboard() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
   return (
     <div className="w-full max-w-[640px] flex flex-col pt-8">
@@ -36,9 +38,12 @@ export default function Dashboard() {
             >
               Withdraw
             </button>
-            <Link href="/deposit" className="flex-1 sm:flex-none h-[42px] px-6 bg-accent text-accent-text rounded-[8px] font-bold text-[14px] flex items-center justify-center hover:opacity-90 transition-opacity">
+            <button 
+              onClick={() => setIsDepositModalOpen(true)}
+              className="flex-1 sm:flex-none h-[42px] px-6 bg-accent text-accent-text rounded-[8px] font-bold text-[14px] flex items-center justify-center hover:opacity-90 transition-opacity"
+            >
               Deposit
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -147,6 +152,10 @@ export default function Dashboard() {
       <WithdrawModal 
         isOpen={isWithdrawModalOpen} 
         onClose={() => setIsWithdrawModalOpen(false)} 
+      />
+      <DepositModal 
+        isOpen={isDepositModalOpen} 
+        onClose={() => setIsDepositModalOpen(false)} 
       />
     </div>
   );
