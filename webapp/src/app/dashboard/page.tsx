@@ -1,7 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { Accordion } from "@/components/Accordion";
+import { WithdrawModal } from "@/components/WithdrawModal";
 
 export default function Dashboard() {
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+
   return (
     <div className="w-full max-w-[640px] flex flex-col pt-8">
       {/* Top Address & Action Bar */}
@@ -24,7 +30,10 @@ export default function Dashboard() {
             <span className="text-text-primary text-[24px] font-[800] tracking-tight">0.00 <span className="text-text-secondary text-[16px] font-normal">USDT</span></span>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none h-[42px] px-6 bg-transparent border border-border text-text-primary rounded-[8px] font-bold text-[14px] hover:bg-surface transition-colors">
+            <button 
+              onClick={() => setIsWithdrawModalOpen(true)}
+              className="flex-1 sm:flex-none h-[42px] px-6 bg-transparent border border-border text-text-primary rounded-[8px] font-bold text-[14px] hover:bg-surface transition-colors"
+            >
               Withdraw
             </button>
             <Link href="/deposit" className="flex-1 sm:flex-none h-[42px] px-6 bg-accent text-accent-text rounded-[8px] font-bold text-[14px] flex items-center justify-center hover:opacity-90 transition-opacity">
@@ -44,7 +53,6 @@ export default function Dashboard() {
           </p>
         </div>
         
-        {/* Moved New Bet here */}
         <Link href="/place" className="h-[42px] px-6 bg-accent text-accent-text font-bold rounded-[8px] text-[14px] flex items-center justify-center hover:opacity-90 transition-opacity">
           New Bet
         </Link>
@@ -86,7 +94,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Start Tipping Section (Right-aligned, stacked buttons) */}
+      {/* Start Tipping Section */}
       <div className="w-full mb-16 flex flex-col sm:flex-row sm:items-start justify-between gap-8 pt-6 border-t border-divider">
         <div className="flex flex-col text-left sm:max-w-[320px]">
           <h2 className="text-text-primary text-[20px] font-bold mb-2">Start Tipping</h2>
@@ -136,6 +144,10 @@ export default function Dashboard() {
         </Accordion>
       </div>
 
+      <WithdrawModal 
+        isOpen={isWithdrawModalOpen} 
+        onClose={() => setIsWithdrawModalOpen(false)} 
+      />
     </div>
   );
 }
