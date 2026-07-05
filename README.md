@@ -430,7 +430,7 @@ npm run dev
 
 ## Prior Work Disclosure
 
-This project builds on an existing MoniPay/MoniBot production codebase. Pre-existing components:
+This project builds on my existing MoniPay/MoniBot production codebase. Pre-existing components:
 - `IOURegistryV2.sol` — basic escrow (V3 is a full redesign with conditional logic)
 - `sportsOracle.js` — 3-source consensus oracle (plugin refactor and AI integration are new)
 - `blockchain.js` — multi-chain viem utilities (Celo CIP-64 additions are new)
