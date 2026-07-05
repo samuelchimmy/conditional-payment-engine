@@ -93,9 +93,16 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
     // Intercept scroll
     const handleWheel = (e: WheelEvent) => {
       // If we've released the lock at the bottom, and they are scrolling down, let them go.
-      if (currentStepIndex >= maxSteps && e.deltaY > 0) return;
-      
-      // Otherwise, prevent default scroll
+      if (isDesktop) return;
+
+      if (currentStepIndex === maxSteps && containerRef.current) {
+        const scrollTop = containerRef.current.scrollTop;
+        const isScrollingDown = e.deltaY > 0;
+        if (scrollTop > 0 || isScrollingDown) {
+          return; // Allow native scroll
+        }
+      }
+
       e.preventDefault();
 
       if (isAnimating.current) {
@@ -128,18 +135,27 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
       }
     };
 
-    let touchStartY = 0;
     const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
+      touchStartY.current = e.touches[0].clientY;
     };
     
     const handleTouchMove = (e: TouchEvent) => {
-      if (currentStepIndex >= maxSteps && touchStartY > e.touches[0].clientY) return;
-      e.preventDefault();
+      if (isDesktop) return;
 
+      if (currentStepIndex === maxSteps && containerRef.current) {
+        const scrollTop = containerRef.current.scrollTop;
+        const currentY = e.touches[0].clientY;
+        const isSwipingUp = currentY < touchStartY.current;
+        if (scrollTop > 0 || isSwipingUp) {
+          return; // Allow native scroll
+        }
+      }
+
+      e.preventDefault();
       if (isAnimating.current) return;
-      const touchEndY = e.touches[0].clientY;
-      const delta = touchStartY - touchEndY;
+      
+      const currentY = e.touches[0].clientY;
+      const delta = touchStartY.current - currentY;
 
       if (delta > 30) {
         // Swipe up (scroll down)
@@ -174,7 +190,11 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
   }, [currentStepIndex, maxSteps, onClose, isDesktop]);
 
   return (
-    <div id={id} ref={containerRef} className="w-full h-[100dvh] md:h-auto overflow-hidden md:overflow-visible flex flex-col items-center relative pt-12 md:pt-32 md:pb-48">
+    <div 
+      id={id} 
+      ref={containerRef} 
+      className={`w-full flex flex-col items-center relative pt-12 md:pt-32 md:pb-48 ${isDesktop ? 'h-auto overflow-visible' : (currentStepIndex === maxSteps ? 'h-[100dvh] overflow-y-auto' : 'h-[100dvh] overflow-hidden')}`}
+    >
       <motion.div 
         animate={isDesktop ? { y: 0 } : { y: -(Math.min(currentStepIndex, maxSteps) * STEP_HEIGHT * 0.85) }}
         transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
@@ -260,14 +280,59 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
           y: currentStepIndex === maxSteps ? 0 : 20
         } : undefined}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="mt-16 w-full max-w-[280px]"
+        className="mt-16 w-full max-w-[520px] px-4 flex flex-col items-center pb-24"
       >
         <Link 
           href="/connect" 
-          className="w-full h-[54px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg"
+          className="w-full max-w-[280px] h-[54px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg mb-24 mx-auto"
         >
           Get started
         </Link>
+
+        {/* Start Tipping Section */}
+        <div className="w-full flex flex-col text-left">
+          <h2 className="text-text-primary text-[28px] font-[800] tracking-tight mb-4 text-center">
+            Start Tipping
+          </h2>
+          <p className="text-text-muted text-[15px] leading-relaxed mb-8 text-center px-4">
+            Ready to put your money where your mouth is? Tweet at @tether.arena, add the bot to your Discord server, or join the Telegram group.
+          </p>
+
+          <div className="flex flex-col gap-4 w-full max-w-[320px] mb-16 mx-auto">
+            <a href="https://twitter.com/tether_arena" target="_blank" rel="noopener noreferrer" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
+              Tweet at @tether.arena
+            </a>
+            <a href="#" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
+              Add to a Discord server
+            </a>
+            <a href="#" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
+              Add to Telegram group
+            </a>
+          </div>
+
+          <div className="w-full flex flex-col gap-6">
+            <div className="w-full bg-surface border border-border rounded-[10px] p-6">
+              <h3 className="text-text-primary text-[16px] font-bold mb-4">Active conditions (Tournaments)</h3>
+              <ul className="text-text-muted text-[15px] flex flex-col gap-3 list-disc pl-5">
+                <li>Euro 2024</li>
+                <li>Copa America 2024</li>
+                <li>Wimbledon</li>
+              </ul>
+            </div>
+            
+            <div className="w-full bg-surface border border-border rounded-[10px] p-6">
+              <h3 className="text-text-primary text-[16px] font-bold mb-4">Command examples</h3>
+              <div className="text-text-muted text-[14px] flex flex-col gap-3 font-mono">
+                <div className="bg-[#050505] p-4 rounded-md border border-border text-text-primary break-words">
+                  @tether.arena send 50 USDT to @user if Spain wins the Euro finals
+                </div>
+                <div className="bg-[#050505] p-4 rounded-md border border-border text-text-primary break-words">
+                  @tether.arena tip 10 USDT to @user if Alcaraz wins Wimbledon
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   </div>
