@@ -17,7 +17,7 @@ export function Header() {
       {mounted && (
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="absolute right-0 top-10 w-8 h-8 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface transition-colors"
+          className="absolute -right-2 top-10 w-8 h-8 flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? (

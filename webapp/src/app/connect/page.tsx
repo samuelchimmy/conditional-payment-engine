@@ -22,7 +22,7 @@ export default function ConnectWallet() {
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2">
                 <span className="text-text-primary text-[16px] font-bold">Create new wallet</span>
-                <span className="bg-accent text-accent-text text-[9px] px-1.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wide">Recommended</span>
+                <span className="bg-[#009393] text-accent-text text-[9px] px-1.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wide">Recommended</span>
               </div>
               <span className="text-text-muted text-[13px] font-normal">(~30 sec)</span>
             </div>
@@ -36,7 +36,7 @@ export default function ConnectWallet() {
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center">
-              <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain grayscale brightness-0 dark:invert opacity-90" />
+              <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain grayscale dark:invert opacity-90" />
             </div>
             <span className="text-text-primary text-[16px] font-bold">MetaMask or browser wallet</span>
           </div>
