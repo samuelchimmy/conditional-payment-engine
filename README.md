@@ -1,5 +1,5 @@
 <div align="center">
-⚽
+      ⚽
 # Tether Arena 
 
 > **Put Your Money
