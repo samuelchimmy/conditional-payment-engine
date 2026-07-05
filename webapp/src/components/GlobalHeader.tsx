@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export function GlobalHeader() {
   return (
-    <header className="w-full flex flex-col items-center justify-center pt-10 pb-6 z-50 bg-bg-center relative">
+    <header className="w-full flex flex-col items-center justify-center pt-10 pb-6 z-50 relative">
       <Link href="/" className="flex items-baseline gap-0.5 hover:opacity-90 transition-opacity">
         <span className="font-[800] text-text-primary text-[32px] tracking-tight">tether</span>
         <span className="font-[800] text-text-secondary text-[32px]">.</span>
