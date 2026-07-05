@@ -21,7 +21,7 @@ export default function Dashboard() {
       />
 
       {/* Top Header: Address & Settings */}
-      <div className="flex items-start justify-between mb-12">
+      <div className="flex items-start justify-between mb-8">
         <div className="flex flex-col">
           <span className="text-text-secondary text-[11px] font-normal uppercase tracking-[0.1em]">
             DASHBOARD / MY BETS
@@ -45,24 +45,22 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Large Centered Balance Card */}
-      <div className="flex flex-col items-center justify-center mb-16 mt-4">
-        <span className="text-text-muted text-[13px] uppercase tracking-[0.1em] mb-2 font-bold">Total Balance</span>
-        <div className="flex items-baseline gap-2 mb-8">
-          <span className="text-text-primary text-[56px] font-[800] leading-none tracking-tight">0.00</span>
-          <span className="text-text-secondary text-[24px] font-bold">USDT</span>
+      {/* Balance Card & Buttons (Mobile Layout on all devices) */}
+      <div className="flex flex-col items-start w-full mb-16">
+        <div className="bg-surface border border-border rounded-[10px] px-6 py-4 flex flex-col mb-3 w-full">
+          <span className="text-text-secondary text-[12px] uppercase tracking-wider mb-1">Balance</span>
+          <span className="text-text-primary text-[24px] font-[800] tracking-tight">0.00 <span className="text-text-secondary text-[16px] font-normal">USDT</span></span>
         </div>
-        
-        <div className="flex items-center gap-3 w-full max-w-[320px]">
+        <div className="flex items-center gap-3 w-full">
           <button 
             onClick={() => setIsWithdrawModalOpen(true)}
-            className="flex-1 h-[52px] bg-transparent border border-border text-text-primary rounded-[10px] font-bold text-[15px] hover:bg-surface transition-colors"
+            className="flex-1 h-[42px] px-6 bg-transparent border border-border text-text-primary rounded-[8px] font-bold text-[14px] hover:bg-surface transition-colors"
           >
             Withdraw
           </button>
           <button 
             onClick={() => setIsDepositModalOpen(true)}
-            className="flex-1 h-[52px] bg-accent text-accent-text rounded-[10px] font-bold text-[15px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg"
+            className="flex-1 h-[42px] px-6 bg-accent text-accent-text rounded-[8px] font-bold text-[14px] flex items-center justify-center hover:opacity-90 transition-opacity"
           >
             Deposit
           </button>
