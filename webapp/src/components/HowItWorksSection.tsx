@@ -96,7 +96,7 @@ function FAQItem({ question, answer }: { question: string, answer: string }) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between text-left hover:opacity-80 transition-opacity"
       >
-        <h3 className="text-text-primary text-[16px] font-bold pr-8">{question}</h3>
+        <h3 className="text-text-primary text-[15px] font-bold pr-8">{question}</h3>
         <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="text-text-secondary flex-shrink-0">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9"></polyline>
@@ -110,7 +110,7 @@ function FAQItem({ question, answer }: { question: string, answer: string }) {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="overflow-hidden"
       >
-        <div className="pt-4 text-text-muted text-[14px] leading-relaxed whitespace-pre-wrap">
+        <div className="pt-4 text-text-muted text-[13px] leading-relaxed whitespace-pre-wrap">
           {answer}
         </div>
       </motion.div>
@@ -263,10 +263,10 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
         className="w-full flex flex-col items-center pb-[50vh] md:pb-0"
       >
         <div className="mb-20 text-center px-4">
-          <h1 className="text-text-primary text-[36px] font-[800] tracking-tight">
+          <h1 className="text-text-primary text-[32px] font-[800] tracking-tight">
             How it works
           </h1>
-          <p className="text-text-muted text-[16px] mt-2 max-w-[340px] mx-auto leading-relaxed">
+          <p className="text-text-muted text-[15px] mt-2 max-w-[340px] mx-auto leading-relaxed">
             The lifecycle of a conditional tip, from your mouth to their wallet.
           </p>
         </div>
@@ -317,13 +317,13 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
                   transition={{ duration: 0.5, ease: "easeOut" }}
                   className={`w-full sm:w-1/2 flex flex-col pl-10 sm:pl-0 ${isEven ? "sm:pr-12 sm:text-right sm:-translate-x-full" : "sm:pl-12 sm:text-left sm:translate-x-full"}`}
                 >
-                  <div className="text-text-secondary text-[11px] font-mono tracking-widest uppercase mb-1">
+                  <div className="text-text-secondary text-[10px] font-mono tracking-widest uppercase mb-1">
                     Step {step.num}
                   </div>
-                  <h3 className="text-text-primary text-[18px] font-[800] leading-tight mb-2">
+                  <h3 className="text-text-primary text-[16px] font-[800] leading-tight mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-text-muted text-[13px] leading-relaxed">
+                  <p className="text-text-muted text-[12px] leading-relaxed">
                     {step.desc}
                   </p>
                 </motion.div>
@@ -359,10 +359,10 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
           >
-            <h2 className="text-text-primary text-[28px] font-[800] tracking-tight mb-4 text-center">
+            <h2 className="text-text-primary text-[24px] font-[800] tracking-tight mb-4 text-center">
               Start Tipping
             </h2>
-            <p className="text-text-muted text-[15px] leading-relaxed mb-8 text-center px-4">
+            <p className="text-text-muted text-[14px] leading-relaxed mb-8 text-center px-4">
               Ready to put your money where your mouth is? Tweet at @tether.arena, add the bot to your Discord server, or join the Telegram group.
             </p>
           </motion.div>
@@ -393,8 +393,8 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
               transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1], delay: 0.2 }}
               className="w-full bg-surface border border-border rounded-[10px] p-6"
             >
-              <h3 className="text-text-primary text-[16px] font-bold mb-4">Active conditions (Tournaments)</h3>
-              <ul className="text-text-muted text-[15px] flex flex-col gap-3 list-disc pl-5">
+              <h3 className="text-text-primary text-[15px] font-bold mb-4">Active conditions (Tournaments)</h3>
+              <ul className="text-text-muted text-[14px] flex flex-col gap-3 list-disc pl-5">
                 <li>World Cup 2026</li>
               </ul>
             </motion.div>
@@ -406,8 +406,8 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
               transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1], delay: 0.3 }}
               className="w-full bg-surface border border-border rounded-[10px] p-6"
             >
-              <h3 className="text-text-primary text-[16px] font-bold mb-4">Command examples</h3>
-              <div className="text-text-muted text-[14px] flex flex-col gap-3 font-mono">
+              <h3 className="text-text-primary text-[15px] font-bold mb-4">Command examples</h3>
+              <div className="text-text-muted text-[13px] flex flex-col gap-3 font-mono">
                 <div className="bg-bg-center p-4 rounded-md border border-border text-text-primary break-words">
                   @tether.arena send 50 USDT to @user if Spain wins the Euro finals
                 </div>
@@ -426,10 +426,10 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
             transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1], delay: 0.4 }}
             className="w-full flex flex-col mt-24 border-t border-divider pt-16"
           >
-            <h2 className="text-text-primary text-[28px] font-[800] tracking-tight mb-2">
+            <h2 className="text-text-primary text-[24px] font-[800] tracking-tight mb-2">
               Good to know,
             </h2>
-            <h2 className="text-text-secondary text-[28px] font-[800] tracking-tight mb-8">
+            <h2 className="text-text-secondary text-[24px] font-[800] tracking-tight mb-8">
               before you start.
             </h2>
             

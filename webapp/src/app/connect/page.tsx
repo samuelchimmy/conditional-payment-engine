@@ -4,10 +4,10 @@ export default function ConnectWallet() {
   return (
     <div className="w-full max-w-[420px] flex flex-col pt-12">
       <div className="mb-10 text-center sm:text-left">
-        <h1 className="text-text-primary text-[32px] font-[800]">
+        <h1 className="text-text-primary text-[28px] font-[800]">
           Connect your wallet
         </h1>
-        <p className="text-text-muted text-[15px] mt-2">
+        <p className="text-text-muted text-[14px] mt-2">
           Choose how to continue
         </p>
       </div>
@@ -21,10 +21,10 @@ export default function ConnectWallet() {
             </div>
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2">
-                <span className="text-text-primary text-[16px] font-bold">Create new wallet</span>
+                <span className="text-text-primary text-[15px] font-bold">Create new wallet</span>
                 <span className="bg-[#009393] text-accent-text text-[9px] px-1.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wide">Recommended</span>
               </div>
-              <span className="text-text-muted text-[13px] font-normal">(~30 sec)</span>
+              <span className="text-text-muted text-[12px] font-normal">(~30 sec)</span>
             </div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary group-hover:text-text-primary transition-colors">
@@ -38,7 +38,7 @@ export default function ConnectWallet() {
             <div className="w-8 h-8 flex items-center justify-center">
               <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain opacity-90 transition-all duration-300 theme-logo-mm" />
             </div>
-            <span className="text-text-primary text-[16px] font-bold">MetaMask or browser wallet</span>
+            <span className="text-text-primary text-[15px] font-bold">MetaMask or browser wallet</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary group-hover:text-text-primary transition-colors">
             <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -51,7 +51,7 @@ export default function ConnectWallet() {
             <div className="w-8 h-8 flex items-center justify-center">
               <img src="/walletconnect.svg" alt="WalletConnect" className="w-7 h-7 object-contain opacity-90 transition-all duration-300 theme-logo-wc" />
             </div>
-            <span className="text-text-primary text-[16px] font-bold">WalletConnect</span>
+            <span className="text-text-primary text-[15px] font-bold">WalletConnect</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary group-hover:text-text-primary transition-colors">
             <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -59,7 +59,7 @@ export default function ConnectWallet() {
         </Link>
       </div>
 
-      <p className="text-text-muted text-[13px] text-center sm:text-left mb-10">
+      <p className="text-text-muted text-[12px] text-center sm:text-left mb-10">
         New wallets include a 12-word phrase and Google Drive backup.
       </p>
 

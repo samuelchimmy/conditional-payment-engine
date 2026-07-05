@@ -39,7 +39,7 @@ export default function RootLayout({
           {/* Global Footer */}
           <footer className="w-full py-8 mt-auto flex flex-col items-center justify-center border-t border-divider gap-8">
             <div className="flex flex-col items-center gap-3">
-              <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em]">Powered by</span>
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.15em]">Powered by</span>
               <div className="flex items-center gap-6 transition-all duration-300">
                 <img src="/tether-logo.svg" alt="Tether" className="h-[22px] w-auto" />
                 <svg className="h-[20px] w-auto text-text-primary" viewBox="0 0 441 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -55,7 +55,7 @@ export default function RootLayout({
               </div>
             </div>
 
-            <div className="flex gap-6 text-[13px] font-medium text-text-muted">
+            <div className="flex gap-6 text-[12px] font-medium text-text-muted">
               <Link href="/terms" className="hover:text-text-primary transition-colors">Terms of Service</Link>
               <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy Policy</Link>
               <Link href="/support" className="hover:text-text-primary transition-colors">Support</Link>

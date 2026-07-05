@@ -84,7 +84,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           >
             {/* Header */}
             <div className="h-[64px] border-b border-divider flex items-center justify-between px-6 shrink-0">
-              <h2 className="text-text-primary text-[18px] font-bold leading-tight">Settings</h2>
+              <h2 className="text-text-primary text-[16px] font-bold leading-tight">Settings</h2>
               <button 
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-border transition-colors text-text-muted"
@@ -100,17 +100,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               
               {/* Backup Info */}
               <div className="flex flex-col gap-2">
-                <span className="text-text-secondary text-[12px] uppercase tracking-[0.1em] font-bold mb-1">Backup</span>
+                <span className="text-text-secondary text-[11px] uppercase tracking-[0.1em] font-bold mb-1">Backup</span>
                 <div className="bg-bg-center border border-border rounded-[10px] p-4 flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-text-primary font-bold text-[14px]">Connected via Google</span>
-                    <span className="text-text-muted text-[13px] mt-0.5">user@example.com</span>
-                    <span className="text-text-muted text-[12px] mt-2 flex items-center gap-1.5">
+                    <span className="text-text-primary font-bold text-[13px]">Connected via Google</span>
+                    <span className="text-text-muted text-[12px] mt-0.5">user@example.com</span>
+                    <span className="text-text-muted text-[11px] mt-2 flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></div>
                       Last backed up: Just now
                     </span>
                   </div>
-                  <button className="text-text-primary border border-border hover:bg-border px-4 py-2 rounded-[8px] text-[13px] font-bold transition-colors">
+                  <button className="text-text-primary border border-border hover:bg-border px-4 py-2 rounded-[8px] text-[12px] font-bold transition-colors">
                     Manage
                   </button>
                 </div>
@@ -118,29 +118,29 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
               {/* Preferences */}
               <div className="flex flex-col gap-2">
-                <span className="text-text-secondary text-[12px] uppercase tracking-[0.1em] font-bold mb-1">Preferences</span>
+                <span className="text-text-secondary text-[11px] uppercase tracking-[0.1em] font-bold mb-1">Preferences</span>
                 <div className="bg-bg-center border border-border rounded-[10px] flex flex-col overflow-hidden">
                   
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-                    <span className="text-text-primary text-[15px] font-medium">Notifications</span>
+                    <span className="text-text-primary text-[14px] font-medium">Notifications</span>
                     <ToggleSwitch checked={true} onChange={() => {}} />
                   </div>
                   
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">
                     <div className="flex flex-col">
-                      <span className="text-text-primary text-[15px] font-medium">Payment alerts & updates</span>
-                      <span className="text-text-muted text-[13px] mt-0.5">Receive updates when funds move</span>
+                      <span className="text-text-primary text-[14px] font-medium">Payment alerts & updates</span>
+                      <span className="text-text-muted text-[12px] mt-0.5">Receive updates when funds move</span>
                     </div>
                     <ToggleSwitch checked={true} onChange={() => {}} />
                   </div>
 
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-                    <span className="text-text-primary text-[15px] font-medium">Sound Effects</span>
+                    <span className="text-text-primary text-[14px] font-medium">Sound Effects</span>
                     <ToggleSwitch checked={false} onChange={() => {}} />
                   </div>
 
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-                    <span className="text-text-primary text-[15px] font-medium">Switch to dark theme</span>
+                    <span className="text-text-primary text-[14px] font-medium">Switch to dark theme</span>
                     <ToggleSwitch 
                       checked={theme === 'dark'} 
                       onChange={(checked) => setTheme(checked ? 'dark' : 'light')} 
@@ -150,15 +150,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="flex flex-col px-4 py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-text-primary text-[15px] font-medium">Approve tipping</span>
-                        <span className="text-text-muted text-[13px] mt-0.5">Approved amount: {allowanceAmount} USDT</span>
+                        <span className="text-text-primary text-[14px] font-medium">Approve tipping</span>
+                        <span className="text-text-muted text-[12px] mt-0.5">Approved amount: {allowanceAmount} USDT</span>
                       </div>
                       <button 
                         onClick={() => {
                           setTempAllowance(allowanceAmount);
                           setIsAllowanceModalOpen(true);
                         }}
-                        className="px-5 py-2 bg-accent text-accent-text font-bold rounded-[8px] text-[13px] hover:opacity-90 transition-opacity"
+                        className="px-5 py-2 bg-accent text-accent-text font-bold rounded-[8px] text-[12px] hover:opacity-90 transition-opacity"
                       >
                         Approve
                       </button>
@@ -170,14 +170,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
               {/* Language */}
               <div className="flex flex-col gap-2 mb-2">
-                <span className="text-text-secondary text-[12px] uppercase tracking-[0.1em] font-bold mb-1">Language</span>
+                <span className="text-text-secondary text-[11px] uppercase tracking-[0.1em] font-bold mb-1">Language</span>
                 <div 
                   onClick={() => setIsLanguageModalOpen(true)}
                   className="bg-bg-center border border-border rounded-[10px] px-4 py-4 flex items-center justify-between cursor-pointer hover:bg-border transition-colors"
                 >
-                  <span className="text-text-primary text-[15px] font-medium">Select Language</span>
+                  <span className="text-text-primary text-[14px] font-medium">Select Language</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-text-secondary text-[15px]">{selectedLanguage.label}</span>
+                    <span className="text-text-secondary text-[14px]">{selectedLanguage.label}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted">
                       <path d="m9 18 6-6-6-6"/>
                     </svg>
@@ -208,7 +208,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             className="relative w-full max-w-[400px] bg-surface border border-border rounded-[16px] overflow-hidden flex flex-col shadow-2xl p-6"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-text-primary text-[18px] font-bold">Approve Allowance</h3>
+              <h3 className="text-text-primary text-[16px] font-bold">Approve Allowance</h3>
               <button 
                 onClick={() => setIsAllowanceModalOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-border transition-colors text-text-muted"
@@ -220,7 +220,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
             
             <div className="flex flex-col gap-4 mb-8">
-              <p className="text-text-muted text-[14px]">
+              <p className="text-text-muted text-[13px]">
                 Enter the maximum amount of USDT you want to allow the tipping engine to spend automatically.
               </p>
               <div className="relative w-full">
@@ -228,10 +228,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="number" 
                   value={tempAllowance}
                   onChange={(e) => setTempAllowance(e.target.value)}
-                  className="w-full h-[52px] bg-bg-center border border-border rounded-[10px] px-4 text-text-primary text-[16px] focus:outline-none focus:border-border-emphasis font-mono"
+                  className="w-full h-[52px] bg-bg-center border border-border rounded-[10px] px-4 text-text-primary text-[15px] focus:outline-none focus:border-border-emphasis font-mono"
                   placeholder="0.00"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary text-[14px] font-mono">
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary text-[13px] font-mono">
                   USDT
                 </span>
               </div>
@@ -268,7 +268,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             className="relative w-full max-w-[400px] bg-surface border border-border rounded-[16px] overflow-hidden flex flex-col shadow-2xl max-h-[80vh]"
           >
             <div className="h-[64px] border-b border-divider flex items-center justify-between px-6 shrink-0">
-              <h3 className="text-text-primary text-[18px] font-bold">Select Language</h3>
+              <h3 className="text-text-primary text-[16px] font-bold">Select Language</h3>
               <button 
                 onClick={() => setIsLanguageModalOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-border transition-colors text-text-muted"
@@ -289,7 +289,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }}
                   className={`w-full h-[52px] px-4 rounded-[10px] flex items-center justify-between transition-colors ${selectedLanguage.code === lang.code ? 'bg-bg-center border border-border-emphasis' : 'hover:bg-border border border-transparent'}`}
                 >
-                  <span className={`text-[15px] ${selectedLanguage.code === lang.code ? 'text-text-primary font-bold' : 'text-text-secondary font-medium'}`}>
+                  <span className={`text-[14px] ${selectedLanguage.code === lang.code ? 'text-text-primary font-bold' : 'text-text-secondary font-medium'}`}>
                     {lang.label}
                   </span>
                   {selectedLanguage.code === lang.code && (

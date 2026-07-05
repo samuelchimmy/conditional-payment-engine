@@ -41,11 +41,11 @@ export function GlobalHeader() {
       )}
 
       <Link href="/" className="flex items-baseline gap-0.5 hover:opacity-90 transition-opacity">
-        <span className="font-[800] text-text-primary text-[32px] tracking-tight">tether</span>
-        <span className="font-[800] text-text-secondary text-[32px]">.</span>
-        <span className="font-[400] text-text-primary text-[32px] tracking-tight">arena</span>
+        <span className="font-[800] text-text-primary text-[28px] tracking-tight">tether</span>
+        <span className="font-[800] text-text-secondary text-[28px]">.</span>
+        <span className="font-[400] text-text-primary text-[28px] tracking-tight">arena</span>
       </Link>
-      <p className="text-text-secondary text-[15px] font-bold mt-1">
+      <p className="text-text-secondary text-[14px] font-bold mt-1">
         The Conditional Payment Engine
       </p>
     </header>

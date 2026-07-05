@@ -23,15 +23,15 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-[520px] flex flex-col items-center text-center px-4">
-          <p className="text-text-secondary font-bold text-[14px] uppercase tracking-[0.08em] mb-4">
+          <p className="text-text-secondary font-bold text-[13px] uppercase tracking-[0.08em] mb-4">
             Banter, backed by escrow.
           </p>
 
-          <h1 className="text-text-primary text-[36px] font-[800] leading-[1.1] tracking-tight mb-6">
+          <h1 className="text-text-primary text-[32px] font-[800] leading-[1.1] tracking-tight mb-6">
             Put Your Money<br />Where Your Mouth Is.
           </h1>
 
-          <p className="text-text-muted text-[16px] font-medium leading-[1.6] max-w-[520px] mb-12">
+          <p className="text-text-muted text-[15px] font-medium leading-[1.6] max-w-[520px] mb-12">
             AI powered conditional tipping engine. Tweet a tip at any username based on match outcomes. Talk in plain language, and the money moves automatically when the match settles. Available on Discord and Telegram.
           </p>
 

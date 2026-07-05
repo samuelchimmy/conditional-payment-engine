@@ -44,7 +44,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
           >
             {/* Header */}
             <div className="h-[64px] border-b border-divider flex items-center justify-between px-6">
-              <h2 className="text-text-primary text-[18px] font-bold">Withdraw USDT</h2>
+              <h2 className="text-text-primary text-[16px] font-bold">Withdraw USDT</h2>
               <button 
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-border transition-colors text-text-secondary hover:text-text-primary"
@@ -60,28 +60,28 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               
               {/* Destination Address */}
               <div className="flex flex-col gap-2">
-                <label className="text-text-secondary text-[13px]">Destination Address</label>
+                <label className="text-text-secondary text-[12px]">Destination Address</label>
                 <input 
                   type="text" 
                   placeholder="0x..." 
-                  className="w-full bg-surface border border-border rounded-[10px] h-[52px] px-4 text-text-primary text-[15px] focus:outline-none focus:border-border-emphasis transition-colors"
+                  className="w-full bg-surface border border-border rounded-[10px] h-[52px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
                 />
               </div>
 
               {/* Amount */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-text-secondary text-[13px]">Amount</label>
-                  <span className="text-text-muted text-[13px]">Balance: 0.00</span>
+                  <label className="text-text-secondary text-[12px]">Amount</label>
+                  <span className="text-text-muted text-[12px]">Balance: 0.00</span>
                 </div>
                 <div className="relative">
                   <input 
                     type="number" 
                     placeholder="0.00" 
-                    className="w-full bg-surface border border-border rounded-[10px] h-[52px] pl-4 pr-16 text-text-primary text-[15px] focus:outline-none focus:border-border-emphasis transition-colors"
+                    className="w-full bg-surface border border-border rounded-[10px] h-[52px] pl-4 pr-16 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
                   />
                   <div className="absolute right-4 top-0 bottom-0 flex items-center">
-                    <span className="text-text-secondary font-bold text-[13px]">USDT</span>
+                    <span className="text-text-secondary font-bold text-[12px]">USDT</span>
                   </div>
                 </div>
 
@@ -90,7 +90,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   {["25%", "50%", "75%", "Max"].map((amt) => (
                     <button 
                       key={amt}
-                      className="flex-1 h-[32px] bg-transparent border border-border rounded-[6px] text-text-secondary text-[12px] font-bold hover:text-text-primary hover:border-border-emphasis hover:bg-[#151515] transition-colors"
+                      className="flex-1 h-[32px] bg-transparent border border-border rounded-[6px] text-text-secondary text-[11px] font-bold hover:text-text-primary hover:border-border-emphasis hover:bg-[#151515] transition-colors"
                     >
                       {amt}
                     </button>

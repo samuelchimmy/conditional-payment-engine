@@ -12,7 +12,7 @@ export function Accordion({ title, children }: { title: string, children: React.
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between py-6 text-left focus:outline-none group"
       >
-        <span className="text-text-primary text-[15px] font-bold group-hover:text-text-secondary transition-colors">
+        <span className="text-text-primary text-[14px] font-bold group-hover:text-text-secondary transition-colors">
           {title}
         </span>
         <motion.div
