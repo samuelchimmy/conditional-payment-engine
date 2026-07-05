@@ -54,7 +54,7 @@ export default function Deposit() {
       </div>
 
       <Link 
-        href="/dashboard"
+        href="/approve"
         className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity mt-2"
       >
         I have sent funds
