@@ -1,7 +1,11 @@
 <div align="center">
-      ⚽
-# Tether Arena 
+<div align="center">
 
+<img src="https://em-content.zobj.net/source/apple/391/soccer-ball_26bd.png" width="80" height="80" />
+
+# Tether Arena
+
+</div>
 > **Put Your Money
 Where Your Mouth Is..**
 > AI powered Conditional USDT payments for football fans, settled onchain.
