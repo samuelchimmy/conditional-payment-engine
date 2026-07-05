@@ -37,20 +37,9 @@ const steps = [
   }
 ];
 
-// True Football SVG (classic pentagon pattern)
+// We use the uploaded football SVG instead of the inline drawing
 const FootballIcon = () => (
-  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Outer boundary */}
-    <circle cx="12" cy="12" r="11" stroke="#F2F1EF" strokeWidth="1.5" />
-    {/* Central pentagon */}
-    <path d="M12 7L8 10V15.5L12 18L16 15.5V10L12 7Z" fill="#F2F1EF" />
-    {/* Lines connecting pentagon to edges */}
-    <line x1="12" y1="7" x2="12" y2="1" stroke="#F2F1EF" strokeWidth="1.5" />
-    <line x1="8" y1="10" x2="2.5" y2="8" stroke="#F2F1EF" strokeWidth="1.5" />
-    <line x1="16" y1="10" x2="21.5" y2="8" stroke="#F2F1EF" strokeWidth="1.5" />
-    <line x1="8" y1="15.5" x2="4" y2="20" stroke="#F2F1EF" strokeWidth="1.5" />
-    <line x1="16" y1="15.5" x2="20" y2="20" stroke="#F2F1EF" strokeWidth="1.5" />
-  </svg>
+  <img src="/football.svg" alt="Football" className="w-[34px] h-[34px]" />
 );
 
 interface HowItWorksProps {
@@ -67,6 +56,8 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
   const maxSteps = steps.length;
 
   useEffect(() => {
+    let accumulatedDeltaY = 0;
+
     // Intercept scroll
     const handleWheel = (e: WheelEvent) => {
       // If we've released the lock at the bottom, and they are scrolling down, let them go.
@@ -75,27 +66,31 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
       // Otherwise, prevent default scroll
       e.preventDefault();
 
-      if (isAnimating.current) return;
+      if (isAnimating.current) {
+        accumulatedDeltaY = 0;
+        return;
+      }
 
-      if (e.deltaY > 20) {
+      accumulatedDeltaY += e.deltaY;
+
+      if (accumulatedDeltaY > 50) {
         // Scroll Down -> Advance step
         if (currentStepIndex < maxSteps) {
           isAnimating.current = true;
           setCurrentStepIndex(prev => prev + 1);
-          setTimeout(() => { isAnimating.current = false; }, 800);
+          setTimeout(() => { isAnimating.current = false; accumulatedDeltaY = 0; }, 800);
         }
-      } else if (e.deltaY < -20) {
+      } else if (accumulatedDeltaY < -50) {
         // Scroll Up -> Reverse step or exit
         if (currentStepIndex > 0) {
           isAnimating.current = true;
           setCurrentStepIndex(prev => prev - 1);
-          setTimeout(() => { isAnimating.current = false; }, 800);
+          setTimeout(() => { isAnimating.current = false; accumulatedDeltaY = 0; }, 800);
         } else if (currentStepIndex === 0) {
           // Exit up
           if (onClose) {
             isAnimating.current = true;
             onClose();
-            // don't reset isAnimating because component unmounts
           }
         }
       }
@@ -150,15 +145,20 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
   const STEP_HEIGHT = 160;
 
   return (
-    <div id={id} ref={containerRef} className="w-full flex flex-col items-center pt-8 pb-32">
-      <div className="mb-20 text-center">
-        <h1 className="text-text-primary text-[36px] font-[800] tracking-tight">
-          How it works
-        </h1>
-        <p className="text-text-muted text-[16px] mt-2 max-w-[340px] mx-auto leading-relaxed">
-          The lifecycle of a conditional tip, from your mouth to their wallet.
-        </p>
-      </div>
+    <div id={id} ref={containerRef} className="w-full h-[100dvh] overflow-hidden flex flex-col items-center relative pt-12">
+      <motion.div 
+        animate={{ y: -(Math.min(currentStepIndex, maxSteps) * STEP_HEIGHT * 0.85) }}
+        transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+        className="w-full flex flex-col items-center pb-[50vh]"
+      >
+        <div className="mb-20 text-center px-4">
+          <h1 className="text-text-primary text-[36px] font-[800] tracking-tight">
+            How it works
+          </h1>
+          <p className="text-text-muted text-[16px] mt-2 max-w-[340px] mx-auto leading-relaxed">
+            The lifecycle of a conditional tip, from your mouth to their wallet.
+          </p>
+        </div>
 
       <div className="relative flex flex-col max-w-[500px] w-full pl-12 sm:pl-0 sm:items-center">
         
@@ -234,6 +234,7 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
           Get started
         </Link>
       </motion.div>
-    </div>
-  );
+    </motion.div>
+  </div>
+);
 }
