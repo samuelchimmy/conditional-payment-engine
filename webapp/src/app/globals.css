@@ -49,3 +49,6 @@ body {
 
 html { scroll-behavior: smooth; }
 
+
+html { scroll-snap-type: y proximity; }
+

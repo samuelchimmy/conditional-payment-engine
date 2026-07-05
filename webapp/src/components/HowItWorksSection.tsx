@@ -46,15 +46,12 @@ export function HowItWorksSection({ id }: { id?: string }) {
     offset: ["start center", "end center"],
   });
 
-  // Calculate the ball's Y position percentage
-  // We use scrollYProgress (0 to 1) and map it to a top % offset
   const ballY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  // Rotate the ball dynamically as it rolls down
-  const ballRotate = useTransform(scrollYProgress, [0, 1], [0, 1440]); // 4 full rotations
+  const ballRotate = useTransform(scrollYProgress, [0, 1], [0, 1440]);
 
   return (
     <div id={id} className="w-full flex flex-col items-center pt-8 pb-32">
-      <div className="mb-24 text-center">
+      <div className="mb-24 text-center snap-center">
         <h1 className="text-text-primary text-[36px] font-[800] tracking-tight">
           How it works
         </h1>
@@ -63,20 +60,16 @@ export function HowItWorksSection({ id }: { id?: string }) {
         </p>
       </div>
 
-      {/* The timeline container */}
       <div 
         ref={containerRef} 
-        className="relative flex flex-col gap-32 max-w-[500px] w-full items-start pl-8 sm:pl-0 sm:items-center"
+        className="relative flex flex-col gap-[20vh] max-w-[500px] w-full items-start pl-8 sm:pl-0 sm:items-center pb-20"
       >
-        {/* Background Vertical Line */}
         <div className="absolute left-[39px] sm:left-1/2 top-0 bottom-0 w-[2px] bg-border sm:-translate-x-1/2 z-0" />
 
-        {/* The Rolling Ball */}
         <motion.div 
           style={{ top: ballY, rotate: ballRotate }}
           className="absolute left-[28px] sm:left-1/2 sm:-translate-x-1/2 w-7 h-7 z-10 -mt-3.5"
         >
-          {/* An authentic patterned ball (checkered/football vibe) */}
           <div 
             className="w-full h-full rounded-full border-[2px] border-[#000] overflow-hidden flex shadow-lg relative bg-accent"
             style={{
@@ -84,23 +77,20 @@ export function HowItWorksSection({ id }: { id?: string }) {
               backgroundSize: '100% 100%'
             }}
           >
-            {/* Center dot to anchor rotation */}
             <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-black rounded-full" />
           </div>
         </motion.div>
 
-        {/* The Steps */}
         {steps.map((step, i) => {
-          // Alternate sides for desktop
           const isEven = i % 2 === 0;
 
           return (
-            <div key={i} className={`relative flex w-full justify-start ${isEven ? "sm:justify-end" : "sm:justify-start"} z-20`}>
-              {/* Added whileInView animation to reveal steps cleanly */}
+            <div key={i} className={`relative flex w-full justify-start ${isEven ? "sm:justify-end" : "sm:justify-start"} z-20 snap-center py-10`}>
+              {/* Tightened the viewport amount so it only reveals exactly when it reaches the center */}
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true, amount: 0.6 }}
                 transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
                 className={`w-full sm:w-[calc(50%-48px)] flex flex-col pl-16 sm:pl-0 ${isEven ? "sm:text-left" : "sm:text-right"}`}
               >
@@ -119,7 +109,7 @@ export function HowItWorksSection({ id }: { id?: string }) {
         })}
       </div>
 
-      <div className="mt-32 w-full max-w-[280px]">
+      <div className="mt-20 w-full max-w-[280px] snap-center">
         <Link 
           href="/connect" 
           className="w-full h-[54px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg"

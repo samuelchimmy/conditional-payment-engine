@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Deposit() {
   return (
-    <div className="w-full max-w-[440px] flex flex-col pt-12">
-      <div className="mb-10 text-center sm:text-left">
+    <div className="w-full max-w-[440px] flex flex-col pt-8">
+      <div className="mb-6 text-center sm:text-left">
         <h1 className="text-text-primary text-[32px] font-[800]">
           Add funds
         </h1>
@@ -25,15 +25,15 @@ export default function Deposit() {
         </div>
 
         {/* QR Code Expansion Panel */}
-        <div className="w-full bg-surface border-x border-b border-border-emphasis p-8 flex flex-col items-center">
-          <div className="w-[180px] h-[180px] bg-white p-2 rounded-[10px] mb-6 flex items-center justify-center">
+        <div className="w-full bg-surface border-x border-b border-border-emphasis p-6 flex flex-col items-center">
+          <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 flex items-center justify-center">
             {/* Placeholder QR Code image. Typically you'd use a real library or image here */}
             <div className="w-full h-full border-4 border-black border-dashed flex items-center justify-center text-black font-bold text-[12px]">QR CODE</div>
           </div>
           
           <span className="font-mono text-text-primary text-[16px] tracking-wide mb-2">0x4f2a...8c3b</span>
           
-          <button className="text-text-secondary text-[13px] underline underline-offset-4 hover:text-text-primary transition-colors mb-6">
+          <button className="text-text-secondary text-[13px] underline underline-offset-4 hover:text-text-primary transition-colors mb-4">
             Copy address
           </button>
           
@@ -54,7 +54,7 @@ export default function Deposit() {
 
       <Link 
         href="/dashboard"
-        className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity mt-4"
+        className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity mt-2"
       >
         I have sent funds
       </Link>

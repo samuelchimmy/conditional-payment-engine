@@ -1,7 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Home() {
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
+
   return (
     <div className="w-full flex flex-col items-center mt-10">
       <div className="w-full max-w-[520px] flex flex-col items-center text-center">
@@ -27,21 +33,36 @@ export default function Home() {
               Get started
             </Link>
             {/* Scroll down to #how-it-works on click */}
-            <a 
-              href="#how-it-works" 
+            <button 
+              onClick={() => {
+                setShowHowItWorks(true);
+                // Allow state to update and render before scrolling
+                setTimeout(() => {
+                  document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+              }}
               className="w-full h-[54px] bg-transparent text-text-primary border border-border rounded-[10px] flex items-center justify-center hover:bg-surface transition-colors"
             >
               How it works
-            </a>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Spacer to give the hero room before scrolling into the animation */}
-      <div className="h-[200px]" />
-
-      {/* Embedded How It Works Section */}
-      <HowItWorksSection id="how-it-works" />
+      <AnimatePresence>
+        {showHowItWorks && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+            className="w-full overflow-hidden flex flex-col items-center"
+          >
+            {/* Spacer to give the hero room before scrolling into the animation */}
+            <div className="h-[200px]" />
+            <HowItWorksSection id="how-it-works" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
