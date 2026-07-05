@@ -13,10 +13,30 @@ export default function ConnectWallet() {
       </div>
 
       <div className="flex flex-col gap-4 mb-4">
+        {/* Create new wallet - Moved to top */}
+        <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
+              <img src="/wdk-logo.svg" alt="WDK" className="h-[14px] w-auto ml-1 grayscale brightness-0 dark:invert opacity-90" />
+            </div>
+            <div className="flex flex-col items-start">
+              <div className="flex items-center gap-2">
+                <span className="text-text-primary text-[16px] font-bold">Create new wallet</span>
+                <span className="bg-accent text-accent-text text-[9px] px-1.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wide">Recommended</span>
+              </div>
+              <span className="text-text-muted text-[13px] font-normal">(~30 sec)</span>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary group-hover:text-text-primary transition-colors">
+            <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Link>
+
+        {/* MetaMask */}
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center">
-              <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain" />
+              <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain grayscale brightness-0 dark:invert opacity-90" />
             </div>
             <span className="text-text-primary text-[16px] font-bold">MetaMask or browser wallet</span>
           </div>
@@ -25,27 +45,13 @@ export default function ConnectWallet() {
           </svg>
         </Link>
 
+        {/* WalletConnect */}
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center">
-              <img src="/walletconnect.svg" alt="WalletConnect" className="w-7 h-7 object-contain" />
+              <img src="/walletconnect.svg" alt="WalletConnect" className="w-7 h-7 object-contain grayscale brightness-0 dark:invert opacity-90" />
             </div>
             <span className="text-text-primary text-[16px] font-bold">WalletConnect</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary group-hover:text-text-primary transition-colors">
-            <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </Link>
-
-        <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
-              <img src="/wdk-logo.svg" alt="WDK" className="h-[14px] w-auto ml-1 grayscale opacity-90 brightness-0 dark:brightness-200 dark:invert-0" style={{ filter: "brightness(0) dark:brightness(200)" }} />
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="text-text-primary text-[16px] font-bold">Create new wallet</span>
-              <span className="text-text-muted text-[13px] font-normal">(~30 sec)</span>
-            </div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary group-hover:text-text-primary transition-colors">
             <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
