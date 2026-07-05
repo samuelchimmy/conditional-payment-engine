@@ -16,8 +16,8 @@ export default function ConnectWallet() {
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21.914 7.64303L20.89 3.01803L15.352 6.13603L12 4.10303L8.648 6.13603L3.111 3.01803L2.086 7.64303L5.342 12.387L2 17.585L3.626 21.603L8.85 19.467L12 21.056L15.15 19.467L20.374 21.603L22 17.585L18.658 12.387L21.914 7.64303Z" stroke="#F2F1EF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21.2 5.3l-2.4 1.7 1.3 4.2-1.9 1.4 1.1 5.4-4.8-1.5-2.5 3.5-2.5-3.5-4.8 1.5 1.1-5.4-1.9-1.4 1.3-4.2-2.4-1.7 3.3 4.8 2.3-3.6 3.6 3.4 3.6-3.4 2.3 3.6z"/>
               </svg>
             </div>
             <span className="text-text-primary text-[16px] font-bold">MetaMask or browser wallet</span>
@@ -30,10 +30,8 @@ export default function ConnectWallet() {
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4.68652 10.7417C8.72652 6.94073 15.2745 6.94073 19.3145 10.7417C19.5535 10.9667 19.5665 11.3417 19.3415 11.5817L17.7025 13.3117C17.5835 13.4367 17.4125 13.5017 17.2385 13.4867C17.0635 13.4717 16.9055 13.3817 16.8095 13.2387C14.0765 9.17673 8.16052 9.42173 5.75352 13.6877C5.66652 13.8407 5.51252 13.9357 5.33752 13.9517C5.16352 13.9677 4.99252 13.9017 4.87352 13.7767L3.21852 12.0297C2.99152 11.7907 3.00152 11.4137 3.24252 11.1867C3.69352 10.7607 4.17952 10.3737 4.68652 10.7417Z" stroke="#F2F1EF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="7" cy="18" r="2" fill="#F2F1EF"/>
-                <circle cx="17" cy="18" r="2" fill="#F2F1EF"/>
+              <svg width="20" height="20" viewBox="0 0 40 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.598 12.378C14.896 6.297 25.104 6.297 31.402 12.378l1.411 1.362c.414.4.414 1.05 0 1.45l-3.327 3.212c-.198.192-.521.192-.72 0l-1.468-1.418c-3.993-3.856-10.468-3.856-14.461 0l-1.341 1.295c-.21.203-.55.203-.76 0L7.41 15.191c-.413-.4-.413-1.049 0-1.45l1.188-1.147zm26.969 8.232l3.327 3.212c.414.4.414 1.05 0 1.45l-8.239 7.957c-.414.4-1.085.4-1.5 0l-8.777-8.476c-.21-.202-.55-.202-.76 0l-8.776 8.476c-.414.4-1.086.4-1.5 0l-8.24-7.957c-.413-.4-.413-1.05 0-1.45l3.328-3.212c.198-.192.521-.192.72 0l7.531 7.273c.198.192.521.192.72 0l8.776-8.476c.414-.4 1.086-.4 1.5 0l8.777 8.476c.198.192.521.192.72 0l7.532-7.273c.198-.192.521-.192.72 0z"/>
               </svg>
             </div>
             <span className="text-text-primary text-[16px] font-bold">WalletConnect</span>
@@ -45,10 +43,8 @@ export default function ConnectWallet() {
 
         <Link href="/link-socials" className="w-full h-[72px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group">
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-border-emphasis flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#F2F1EF" strokeWidth="2" strokeLinejoin="round"/>
-              </svg>
+            <div className="w-8 h-8 rounded-full bg-border-emphasis flex items-center justify-center overflow-hidden">
+              <img src="/wdk-logo.svg" alt="WDK" className="h-[14px] w-auto ml-1 grayscale opacity-90 brightness-0 dark:brightness-200 dark:invert-0" style={{ filter: "brightness(0) dark:brightness(200)" }} />
             </div>
             <div className="flex flex-col items-start">
               <span className="text-text-primary text-[16px] font-bold">Create new wallet</span>
