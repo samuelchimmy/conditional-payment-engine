@@ -74,12 +74,18 @@ export function HowItWorksSection({ id }: { id?: string }) {
         {/* The Rolling Ball */}
         <motion.div 
           style={{ top: ballY, rotate: ballRotate }}
-          className="absolute left-[28px] sm:left-1/2 sm:-translate-x-1/2 w-6 h-6 z-10 -mt-3"
+          className="absolute left-[28px] sm:left-1/2 sm:-translate-x-1/2 w-7 h-7 z-10 -mt-3.5"
         >
-          {/* We make an orange and black segmented ball to show rotation clearly */}
-          <div className="w-full h-full rounded-full bg-accent border-[3px] border-[#050505] overflow-hidden flex shadow-lg">
-            <div className="w-1/2 h-full bg-[#000000]"></div>
-            <div className="w-1/2 h-full bg-accent"></div>
+          {/* An authentic patterned ball (checkered/football vibe) */}
+          <div 
+            className="w-full h-full rounded-full border-[2px] border-[#000] overflow-hidden flex shadow-lg relative bg-accent"
+            style={{
+              backgroundImage: `repeating-conic-gradient(from 0deg, transparent 0deg 45deg, rgba(0,0,0,0.85) 45deg 90deg)`,
+              backgroundSize: '100% 100%'
+            }}
+          >
+            {/* Center dot to anchor rotation */}
+            <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-black rounded-full" />
           </div>
         </motion.div>
 
@@ -90,7 +96,14 @@ export function HowItWorksSection({ id }: { id?: string }) {
 
           return (
             <div key={i} className={`relative flex w-full justify-start ${isEven ? "sm:justify-end" : "sm:justify-start"} z-20`}>
-              <div className={`w-full sm:w-[calc(50%-48px)] flex flex-col pl-16 sm:pl-0 ${isEven ? "sm:text-left" : "sm:text-right"}`}>
+              {/* Added whileInView animation to reveal steps cleanly */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+                className={`w-full sm:w-[calc(50%-48px)] flex flex-col pl-16 sm:pl-0 ${isEven ? "sm:text-left" : "sm:text-right"}`}
+              >
                 <div className="text-text-secondary text-[11px] font-mono tracking-widest uppercase mb-2">
                   Step {step.num}
                 </div>
@@ -100,7 +113,7 @@ export function HowItWorksSection({ id }: { id?: string }) {
                 <p className="text-text-muted text-[14px] leading-relaxed">
                   {step.desc}
                 </p>
-              </div>
+              </motion.div>
             </div>
           );
         })}

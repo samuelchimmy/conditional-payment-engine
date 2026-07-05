@@ -3,13 +3,8 @@ import { HowItWorksSection } from "@/components/HowItWorksSection";
 
 export default function Home() {
   return (
-    <div className="w-full flex flex-col items-center mt-0">
+    <div className="w-full flex flex-col items-center mt-10">
       <div className="w-full max-w-[520px] flex flex-col items-center text-center">
-        {/* Tagline right below the layout wordmark */}
-        <p className="text-text-secondary text-[15px] font-bold mb-10">
-          The Conditional Payment Engine
-        </p>
-
         {/* Hero Content */}
         <div className="flex flex-col items-center">
           <p className="text-text-secondary font-bold text-[14px] uppercase tracking-[0.08em] mb-4">
