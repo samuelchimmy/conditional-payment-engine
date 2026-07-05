@@ -39,9 +39,9 @@ export default function RootLayout({
           {/* Global Footer */}
           <footer className="w-full py-8 mt-auto flex flex-col items-center justify-center border-t border-divider gap-8">
             <div className="flex gap-6 text-[13px] font-medium text-text-muted">
-              <Link href="#" className="hover:text-text-primary transition-colors">Terms of Service</Link>
-              <Link href="#" className="hover:text-text-primary transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-text-primary transition-colors">Support</Link>
+              <Link href="/terms" className="hover:text-text-primary transition-colors">Terms of Service</Link>
+              <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy Policy</Link>
+              <Link href="/support" className="hover:text-text-primary transition-colors">Support</Link>
             </div>
 
             <div className="flex flex-col items-center gap-3">
