@@ -78,7 +78,11 @@ export default function Home() {
             transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
             className="w-full overflow-hidden flex flex-col items-center"
           >
-            <HowItWorksSection id="how-it-works" />
+            <HowItWorksSection id="how-it-works" onClose={() => {
+              setShowHowItWorks(false);
+              // scroll back up slightly so the user sees they are back in normal land
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} />
           </motion.div>
         )}
       </AnimatePresence>

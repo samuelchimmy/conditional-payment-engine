@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useEffect, useState, useRef } from "react";
 
 const steps = [
   {
@@ -36,24 +37,121 @@ const steps = [
   }
 ];
 
-// Classic SVG soccer ball icon
+// True Football SVG (classic pentagon pattern)
 const FootballIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
-    <circle cx="12" cy="12" r="10"/>
-    <path d="M12 7l-2.5 3.5h5L12 7z"/>
-    <path d="M12 7V2.5"/>
-    <path d="M9.5 10.5L4.5 9"/>
-    <path d="M14.5 10.5L19.5 9"/>
-    <path d="M9.5 10.5l1.5 5.5h2l1.5-5.5"/>
-    <path d="M11 16l-3.5 5.5"/>
-    <path d="M13 16l3.5 5.5"/>
+  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Outer boundary */}
+    <circle cx="12" cy="12" r="11" stroke="#F2F1EF" strokeWidth="1.5" />
+    {/* Central pentagon */}
+    <path d="M12 7L8 10V15.5L12 18L16 15.5V10L12 7Z" fill="#F2F1EF" />
+    {/* Lines connecting pentagon to edges */}
+    <line x1="12" y1="7" x2="12" y2="1" stroke="#F2F1EF" strokeWidth="1.5" />
+    <line x1="8" y1="10" x2="2.5" y2="8" stroke="#F2F1EF" strokeWidth="1.5" />
+    <line x1="16" y1="10" x2="21.5" y2="8" stroke="#F2F1EF" strokeWidth="1.5" />
+    <line x1="8" y1="15.5" x2="4" y2="20" stroke="#F2F1EF" strokeWidth="1.5" />
+    <line x1="16" y1="15.5" x2="20" y2="20" stroke="#F2F1EF" strokeWidth="1.5" />
   </svg>
 );
 
-export function HowItWorksSection({ id }: { id?: string }) {
+interface HowItWorksProps {
+  id?: string;
+  onClose?: () => void;
+}
+
+export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const isAnimating = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // We add +1 step at the end for the "Get Started" CTA reveal
+  const maxSteps = steps.length;
+
+  useEffect(() => {
+    // Intercept scroll
+    const handleWheel = (e: WheelEvent) => {
+      // If we've released the lock at the bottom, and they are scrolling down, let them go.
+      if (currentStepIndex >= maxSteps && e.deltaY > 0) return;
+      
+      // Otherwise, prevent default scroll
+      e.preventDefault();
+
+      if (isAnimating.current) return;
+
+      if (e.deltaY > 20) {
+        // Scroll Down -> Advance step
+        if (currentStepIndex < maxSteps) {
+          isAnimating.current = true;
+          setCurrentStepIndex(prev => prev + 1);
+          setTimeout(() => { isAnimating.current = false; }, 800);
+        }
+      } else if (e.deltaY < -20) {
+        // Scroll Up -> Reverse step or exit
+        if (currentStepIndex > 0) {
+          isAnimating.current = true;
+          setCurrentStepIndex(prev => prev - 1);
+          setTimeout(() => { isAnimating.current = false; }, 800);
+        } else if (currentStepIndex === 0) {
+          // Exit up
+          if (onClose) {
+            isAnimating.current = true;
+            onClose();
+            // don't reset isAnimating because component unmounts
+          }
+        }
+      }
+    };
+
+    let touchStartY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (currentStepIndex >= maxSteps && touchStartY > e.touches[0].clientY) return;
+      e.preventDefault();
+
+      if (isAnimating.current) return;
+      const touchEndY = e.touches[0].clientY;
+      const delta = touchStartY - touchEndY;
+
+      if (delta > 30) {
+        // Swipe up (scroll down)
+        if (currentStepIndex < maxSteps) {
+          isAnimating.current = true;
+          setCurrentStepIndex(prev => prev + 1);
+          setTimeout(() => { isAnimating.current = false; }, 800);
+        }
+      } else if (delta < -30) {
+        // Swipe down (scroll up)
+        if (currentStepIndex > 0) {
+          isAnimating.current = true;
+          setCurrentStepIndex(prev => prev - 1);
+          setTimeout(() => { isAnimating.current = false; }, 800);
+        } else if (currentStepIndex === 0 && onClose) {
+          isAnimating.current = true;
+          onClose();
+        }
+      }
+    };
+
+    // Attach passive: false to allow e.preventDefault()
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [currentStepIndex, maxSteps, onClose]);
+
+  // Height of each step block for absolute positioning math
+  const STEP_HEIGHT = 160;
+
   return (
-    <div id={id} className="w-full flex flex-col items-center pt-8 pb-32 overflow-hidden">
-      <div className="mb-24 text-center snap-center">
+    <div id={id} ref={containerRef} className="w-full flex flex-col items-center pt-8 pb-32">
+      <div className="mb-20 text-center">
         <h1 className="text-text-primary text-[36px] font-[800] tracking-tight">
           How it works
         </h1>
@@ -62,57 +160,80 @@ export function HowItWorksSection({ id }: { id?: string }) {
         </p>
       </div>
 
-      <div className="relative flex flex-col max-w-[500px] w-full items-start pl-8 sm:pl-0 sm:items-center">
-        {steps.map((step, i) => {
-          const isEven = i % 2 === 0;
-          const isLast = i === steps.length - 1;
+      <div className="relative flex flex-col max-w-[500px] w-full pl-12 sm:pl-0 sm:items-center">
+        
+        {/* The Continuous Background Line */}
+        <div 
+          className="absolute left-[39px] sm:left-1/2 sm:-translate-x-1/2 top-[17px] bg-border w-[2px]"
+          style={{ height: `${(steps.length - 1) * STEP_HEIGHT}px` }}
+        />
 
-          return (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.6 }} // Strict reveal threshold
-              transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-              className="relative flex w-full min-h-[200px] sm:min-h-[240px] justify-start sm:justify-center snap-center z-20"
-            >
-              {/* Center spine: Ball + Broken Line */}
-              <div className="absolute left-[39px] sm:left-1/2 sm:-translate-x-1/2 top-0 bottom-0 flex flex-col items-center">
-                {/* The Ball */}
-                <div className="w-[34px] h-[34px] rounded-full bg-white flex items-center justify-center z-10 shadow-lg shrink-0 mt-6 sm:mt-12">
-                  <FootballIcon />
-                </div>
-                {/* The connecting line, breaks perfectly before the next step */}
-                {!isLast && (
-                  <div className="w-[2px] flex-1 bg-border mt-4 mb-4" />
-                )}
-              </div>
+        {/* The Single Procedural Ball */}
+        <motion.div
+          animate={{
+            y: Math.min(currentStepIndex, steps.length - 1) * STEP_HEIGHT,
+            rotate: currentStepIndex * 360 // Physical roll rotation
+          }}
+          transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+          className="absolute left-[22px] sm:left-1/2 sm:-translate-x-1/2 top-0 z-20"
+        >
+          {/* No background circle, just the pure SVG */}
+          <FootballIcon />
+        </motion.div>
 
-              {/* Step Content */}
-              <div className={`w-full sm:w-1/2 flex flex-col mt-6 sm:mt-12 pl-16 sm:pl-0 ${isEven ? "sm:pr-12 sm:text-right self-start sm:-translate-x-full" : "sm:pl-12 sm:text-left self-start"}`}>
-                <div className="text-text-secondary text-[11px] font-mono tracking-widest uppercase mb-2">
-                  Step {step.num}
-                </div>
-                <h3 className="text-text-primary text-[20px] font-[800] leading-tight mb-3">
-                  {step.title}
-                </h3>
-                <p className="text-text-muted text-[14px] leading-relaxed">
-                  {step.desc}
-                </p>
+        {/* The Discrete Steps */}
+        <div className="relative w-full">
+          {steps.map((step, i) => {
+            const isEven = i % 2 === 0;
+            const isVisible = currentStepIndex >= i;
+
+            return (
+              <div 
+                key={i}
+                style={{ height: `${STEP_HEIGHT}px` }}
+                className="w-full flex relative"
+              >
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: isVisible ? 1 : 0, 
+                    y: isVisible ? 0 : 20 
+                  }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className={`w-full sm:w-1/2 flex flex-col pl-10 sm:pl-0 ${isEven ? "sm:pr-12 sm:text-right sm:-translate-x-full" : "sm:pl-12 sm:text-left sm:translate-x-full"}`}
+                >
+                  <div className="text-text-secondary text-[11px] font-mono tracking-widest uppercase mb-1">
+                    Step {step.num}
+                  </div>
+                  <h3 className="text-text-primary text-[18px] font-[800] leading-tight mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-text-muted text-[13px] leading-relaxed">
+                    {step.desc}
+                  </p>
+                </motion.div>
               </div>
-            </motion.div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-12 w-full max-w-[280px] snap-center">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ 
+          opacity: currentStepIndex === maxSteps ? 1 : 0,
+          y: currentStepIndex === maxSteps ? 0 : 20
+        }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="mt-16 w-full max-w-[280px]"
+      >
         <Link 
           href="/connect" 
           className="w-full h-[54px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg"
         >
           Get started
         </Link>
-      </div>
+      </motion.div>
     </div>
   );
 }
