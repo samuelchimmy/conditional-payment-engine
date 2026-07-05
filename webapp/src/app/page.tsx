@@ -1,18 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useInView } from "framer-motion";
+import { GlobalHeader } from "@/components/GlobalHeader";
 
 export default function Home() {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+  
+  // Detect if the hero section is almost entirely in view
+  const isHeroInView = useInView(heroRef, { amount: 0.7 });
+
+  useEffect(() => {
+    // If we scroll back up and the hero comes into view, automatically hide the timeline
+    if (isHeroInView && showHowItWorks) {
+      setShowHowItWorks(false);
+    }
+  }, [isHeroInView, showHowItWorks]);
 
   return (
-    <div className="w-full flex flex-col items-center mt-10">
-      <div className="w-full max-w-[520px] flex flex-col items-center text-center">
-        {/* Hero Content */}
-        <div className="flex flex-col items-center">
+    <div className="w-full flex flex-col items-center">
+      {/* Centered Hero Container */}
+      <div 
+        ref={heroRef}
+        className="w-full min-h-[calc(100vh-100px)] flex flex-col items-center justify-center snap-center"
+      >
+        {/* Render GlobalHeader inline here so it centers dynamically with the hero text */}
+        <div className="mb-10">
+          <GlobalHeader />
+        </div>
+
+        <div className="w-full max-w-[520px] flex flex-col items-center text-center px-4">
           <p className="text-text-secondary font-bold text-[14px] uppercase tracking-[0.08em] mb-4">
             Banter, backed by escrow.
           </p>
@@ -54,11 +74,10 @@ export default function Home() {
           <motion.div 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
             className="w-full overflow-hidden flex flex-col items-center"
           >
-            {/* Spacer to give the hero room before scrolling into the animation */}
-            <div className="h-[200px]" />
             <HowItWorksSection id="how-it-works" />
           </motion.div>
         )}

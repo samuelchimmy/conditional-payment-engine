@@ -22,17 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${schibsted.variable} antialiased`}>
       <body className="flex flex-col min-h-screen text-text-primary">
-        {/* Global Nav / Header */}
-        <header className="w-full flex flex-col items-center justify-center pt-10 pb-6">
-          <Link href="/" className="flex items-baseline gap-0.5 hover:opacity-90 transition-opacity">
-            <span className="font-[800] text-text-primary text-[32px] tracking-tight">tether</span>
-            <span className="font-[800] text-text-secondary text-[32px]">.</span>
-            <span className="font-[400] text-text-primary text-[32px] tracking-tight">arena</span>
-          </Link>
-          <p className="text-text-secondary text-[15px] font-bold mt-1">
-            The Conditional Payment Engine
-          </p>
-        </header>
+        {/* Global Nav / Header moved to template/pages */}
 
         <main className="flex-1 flex flex-col items-center px-4 w-full">
           {children}
