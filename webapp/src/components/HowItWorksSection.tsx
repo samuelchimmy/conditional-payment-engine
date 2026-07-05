@@ -315,9 +315,7 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
             <div className="w-full bg-surface border border-border rounded-[10px] p-6">
               <h3 className="text-text-primary text-[16px] font-bold mb-4">Active conditions (Tournaments)</h3>
               <ul className="text-text-muted text-[15px] flex flex-col gap-3 list-disc pl-5">
-                <li>Euro 2024</li>
-                <li>Copa America 2024</li>
-                <li>Wimbledon</li>
+                <li>World Cup 2026</li>
               </ul>
             </div>
             
