@@ -1,4 +1,4 @@
-// Shared security utilities for MoniPay Edge Functions
+// Shared security utilities for tether.arena Edge Functions
 // Rate limiting + Request signature verification
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -108,7 +108,7 @@ export const RATE_LIMITS = {
 };
 
 // ===== REQUEST SIGNATURE VERIFICATION =====
-// HMAC-SHA256 based request signing to ensure only MoniPay app can call functions
+// HMAC-SHA256 based request signing to ensure only tether.arena app can call functions
 
 async function hmacSign(message: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -234,17 +234,16 @@ export const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-request-timestamp, x-request-signature",
 };
 
-// ===== Admin CORS (restricted to MoniPay domains) =====
-const ALLOWED_ORIGINS = [
-  "https://monipay.lovable.app",
-  "https://www.monipay.lovable.app",
-  "https://monipay.xyz",
-  "https://www.monipay.xyz",
+// ===== Admin CORS (restricted to tether.arena domains) =====
+export const ADMIN_CORS_ALLOWED_ORIGINS = [
+  "https://tarena.xyz",
+  "https://www.tarena.xyz",
+  "http://localhost:3000",
 ];
 
 export function getAdminCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") || "";
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = ADMIN_CORS_ALLOWED_ORIGINS.includes(origin) ? origin : ADMIN_CORS_ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-request-timestamp, x-request-signature, x-wallet-address, x-wallet-signature, x-railway-token",

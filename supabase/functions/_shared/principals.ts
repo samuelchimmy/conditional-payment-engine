@@ -1,5 +1,5 @@
 // Shared dual-lookup for "principals" — accounts that can act as sender or payer.
-// Falls back from `public.profiles` (full MoniPay accounts) to `public.wallet_profiles`
+// Falls back from `public.profiles` (full tether.arena accounts) to `public.wallet_profiles`
 // (wallet-only sessions: Path B/C connect-wallet identities).
 //
 // Returns a normalized shape so callers don't care which table the row came from.

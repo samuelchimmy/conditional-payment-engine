@@ -105,9 +105,9 @@ Deno.serve(async (req) => {
     );
 
     // The wallet address is treated as the identity claim — look up ALL profile
-    // rows with this wallet across both legacy `profiles` and MiniPay
-    // `wallet_profiles`. A user may exist in both tables (legacy MoniPay row
-    // + MiniPay-linked socials in wallet_profiles); pick whichever row has the
+    // Check if the user claiming the funds has a registered wallet in `public.profiles` OR
+    // `wallet_profiles`. A user may exist in both tables (legacy tether.arena row
+    // and new wallet connection row), or just in one. Pick whichever row has the
     // requested social identity linked.
     const SELECT_COLS =
       "id, wallet_address, discord_id, telegram_id, x_username, x_user_id, x_verified";

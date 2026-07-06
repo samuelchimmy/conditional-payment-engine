@@ -5,7 +5,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = 'MoniPay'
+const SITE_NAME = 'tether.arena'
 const ARC_TEAL = '#15839c'
 const INK = '#0e2030'
 const MUTED = '#5a6b7a'
@@ -40,7 +40,7 @@ const ArcWaitlistConfirmationEmail = ({ email }: ArcWaitlistConfirmationProps) =
 
         <Text style={text}>
           Until then, you can explore {SITE_NAME} on Base, BSC, Solana, and Tempo at{' '}
-          <a href="https://monipay.xyz" style={link}>monipay.xyz</a>.
+          <a href="https://tarena.xyz" style={link}>tarena.xyz</a>.
         </Text>
 
         <Hr style={hr} />

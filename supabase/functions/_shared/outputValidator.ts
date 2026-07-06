@@ -20,7 +20,7 @@ const ALLOWED_CHAINS = new Set([
 ]);
 
 const FORBIDDEN_RECIPIENTS = new Set([
-  "monibot", "monipay", "everyone", "here", "bot", "admin",
+  "tarena", "tether", "arena", "everyone", "here", "bot", "admin",
 ]);
 
 // Hard limits — if AI hallucinates beyond these, reject.
