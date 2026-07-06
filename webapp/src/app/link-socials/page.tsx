@@ -23,14 +23,6 @@ export default function LinkSocials() {
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       
-      if (event.data?.type === "OAUTH_CALLBACK") {
-        const { code, state } = event.data.payload;
-        // state carries the platform
-        const platform = state as "twitter" | "discord" | "telegram";
-        
-        try {
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-          if (!supabaseUrl || supabaseUrl === "YOUR_SUPABASE_URL") {
       if (event.data?.type === "x-oauth-success") {
         setLinkedStatus(prev => ({ ...prev, twitter: true }));
         setLoading(null);
