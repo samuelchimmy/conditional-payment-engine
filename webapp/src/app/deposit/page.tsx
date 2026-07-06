@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import { useWallet } from "@/components/WalletProvider";
 
 export default function Deposit() {
+  const { address } = useWallet();
   const router = useRouter();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -57,19 +59,22 @@ export default function Deposit() {
           <div className="w-full bg-[#050505] border-x border-b border-border-emphasis p-6 flex flex-col items-center rounded-b-[10px]">
             <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 relative flex items-center justify-center">
               {/* This represents a QR code for the Celo address */}
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CeloDeposit`} alt="QR Code" className="w-full h-full" />
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${address || 'CeloDeposit'}`} alt="QR Code" className="w-full h-full" />
               
               {/* Logo superimposed in the center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-white rounded-full p-1 shadow-sm">
-                  <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center shadow-[0_0_0_4px_white]">
+                  <img src="/tether-logo.svg" alt="Tether" className="h-4 w-4" />
                 </div>
               </div>
             </div>
             
-            <span className="font-mono text-text-primary text-[15px] tracking-wide mb-2">0x4f2a...8c3b</span>
+            <span className="font-mono text-text-primary text-[15px] tracking-wide mb-2">{address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not Connected"}</span>
             
-            <button className="text-text-secondary text-[12px] underline underline-offset-4 hover:text-text-primary transition-colors mb-4">
+            <button 
+              onClick={() => { if (address) navigator.clipboard.writeText(address); }}
+              className="text-text-secondary text-[12px] underline underline-offset-4 hover:text-text-primary transition-colors mb-4"
+            >
               Copy address
             </button>
             

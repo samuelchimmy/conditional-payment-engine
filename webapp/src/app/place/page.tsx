@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useReadContract, useWriteContract } from "wagmi";
+import { useWallet } from "@/components/WalletProvider";
 import { parseUnits, formatUnits, keccak256, toHex } from "viem";
 import { ERC20ABI, IOURegistryV3ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 
 export default function PlaceBet() {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [query, setQuery] = useState("");
   const [amount, setAmount] = useState("");
   const [counterparty, setCounterparty] = useState("");

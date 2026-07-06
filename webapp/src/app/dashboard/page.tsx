@@ -6,7 +6,8 @@ import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { DepositModal } from "@/components/DepositModal";
 import { SettingsModal } from "@/components/SettingsModal";
-import { useAccount, useReadContract } from "wagmi";
+import { useReadContract } from "wagmi";
+import { useWallet } from "@/components/WalletProvider";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { formatUnits } from "viem";
 
@@ -15,7 +16,7 @@ export default function Dashboard() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useWallet();
 
   const { data: balanceData } = useReadContract({
     address: USDTAddressCelo,

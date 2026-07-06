@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useAccount, useSignMessage } from "wagmi";
+import { useSignMessage } from "wagmi";
+import { useWallet } from "@/components/WalletProvider";
 
 export default function Claim() {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const { signMessageAsync } = useSignMessage();
   const [claiming, setClaiming] = useState(false);
   const [result, setResult] = useState<{ success?: boolean; message?: string } | null>(null);
