@@ -1,0 +1,33 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Keys and certificates
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Next.js
+.next/
+out/
+
+# Hardhat
+cache/
+artifacts/
+
+# OS/Editor
+.DS_Store
+.vscode/
+.idea/
