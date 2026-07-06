@@ -374,13 +374,13 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
             transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1], delay: 0.1 }}
             className="flex flex-col gap-4 w-full max-w-[320px] mb-16 mx-auto"
           >
-            <a href="https://twitter.com/tether_arena" target="_blank" rel="noopener noreferrer" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
+            <a href="https://x.com/intent/tweet?text=@tetherarena%20pay%20@user%2010%20USDT%20for%20winning%20the%20match" target="_blank" rel="noopener noreferrer" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
               Tweet at @tether.arena
             </a>
-            <a href="#" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
+            <a href="https://discord.com/oauth2/authorize?client_id=1523511863298621531&permissions=8&response_type=code&redirect_uri=https%3A%2F%2Fnngnahfwxhrmejicbkxc.supabase.co%2Fauth%2Fv1%2Fcallback&integration_type=0&scope=identify+bot+guilds.members.read+activities.write+relationships.write+role_connections.write+openid+gateway.connect+identify.premium+guilds+guilds.channels.read+rpc+activities.invites.write" target="_blank" rel="noopener noreferrer" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
               Add to a Discord server
             </a>
-            <a href="#" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
+            <a href="https://t.me/TarenaAi_bot?startgroup=new" target="_blank" rel="noopener noreferrer" className="w-full h-[54px] bg-surface text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
               Add to Telegram group
             </a>
           </motion.div>

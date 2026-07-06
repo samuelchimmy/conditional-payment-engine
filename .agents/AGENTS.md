@@ -229,3 +229,5 @@ The approved design is documented in the agent artifacts directory. When in doub
 - `v3_screen6_claim` — Claim / MagicPay
 
 The visual reference for this design system is **wallet.tether.io** and the **Tether wallet app**. When unsure about a design decision, ask: "Does this look like it belongs on wallet.tether.io?" If no, strip it back further.
+
+- NEVER commit Supabase Personal Access Tokens (e.g. sbp_v0_...) or API keys to the repository.
