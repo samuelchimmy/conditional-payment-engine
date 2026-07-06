@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WalletProvider } from "@/components/WalletProvider";
 import { AuthGuard } from "@/components/AuthGuard";
+import { Toaster } from "react-hot-toast";
 
 const schibsted = Schibsted_Grotesk({
   variable: "--font-sans",
@@ -39,7 +40,7 @@ export default function RootLayout({
             <AuthGuard>
               {/* Global Nav / Header moved to template/pages */}
 
-              <main className="flex-1 flex flex-col items-center px-4 w-full">
+              <main className="flex-1 flex flex-col items-center justify-center px-4 w-full">
                 {children}
               </main>
 
@@ -71,6 +72,31 @@ export default function RootLayout({
             </AuthGuard>
           </WalletProvider>
         </ThemeProvider>
+        <Toaster 
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              background: '#0D0D0D',
+              color: '#F2F1EF',
+              border: '1px solid #2A2A2A',
+              fontSize: '14px',
+              fontWeight: 500,
+              borderRadius: '10px'
+            },
+            success: {
+              iconTheme: {
+                primary: '#F2F1EF',
+                secondary: '#0D0D0D',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#D53131',
+                secondary: '#0D0D0D',
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );

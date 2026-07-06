@@ -59,7 +59,7 @@ export default function Claim() {
   };
 
   return (
-    <div className="w-full flex justify-center pt-8">
+    <div className="w-full flex justify-center pt-4">
       {/* Light Theme Card for Claiming */}
       <div className="w-full max-w-[420px] bg-[#F2F1EF] rounded-[16px] p-8 text-[#050505]">
         <div className="flex justify-center mb-10">
@@ -73,14 +73,14 @@ export default function Claim() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 text-center">
           <span className="text-[#797977] text-[10px] font-normal uppercase tracking-[0.1em]">
             SECURE CLAIM
           </span>
-          <h1 className="text-[#050505] text-[40px] font-[800] leading-none mt-2 mb-3 tracking-tight">
+          <h1 className="text-[#050505] text-[32px] font-[800] leading-none mt-2 mb-3 tracking-tight">
             Claim Funds
           </h1>
-          <p className="text-[#797977] text-[14px]">
+          <p className="text-[#797977] text-[13px]">
             Claim all pending IOUs sent to your linked social accounts.
           </p>
         </div>
@@ -95,12 +95,12 @@ export default function Claim() {
 
         <div className="flex flex-col mb-6">
           <label className="text-[#797977] text-[12px] mb-2">Claim to Wallet</label>
-          <div className="w-full h-[52px] bg-[#E2E1DF] border border-[#D1D1D1] rounded-[10px] px-4 flex items-center text-[#797977] text-[14px]">
+          <div className="w-full h-[46px] bg-[#E2E1DF] border border-[#D1D1D1] rounded-[10px] px-4 flex items-center justify-center text-[#797977] text-[14px]">
             {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
           </div>
         </div>
 
-        <p className="text-[#797977] text-[13px] mb-4">
+        <p className="text-[#797977] text-[12px] mb-4 text-center">
           You will be prompted to sign a message to prove ownership of this wallet before funds are released.
         </p>
 
@@ -108,7 +108,7 @@ export default function Claim() {
           <button 
             onClick={handleClaim}
             disabled={claiming || !address}
-            className="w-full h-[52px] bg-[#D53131] text-[#000000] font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full h-[46px] bg-[#D53131] text-[#000000] text-[14px] font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {claiming ? (
               <div className="animate-spin h-5 w-5 border-2 border-[#000000] border-t-transparent rounded-full" />
@@ -119,7 +119,7 @@ export default function Claim() {
           
           <Link 
             href="/dashboard"
-            className="w-full h-[52px] bg-transparent text-[#050505] border border-[#050505] font-bold rounded-[10px] flex items-center justify-center hover:bg-[#E2E1DF] transition-colors"
+            className="w-full h-[46px] bg-transparent text-[#050505] text-[14px] border border-[#050505] font-bold rounded-[10px] flex items-center justify-center hover:bg-[#E2E1DF] transition-colors"
           >
             Back to Dashboard
           </Link>

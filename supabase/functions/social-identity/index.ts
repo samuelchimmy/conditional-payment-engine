@@ -22,21 +22,44 @@ function isValidTelegramId(id: string): boolean {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function verifyOwnership(supabase: any, profileId: string, walletAddress?: string) {
+async function verifyOwnership(supabase: any, profileId: string | undefined, walletAddress?: string) {
   if (!walletAddress) {
     return { error: jsonResponse({ error: "walletAddress is required for this action" }, 400) };
   }
-  const { data: profile, error } = await supabase
-    .from("wallet_profiles")
-    .select("id, wallet_address")
-    .eq("id", profileId)
-    .single();
+  
+  let profile: any = null;
 
-  if (error || !profile) {
+  if (profileId && UUID_RE.test(profileId)) {
+    const { data, error } = await supabase
+      .from("wallet_profiles")
+      .select("id, wallet_address")
+      .eq("id", profileId)
+      .single();
+    if (!error && data) profile = data;
+  } else {
+    const { data, error } = await supabase
+      .from("wallet_profiles")
+      .select("id, wallet_address")
+      .ilike("wallet_address", walletAddress)
+      .single();
+    if (!error && data) {
+      profile = data;
+    } else {
+      const { data: newData, error: insertError } = await supabase
+        .from("wallet_profiles")
+        .insert({ wallet_address: walletAddress.toLowerCase() })
+        .select("id, wallet_address")
+        .single();
+      if (insertError) return { error: jsonResponse({ error: "Failed to create profile" }, 500) };
+      profile = newData;
+    }
+  }
+
+  if (!profile) {
     return { error: jsonResponse({ error: "Profile not found" }, 404) };
   }
 
-  const profileWallet = (profile as any).wallet_address as string;
+  const profileWallet = profile.wallet_address as string;
   if (profileWallet.toLowerCase() !== walletAddress.toLowerCase()) {
     return { error: jsonResponse({ error: "Ownership verification failed" }, 403) };
   }
@@ -92,10 +115,6 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { action, profileId, walletAddress } = body;
-
-    if (!profileId || !UUID_RE.test(profileId)) {
-      return jsonResponse({ error: "Valid profile ID is required" }, 400);
-    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -188,6 +207,31 @@ serve(async (req) => {
 
       if (error) return jsonResponse({ error: "Failed to link Telegram" }, 500);
       return jsonResponse({ success: true, telegram_id: telegramId });
+    }
+
+    if (action === "link-google") {
+      const { googleEmail, googlePicture } = body;
+      if (!googleEmail) return jsonResponse({ error: "Google email is required" }, 400);
+
+      // Verify email isn't already linked to another profile
+      const { data: existing } = await supabase
+        .from("wallet_profiles")
+        .select("id, wallet_address")
+        .eq("google_email", googleEmail)
+        .neq("id", profileId)
+        .maybeSingle();
+
+      if (existing) {
+        return jsonResponse({ error: `This Google account is already linked to wallet ${existing.wallet_address.substring(0,6)}...` }, 409);
+      }
+
+      const { error } = await supabase
+        .from("wallet_profiles")
+        .update({ google_email: googleEmail, google_picture: googlePicture })
+        .eq("id", profileId);
+
+      if (error) return jsonResponse({ error: "Failed to link Google account" }, 500);
+      return jsonResponse({ success: true, google_email: googleEmail });
     }
 
     return jsonResponse({ error: "Unknown action" }, 400);

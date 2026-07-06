@@ -28,12 +28,12 @@ export default function RestorePage() {
   };
 
   return (
-    <div className="w-full max-w-[420px] flex flex-col pt-12">
-      <div className="mb-10 text-center sm:text-left">
-        <h1 className="text-text-primary text-[28px] font-[800]">
+    <div className="w-full max-w-[420px] flex flex-col pt-8">
+      <div className="mb-10 text-center">
+        <h1 className="text-text-primary text-[22px] font-[800]">
           Restore your wallet
         </h1>
-        <p className="text-text-muted text-[14px] mt-2">
+        <p className="text-text-muted text-[13px] mt-2">
           Securely recover your wallet from Google Drive.
         </p>
       </div>
@@ -44,7 +44,7 @@ export default function RestorePage() {
 
       <button 
         onClick={() => router.push("/connect")}
-        className="mt-8 text-text-secondary hover:text-text-primary text-[14px] transition-colors"
+        className="mt-8 text-text-secondary hover:text-text-primary text-[13px] transition-colors"
       >
         Back to Connect
       </button>

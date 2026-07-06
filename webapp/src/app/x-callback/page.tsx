@@ -26,7 +26,7 @@ export default function XCallbackPage() {
         return;
       }
 
-      let profileId: string;
+      let profileId: string | undefined;
       let walletAddress: string;
       let codeVerifier: string;
 
@@ -35,8 +35,9 @@ export default function XCallbackPage() {
         profileId = decoded.profileId;
         walletAddress = decoded.walletAddress;
         codeVerifier = decoded.codeVerifier;
-        if (!profileId || !walletAddress || !codeVerifier) throw new Error("missing");
-      } catch {
+        if (!walletAddress || !codeVerifier) throw new Error("missing walletAddress or codeVerifier");
+      } catch (err) {
+        console.error(err);
         setStatus("error");
         setMessage("Invalid state parameter.");
         setTimeout(() => window.close(), 2000);

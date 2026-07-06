@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/WalletProvider";
+import { GoogleDriveBackup } from "@/components/GoogleDriveBackup";
 
 export default function BackupSeed() {
   const router = useRouter();
@@ -19,90 +20,6 @@ export default function BackupSeed() {
     }
   }, [seedPhrase, router]);
   
-
-  const handleCloudBackup = () => {
-    if (!seedPhrase) return;
-    setLoadingCloud(true);
-
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId || clientId === "YOUR_GOOGLE_CLIENT_ID") {
-      console.warn("Google Client ID not configured.");
-      // Simulate for development if no keys
-      setTimeout(() => {
-        setLoadingCloud(false);
-        router.push("/link-socials");
-      }, 1500);
-      return;
-    }
-
-    try {
-      // @ts-ignore - google is loaded via script tag
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: "https://www.googleapis.com/auth/drive.appdata",
-        callback: async (response: any) => {
-          if (response.error !== undefined) {
-            console.error("Google Auth Error:", response);
-            setLoadingCloud(false);
-            return;
-          }
-          
-          await uploadToGoogleDrive(response.access_token, seedPhrase);
-        },
-      });
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    } catch (e) {
-      console.error(e);
-      setLoadingCloud(false);
-    }
-  };
-
-  const uploadToGoogleDrive = async (accessToken: string, phrase: string) => {
-    try {
-      const fileContent = JSON.stringify({
-        seedPhrase: phrase,
-        timestamp: new Date().toISOString()
-      });
-
-      const metadata = {
-        name: 'tarena_wallet_backup.json',
-        parents: ['appDataFolder'],
-        mimeType: 'application/json'
-      };
-
-      const boundary = '-------314159265358979323846';
-      const delimiter = "\r\n--" + boundary + "\r\n";
-      const close_delim = "\r\n--" + boundary + "--";
-
-      const multipartRequestBody =
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(metadata) +
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        fileContent +
-        close_delim;
-
-      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': `multipart/related; boundary=${boundary}`,
-        },
-        body: multipartRequestBody
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to upload to Google Drive");
-      }
-
-      setLoadingCloud(false);
-      router.push("/link-socials");
-    } catch (error) {
-      console.error("Upload error", error);
-      setLoadingCloud(false);
-    }
-  };
 
   const handleManualBackup = () => {
     // Proceed to next onboarding step assuming they wrote it down
@@ -142,26 +59,13 @@ export default function BackupSeed() {
 
       <div className="flex flex-col gap-4">
         {/* Cloud Backup */}
-        <button 
-          onClick={handleCloudBackup}
-          disabled={loadingCloud}
-          className="w-full h-[72px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50"
-        >
-          <div className="flex flex-col items-start justify-center">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-text-primary text-[15px] font-bold">Cloud Backup</span>
-              <span className="bg-[#009393] text-accent-text text-[9px] px-1.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wide">Recommended</span>
-            </div>
-            <span className="text-text-muted text-[13px]">Securely save to Google Drive</span>
-          </div>
-          {loadingCloud ? (
-            <div className="animate-spin h-4 w-4 border-2 border-text-secondary border-t-transparent rounded-full" />
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary group-hover:text-text-primary transition-colors">
-              <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </button>
+        <div className="w-full">
+          <GoogleDriveBackup 
+            payloadToBackup={seedPhrase || ""} 
+            payTag={useWallet().address || "unknown"} 
+            onSuccess={() => router.push("/link-socials")}
+          />
+        </div>
 
         {/* Manual Backup */}
         <button 

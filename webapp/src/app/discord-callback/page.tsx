@@ -21,12 +21,15 @@ export default function DiscordCallbackPage() {
       }
 
       // Parse state (contains profileId + walletAddress)
-      let profileId: string, walletAddress: string;
+      let profileId: string | undefined;
+      let walletAddress: string;
       try {
         const parsed = JSON.parse(atob(state || ""));
         profileId = parsed.profileId;
         walletAddress = parsed.walletAddress;
-      } catch {
+        if (!walletAddress) throw new Error("missing walletAddress");
+      } catch (err) {
+        console.error(err);
         setStatus("error");
         setMessage("Invalid session state. Please try again.");
         return;

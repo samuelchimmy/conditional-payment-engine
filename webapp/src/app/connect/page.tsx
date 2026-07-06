@@ -6,13 +6,15 @@ import { useWallet } from "@/components/WalletProvider";
 
 export default function ConnectWallet() {
   const router = useRouter();
-  const { isConnected, isRegistered, connectWagmi, connectWdk, connectGoogle } = useWallet();
+  const { isConnected, isRegistered, authMethod, connectWagmi, connectWdk, connectGoogle } = useWallet();
   const [loadingMethod, setLoadingMethod] = useState<string | null>(null);
 
   useEffect(() => {
     if (isConnected) {
       if (isRegistered) {
         router.push("/dashboard");
+      } else if (authMethod === "metamask" || authMethod === "walletconnect") {
+        router.push("/link-socials");
       } else {
         router.push("/backup-seed");
       }
@@ -38,12 +40,12 @@ export default function ConnectWallet() {
   };
 
   return (
-    <div className="w-full max-w-[420px] flex flex-col pt-12">
-      <div className="mb-10 text-center sm:text-left">
-        <h1 className="text-text-primary text-[28px] font-[800]">
+    <div className="w-full max-w-[420px] flex flex-col pt-8">
+      <div className="mb-10 text-center">
+        <h1 className="text-text-primary text-[22px] font-[800]">
           Connect your wallet
         </h1>
-        <p className="text-text-muted text-[14px] mt-2">
+        <p className="text-text-muted text-[13px] mt-2">
           Choose how to continue
         </p>
       </div>
@@ -53,7 +55,7 @@ export default function ConnectWallet() {
         <button 
           onClick={() => handleConnect("wdk")}
           disabled={loadingMethod !== null}
-          className="w-full h-[72px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50"
+          className="w-full h-[60px] bg-surface border border-border-emphasis hover:bg-[#151515] transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50"
         >
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
@@ -61,7 +63,7 @@ export default function ConnectWallet() {
             </div>
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2">
-                <span className="text-text-primary text-[15px] font-bold">Create new wallet</span>
+                <span className="text-text-primary text-[14px] font-bold">Create new wallet</span>
                 <span className="bg-[#009393] text-accent-text text-[9px] px-1.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wide">Recommended</span>
               </div>
               <span className="text-text-muted text-[12px] font-normal">(~30 sec)</span>
@@ -80,13 +82,13 @@ export default function ConnectWallet() {
         <button 
           onClick={() => handleConnect("metamask")}
           disabled={loadingMethod !== null}
-          className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50"
+          className="w-full h-[60px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50"
         >
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center">
               <img src="/MetaMask-icon-fox.svg" alt="MetaMask" className="w-7 h-7 object-contain opacity-90 transition-all duration-300 theme-logo-mm" />
             </div>
-            <span className="text-text-primary text-[15px] font-bold">MetaMask or browser wallet</span>
+            <span className="text-text-primary text-[14px] font-bold">MetaMask or browser wallet</span>
           </div>
           {loadingMethod === "metamask" ? (
             <div className="animate-spin h-4 w-4 border-2 border-text-secondary border-t-transparent rounded-full" />
@@ -101,13 +103,13 @@ export default function ConnectWallet() {
         <button 
           onClick={() => handleConnect("walletconnect")}
           disabled={loadingMethod !== null}
-          className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50"
+          className="w-full h-[60px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50"
         >
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 flex items-center justify-center">
               <img src="/walletconnect.svg" alt="WalletConnect" className="w-7 h-7 object-contain opacity-90 transition-all duration-300 theme-logo-wc" />
             </div>
-            <span className="text-text-primary text-[15px] font-bold">WalletConnect</span>
+            <span className="text-text-primary text-[14px] font-bold">WalletConnect</span>
           </div>
           {loadingMethod === "walletconnect" ? (
             <div className="animate-spin h-4 w-4 border-2 border-text-secondary border-t-transparent rounded-full" />
@@ -119,14 +121,14 @@ export default function ConnectWallet() {
         </button>
       </div>
 
-      <p className="text-text-muted text-[12px] text-center sm:text-left mb-10">
+      <p className="text-text-muted text-[12px] text-center mb-10">
         New wallets include a 12-word phrase and Google Drive backup.
       </p>
 
       <button 
         onClick={() => handleConnect("google")}
         disabled={loadingMethod !== null}
-        className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="w-full h-[46px] bg-accent text-accent-text text-[14px] font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {loadingMethod === "google" ? (
           <div className="animate-spin h-5 w-5 border-2 border-accent-text border-t-transparent rounded-full" />

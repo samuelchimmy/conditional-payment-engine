@@ -22,19 +22,40 @@ Deno.serve(async (req) => {
     const { code, redirectUri, profileId, walletAddress } = await req.json();
 
     if (!code || typeof code !== "string") return jsonResponse({ error: "Authorization code is required" }, 400);
-    if (!profileId || !UUID_RE.test(profileId)) return jsonResponse({ error: "Valid profile ID is required" }, 400);
     if (!walletAddress || typeof walletAddress !== "string") return jsonResponse({ error: "Wallet address is required" }, 400);
     if (!redirectUri || typeof redirectUri !== "string") return jsonResponse({ error: "Redirect URI is required" }, 400);
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: profile, error: profileErr } = await supabase
-      .from("wallet_profiles")
-      .select("id, wallet_address, discord_id")
-      .eq("id", profileId)
-      .single();
+    let profile: any = null;
 
-    if (profileErr || !profile) return jsonResponse({ error: "Profile not found" }, 404);
+    if (profileId && UUID_RE.test(profileId)) {
+      const { data, error } = await supabase
+        .from("wallet_profiles")
+        .select("id, wallet_address, discord_id")
+        .eq("id", profileId)
+        .single();
+      if (!error && data) profile = data;
+    } else {
+      const { data, error } = await supabase
+        .from("wallet_profiles")
+        .select("id, wallet_address, discord_id")
+        .ilike("wallet_address", walletAddress)
+        .single();
+      if (!error && data) {
+        profile = data;
+      } else {
+        const { data: newData, error: insertError } = await supabase
+          .from("wallet_profiles")
+          .insert({ wallet_address: walletAddress.toLowerCase() })
+          .select("id, wallet_address, discord_id")
+          .single();
+        if (insertError) return jsonResponse({ error: "Failed to create profile" }, 500);
+        profile = newData;
+      }
+    }
+
+    if (!profile) return jsonResponse({ error: "Profile not found" }, 404);
     if (profile.wallet_address.toLowerCase() !== walletAddress.toLowerCase()) return jsonResponse({ error: "Ownership verification failed" }, 403);
     if (profile.discord_id) return jsonResponse({ error: "A Discord account is already linked. Unlink it first." }, 409);
 

@@ -83,9 +83,9 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
               if (!uiRes.ok) return;
               const ui = await uiRes.json() as { email?: string; picture?: string };
               if (!ui?.email && !ui?.picture) return;
-              await supabase.functions.invoke('check-paytag', {
+              await supabase.functions.invoke('social-identity', {
                 body: {
-                  action: 'linkGoogle',
+                  action: 'link-google',
                   profileId: result.profileId,
                   walletAddress: result.walletAddress,
                   googleEmail: ui.email,
@@ -143,7 +143,7 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
           <button
             onClick={handleStartRestore}
             disabled={status === 'authenticating' || status === 'downloading'}
-            className="w-full h-[52px] flex items-center justify-center bg-[#D53131] hover:bg-[#D53131]/90 text-[#000000] font-bold rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-[46px] flex items-center justify-center bg-[#D53131] hover:bg-[#D53131]/90 text-[#000000] text-[14px] font-bold rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {status === 'authenticating' || status === 'downloading' ? (
               <div className="flex items-center gap-2">
@@ -210,7 +210,7 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
                 setError(null);
               }}
               placeholder="••••"
-              className="w-full h-[52px] text-2xl text-center tracking-[0.5em] font-bold rounded-[10px] bg-[#050505] border-[#2A2A2A] text-[#F2F1EF] focus-visible:ring-0 focus-visible:border-[#3A3A3A] px-3"
+              className="w-full h-[46px] text-2xl text-center tracking-[0.5em] font-bold rounded-[10px] bg-[#050505] border-[#2A2A2A] text-[#F2F1EF] focus-visible:ring-0 focus-visible:border-[#3A3A3A] px-3"
               maxLength={4}
               disabled={status === 'decrypting' || status === 'restoring'}
               autoFocus
@@ -231,7 +231,7 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
           <button
             onClick={handleDecryptAndRestore}
             disabled={pin.length !== 4 || status === 'decrypting' || status === 'restoring'}
-            className="w-full h-[52px] mt-4 flex items-center justify-center bg-[#D53131] hover:bg-[#D53131]/90 text-[#000000] font-bold rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-[46px] mt-4 flex items-center justify-center bg-[#D53131] hover:bg-[#D53131]/90 text-[#000000] text-[14px] font-bold rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {status === 'decrypting' || status === 'restoring' ? (
               <div className="flex items-center gap-2">

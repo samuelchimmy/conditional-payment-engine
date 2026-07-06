@@ -103,7 +103,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
                   placeholder="0x..." 
-                  className="w-full bg-surface border border-border rounded-[10px] h-[52px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
+                  className="w-full bg-surface border border-border rounded-[10px] h-[46px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
                 />
               </div>
 
@@ -119,7 +119,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00" 
-                    className="w-full bg-surface border border-border rounded-[10px] h-[52px] pl-4 pr-16 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
+                    className="w-full bg-surface border border-border rounded-[10px] h-[46px] pl-4 pr-16 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
                   />
                   <div className="absolute right-4 top-0 bottom-0 flex items-center">
                     <span className="text-text-secondary font-bold text-[12px]">USDT</span>

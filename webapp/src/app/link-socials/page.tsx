@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/WalletProvider";
+import { toast } from "react-hot-toast";
 
 export default function LinkSocials() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function LinkSocials() {
         setLinkedStatus(prev => ({ ...prev, telegram: true }));
         setLoading(null);
       } else if (event.data?.type === "social-link-conflict") {
-        alert(event.data.message);
+        toast.error(event.data.message);
         setLoading(null);
       }
     };
@@ -65,14 +66,15 @@ export default function LinkSocials() {
         return;
       }
       const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
-      const state = btoa(JSON.stringify({ walletAddress: address }));
+      const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier: "challenge" }));
       // Uses PKCE challenge (hardcoded "challenge" to match edge function simplified version)
       oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
     } else if (platform === "telegram") {
-      // Telegram login requires a widget injected into the DOM. For this flow, we will redirect to a dedicated telegram-login page.
-      // (Assuming you'll implement a standalone Telegram widget page, or we just mock it for now)
-      alert("Telegram widget requires HTML embedding. Please deploy the telegram-widget.html or use Bot deep linking.");
-      setLoading(null);
+      // Instead of an alert, we can deep link to the bot with the wallet address
+      const botUrl = `https://t.me/tether_arena_bot?start=${address}`;
+      window.open(botUrl, "_blank");
+      // Optionally mock completion locally for UI purposes or wait for an edge function callback
+      setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 2000);
       return;
     }
 

@@ -129,8 +129,8 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </div>
-                  <h2 className="text-text-primary text-[24px] font-[800]">Deposit Detected!</h2>
-                  <p className="text-text-secondary text-[14px]">
+                  <h2 className="text-text-primary text-[20px] font-[800]">Deposit Detected!</h2>
+                  <p className="text-text-secondary text-[13px]">
                     {receivedAmount ? `Successfully received ${parseFloat(receivedAmount).toFixed(2)} USDT` : "Your funds have arrived."}
                   </p>
                 </motion.div>
@@ -142,7 +142,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 <div className="w-full bg-surface border border-border-emphasis rounded-t-[10px] px-5 py-4 flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-text-primary text-[14px] font-bold">Direct deposit</span>
-                    <span className="text-text-muted text-[12px]">Send to your Celo address</span>
+                    <span className="text-text-muted text-[11px]">Send to your Celo address</span>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-primary transform rotate-90 transition-transform">
                     <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -156,7 +156,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     <div className="w-full h-full border-4 border-black border-dashed flex items-center justify-center text-black font-bold text-[11px]">QR CODE</div>
                   </div>
                   
-                  <span className="font-mono text-text-primary text-[15px] tracking-wide mb-2">
+                  <span className="font-mono text-text-primary text-[13px] tracking-wide mb-2">
                     {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
                   </span>
                   

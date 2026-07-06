@@ -1,0 +1,21 @@
+{
+  "name": "tether-arena-bots",
+  "version": "1.0.0",
+  "description": "Tether Arena AI Agent and Oracle Workers",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.11.1",
+    "@supabase/supabase-js": "^2.43.4",
+    "discord.js": "^14.15.2",
+    "dotenv": "^16.4.5",
+    "lru-cache": "^10.2.2",
+    "node-telegram-bot-api": "^0.66.0",
+    "twitter-api-v2": "^1.17.0",
+    "viem": "^2.13.4",
+    "zod": "^3.23.8"
+  }
+}

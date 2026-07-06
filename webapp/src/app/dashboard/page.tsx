@@ -33,7 +33,7 @@ export default function Dashboard() {
     : "0.00";
 
   return (
-    <div className="w-full max-w-[640px] flex flex-col pt-8">
+    <div className="w-full max-w-[640px] flex flex-col pt-4">
       {/* Settings Modal */}
       <SettingsModal 
         isOpen={isSettingsModalOpen} 
@@ -67,18 +67,18 @@ export default function Dashboard() {
       <div className="flex flex-col items-start w-full mb-16">
         <div className="bg-surface border border-border rounded-[10px] px-6 py-4 flex flex-col mb-3 w-full">
           <span className="text-text-secondary text-[11px] uppercase tracking-wider mb-1">Balance</span>
-          <span className="text-text-primary text-[20px] font-[800] tracking-tight">{formattedBalance} <span className="text-text-secondary text-[15px] font-normal">USDT</span></span>
+          <span className="text-text-primary text-[20px] font-[800] tracking-tight">{formattedBalance} <span className="text-text-secondary text-[13px] font-normal">USDT</span></span>
         </div>
         <div className="flex items-center gap-3 w-full">
           <button 
             onClick={() => setIsWithdrawModalOpen(true)}
-            className="flex-1 h-[42px] px-6 bg-transparent border border-border text-text-primary rounded-[8px] font-bold text-[13px] hover:bg-surface transition-colors"
+            className="flex-1 h-[40px] px-6 bg-transparent border border-border text-text-primary rounded-[8px] font-bold text-[13px] hover:bg-surface transition-colors"
           >
             Withdraw
           </button>
           <button 
             onClick={() => setIsDepositModalOpen(true)}
-            className="flex-1 h-[42px] px-6 bg-accent text-accent-text rounded-[8px] font-bold text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"
+            className="flex-1 h-[40px] px-6 bg-accent text-accent-text rounded-[8px] font-bold text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"
           >
             Deposit
           </button>
@@ -87,15 +87,15 @@ export default function Dashboard() {
 
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-text-primary text-[28px] font-[800]">
+          <h1 className="text-text-primary text-[22px] font-[800]">
             My Bets
           </h1>
-          <p className="text-text-secondary text-[14px] mt-1">
+          <p className="text-text-secondary text-[13px] mt-1">
             3 Active · 1 Completed
           </p>
         </div>
         
-        <Link href="/place" className="h-[42px] px-6 bg-accent text-accent-text font-bold rounded-[8px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity">
+        <Link href="/place" className="h-[40px] px-6 bg-accent text-accent-text font-bold rounded-[8px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity">
           New Bet
         </Link>
       </div>
@@ -137,9 +137,9 @@ export default function Dashboard() {
       </div>
 
       {/* Start Tipping Section */}
-      <div className="w-full mb-16 flex flex-col sm:flex-row sm:items-start justify-between gap-8 pt-6 border-t border-divider">
+      <div className="w-full mb-16 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-6 border-t border-divider">
         <div className="flex flex-col text-left sm:max-w-[320px]">
-          <h2 className="text-text-primary text-[18px] font-bold mb-2">Start Tipping</h2>
+          <h2 className="text-text-primary text-[16px] font-bold mb-2">Start Tipping</h2>
           <p className="text-text-muted text-[13px] leading-relaxed">
             Ready to put your money where your mouth is? Tweet at @tether.arena, add the bot to your Discord server, or join the Telegram group.
           </p>

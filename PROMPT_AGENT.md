@@ -17,7 +17,7 @@ The agent backend is a single Node.js (ESM) process that runs:
 - **Runtime**: Node.js 22 (ESM, `"type": "module"`)
 - **Blockchain**: viem (Celo mainnet + Alfajores)
 - **Database**: `@supabase/supabase-js`
-- **X/Twitter**: `twitter-api-v2` (v2 API, app-only auth for reads, OAuth1a for DMs/replies)
+- **X/Twitter**: `twitter-api-v2` (v2 API, app-only auth for reads, OAuth 2.0 User Token for DMs/replies)
 - **Discord**: `discord.js` v14
 - **Telegram**: `node-telegram-bot-api` (webhook mode for production, polling for dev)
 - **LLM**: `@google/generative-ai` (Gemini 2.5 Flash)
@@ -30,7 +30,7 @@ The agent backend is a single Node.js (ESM) process that runs:
 
 ## Directory Structure
 ```
-agent/
+bots/
 ├── index.js                   # Entry point — boots all adapters + workers
 ├── adapters/
 │   ├── x.adapter.js           # Twitter/X listener + replier
@@ -132,7 +132,7 @@ Boot sequence:
 ## 3. Message Handler (shared across all adapters)
 
 ```javascript
-// agent/handler.js
+// bots/handler.js
 export async function handleMessage({ text, userId, messageId, platform, replyFn }) {
 
   // Step 1: Pre-filter (fast, no LLM)
@@ -532,11 +532,12 @@ SUPABASE_URL=
 SUPABASE_SERVICE_KEY=
 
 # X/Twitter
-TWITTER_BEARER_TOKEN=
-TWITTER_API_KEY=
-TWITTER_API_SECRET=
-TWITTER_ACCESS_TOKEN=
-TWITTER_ACCESS_SECRET=
+X_API_KEY=
+X_API_SECRET=
+X_BEARER_TOKEN=
+X_OAUTH2_CLIENT_ID=
+X_ACCESS_TOKEN=
+X_REFRESH_TOKEN=
 
 # Discord
 DISCORD_BOT_TOKEN=

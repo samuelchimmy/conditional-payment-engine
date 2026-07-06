@@ -8,6 +8,7 @@ import { injected, walletConnect } from "wagmi/connectors";
 import { generateMnemonic, english } from 'viem/accounts';
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm';
 import { SeedSignerEvm } from '@tetherto/wdk-wallet-evm/signers';
+import { supabase } from '@/lib/supabaseClient';
 
 // Wagmi config
 const wagmiConfig = createConfig({
@@ -61,6 +62,23 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
 
   // Sync Wagmi state
   useEffect(() => {
+    let mounted = true;
+    const checkRegistration = async (addr: string) => {
+      try {
+        if (!supabase) return;
+        const { data, error } = await supabase
+          .from("wallet_profiles")
+          .select("id, paytag")
+          .eq("wallet_address", addr)
+          .single();
+        if (mounted) {
+          setIsRegistered(!!(data && data.paytag));
+        }
+      } catch (err) {
+        console.error("Failed to check registration", err);
+      }
+    };
+
     if (isConnected && address) {
       setState(prev => ({
         ...prev,
@@ -68,8 +86,7 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
         address: address,
         authMethod: "metamask", // For now we assume Metamask/Wagmi
       }));
-      // Mock db check: let's pretend addresses starting with 0x1 are unregistered
-      setIsRegistered(!address.startsWith("0x1"));
+      checkRegistration(address);
     } else if (state.authMethod === "metamask") {
       setState(prev => ({
         ...prev,
@@ -77,7 +94,9 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
         address: null,
         authMethod: null,
       }));
+      setIsRegistered(false);
     }
+    return () => { mounted = false; };
   }, [isConnected, address]);
 
   const connectWagmi = async (connectorId?: string) => {

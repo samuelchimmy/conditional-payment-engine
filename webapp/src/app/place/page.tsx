@@ -66,15 +66,15 @@ export default function PlaceBet() {
 
   if (success) {
     return (
-      <div className="w-full max-w-[480px] flex flex-col pt-12 items-center text-center">
+      <div className="w-full max-w-[480px] flex flex-col pt-8 items-center text-center">
         <div className="w-16 h-16 rounded-full bg-accent text-accent-text flex items-center justify-center mb-6">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </div>
-        <h1 className="text-text-primary text-[28px] font-[800]">Funds Locked!</h1>
-        <p className="text-text-muted mt-2 mb-8">The AI agent will now monitor the match outcome and settle automatically.</p>
-        <Link href="/dashboard" className="w-full h-[52px] bg-surface border border-border text-text-primary font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
+        <h1 className="text-text-primary text-[22px] font-[800]">Funds Locked!</h1>
+        <p className="text-text-muted text-[13px] mt-2 mb-8">The AI agent will now monitor the match outcome and settle automatically.</p>
+        <Link href="/dashboard" className="w-full h-[46px] bg-surface border border-border text-text-primary text-[14px] font-bold rounded-[10px] flex items-center justify-center hover:bg-border transition-colors">
           Back to Dashboard
         </Link>
       </div>
@@ -82,12 +82,12 @@ export default function PlaceBet() {
   }
 
   return (
-    <div className="w-full max-w-[480px] flex flex-col pt-12">
-      <div className="mb-8">
+    <div className="w-full max-w-[480px] flex flex-col pt-8">
+      <div className="mb-8 text-center">
         <span className="text-text-secondary text-[10px] font-normal uppercase tracking-[0.1em]">
           PLACE BET · 1 OF 3
         </span>
-        <h1 className="text-text-primary text-[28px] font-[800] mt-2">
+        <h1 className="text-text-primary text-[22px] font-[800] mt-2">
           What's the bet?
         </h1>
       </div>
@@ -107,7 +107,7 @@ export default function PlaceBet() {
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full h-[52px] bg-surface border border-border rounded-[10px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
+              className="w-full h-[46px] bg-surface border border-border rounded-[10px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
             />
           </div>
           <div className="flex-1 flex flex-col gap-2">
@@ -117,7 +117,7 @@ export default function PlaceBet() {
               value={counterparty}
               onChange={(e) => setCounterparty(e.target.value)}
               placeholder="0x..."
-              className="w-full h-[52px] bg-surface border border-border rounded-[10px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
+              className="w-full h-[46px] bg-surface border border-border rounded-[10px] px-4 text-text-primary text-[14px] focus:outline-none focus:border-border-emphasis transition-colors"
             />
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function PlaceBet() {
         <button 
           onClick={handleLockFunds}
           disabled={!amount || !counterparty || !query || isProcessing}
-          className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="w-full h-[46px] bg-accent text-accent-text text-[14px] font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {isProcessing ? "Processing (Approve & Lock)..." : "Review and Lock Funds"}
         </button>

@@ -17,9 +17,10 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 interface GoogleDriveBackupProps {
   payloadToBackup: string; // The private key or seed phrase
   payTag: string;
+  onSuccess?: () => void;
 }
 
-function BackupContent({ payloadToBackup, payTag }: GoogleDriveBackupProps) {
+function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackupProps) {
   const [status, setStatus] = useState<'idle' | 'authenticating' | 'checking' | 'verifying' | 'backing_up' | 'success' | 'error' | 'conflict'>('idle');
   const [pin, setPin] = useState('');
   const [showPinInput, setShowPinInput] = useState(false);
@@ -85,6 +86,9 @@ function BackupContent({ payloadToBackup, payTag }: GoogleDriveBackupProps) {
         setStatus('success');
         setLastBackup(result.timestamp || Date.now());
         setShowConflictDialog(false);
+        if (onSuccess) {
+          setTimeout(onSuccess, 1500);
+        }
       } else {
         setError(result.error || 'Backup failed');
         setStatus('error');
