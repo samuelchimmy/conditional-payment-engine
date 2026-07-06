@@ -15,6 +15,7 @@ export default function LinkSocials() {
   });
   
   const [loading, setLoading] = useState<"twitter" | "discord" | "telegram" | null>(null);
+  const [pendingClaimInfo, setPendingClaimInfo] = useState<{count: number, amount: number} | null>(null);
 
   const hasLinkedAny = Object.values(linkedStatus).some(Boolean);
 
@@ -52,6 +53,11 @@ export default function LinkSocials() {
           
           if (!res.ok) throw new Error("Failed to link identity");
           
+          const data = await res.json();
+          if (data.pendingCount > 0) {
+            setPendingClaimInfo({ count: data.pendingCount, amount: data.pendingAmount });
+          }
+
           setLinkedStatus(prev => ({ ...prev, [platform]: true }));
         } catch (error) {
           console.error(error);
@@ -106,7 +112,9 @@ export default function LinkSocials() {
   };
 
   const handleContinue = () => {
-    if (hasLinkedAny) {
+    if (pendingClaimInfo) {
+      router.push("/claim");
+    } else if (hasLinkedAny) {
       router.push("/deposit");
     }
   };
@@ -196,9 +204,18 @@ export default function LinkSocials() {
         </button>
       </div>
 
-      <p className="text-text-muted text-[12px] text-center sm:text-left mb-10 leading-relaxed">
+      <p className="text-text-muted text-[12px] text-center sm:text-left mb-6 leading-relaxed">
         Linking allows you to tip any username conditionally in plain language directly on social platforms where tether.arena is available. At least 1 is required.
       </p>
+
+      {pendingClaimInfo && (
+        <div className="w-full bg-surface border border-accent rounded-[10px] p-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <h3 className="text-text-primary text-[15px] font-bold mb-1">🎉 Pending claims found!</h3>
+          <p className="text-text-muted text-[13px]">
+            You have {pendingClaimInfo.count} pending tip(s) totaling {pendingClaimInfo.amount} USDT ready to claim.
+          </p>
+        </div>
+      )}
 
       {hasLinkedAny && (
         <button 

@@ -101,7 +101,30 @@ serve(async (req) => {
 
     if (error) throw error;
 
-    return new Response(JSON.stringify({ success: true, socialId, xUsername }), {
+    // Auto-scan for pending IOUs
+    let pendingCount = 0;
+    let pendingAmount = 0;
+
+    // We check IOUs for this platform and socialId
+    const { data: pendingIOUs, error: iouError } = await supabaseClient
+      .from("ious")
+      .select("id, amount")
+      .eq("platform", platform)
+      .eq("platform_user_id", socialId)
+      .eq("status", "pending");
+
+    if (!iouError && pendingIOUs && pendingIOUs.length > 0) {
+      pendingCount = pendingIOUs.length;
+      pendingAmount = pendingIOUs.reduce((sum: number, iou: any) => sum + Number(iou.amount), 0);
+
+      // Link them to the newly connected wallet
+      await supabaseClient
+        .from("ious")
+        .update({ recipient_wallet: walletAddress })
+        .in("id", pendingIOUs.map((iou: any) => iou.id));
+    }
+
+    return new Response(JSON.stringify({ success: true, socialId, xUsername, pendingCount, pendingAmount }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
