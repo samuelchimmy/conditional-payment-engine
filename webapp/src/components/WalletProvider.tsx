@@ -122,11 +122,12 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
   const connectGoogle = async () => {
     // Mock Google connection
     const mockAddress = "0x" + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-    setState({
+    setState((prev) => ({
+      ...prev,
       isConnected: true,
       address: mockAddress,
       authMethod: "google",
-    });
+    }));
     setIsRegistered(true); // Google always registered in this test
   };
 
