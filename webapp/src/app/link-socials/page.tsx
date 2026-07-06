@@ -55,8 +55,8 @@ export default function LinkSocials() {
         return;
       }
       const redirectUri = encodeURIComponent(`${window.location.origin}/discord-callback`);
-      // Pass the profile ID and wallet address through the state parameter so the callback page can use them
-      const state = btoa(JSON.stringify({ profileId: profile?.id, walletAddress: address }));
+      // Pass the wallet address through the state parameter so the callback page can use them
+      const state = btoa(JSON.stringify({ walletAddress: address }));
       oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
     } else if (platform === "twitter") {
       const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
@@ -65,7 +65,7 @@ export default function LinkSocials() {
         return;
       }
       const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
-      const state = btoa(JSON.stringify({ profileId: profile?.id, walletAddress: address }));
+      const state = btoa(JSON.stringify({ walletAddress: address }));
       // Uses PKCE challenge (hardcoded "challenge" to match edge function simplified version)
       oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
     } else if (platform === "telegram") {
