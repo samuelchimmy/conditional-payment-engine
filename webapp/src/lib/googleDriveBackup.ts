@@ -1,7 +1,7 @@
-// Google Drive Backup Manager for MoniPay Wallet
+// Google Drive Backup Manager for tether.arena Wallet
 // Uses Web Crypto API for AES-GCM encryption and Google Drive API v3
 
-const BACKUP_FILENAME = 'monipay_wallet_backup.json';
+const BACKUP_FILENAME = 'tether_arena_wallet_backup.json';
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
 
