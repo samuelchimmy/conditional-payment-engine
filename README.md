@@ -152,7 +152,7 @@ Bot DM to @sam:     "🎉 You won! @fan bet 10 USDT that Nigeria would beat Braz
 
 ## Contract: IOURegistryV3
 
-**Deployed on**: Celo Mainnet — `0x[TBD after deployment]`  
+**Deployed on**: Celo Mainnet - `0x8667BdA2e01462Ea229966E01806BF60F8f2f9f4`  
 **Testnet (Alfajores)**: `0x[TBD after deployment]`  
 **Pattern**: UUPS Upgradeable Proxy + 48h timelock on upgrades
 
@@ -475,7 +475,7 @@ MIT — see [LICENSE](LICENSE)
 
 🔗 Live app: [TBD]
 
-🔗 Contract on CeloScan: [TBD]
+🔗 Contract on CeloScan: [0x8667BdA2e01462Ea229966E01806BF60F8f2f9f4](https://celoscan.io/address/0x8667BdA2e01462Ea229966E01806BF60F8f2f9f4)
 
 ---
 

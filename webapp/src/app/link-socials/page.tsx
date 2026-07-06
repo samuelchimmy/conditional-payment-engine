@@ -1,8 +1,118 @@
-import Link from "next/link";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useWallet } from "@/components/WalletProvider";
 
 export default function LinkSocials() {
+  const router = useRouter();
+  const { address } = useWallet();
+  
+  const [linkedStatus, setLinkedStatus] = useState({
+    twitter: false,
+    discord: false,
+    telegram: false,
+  });
+  
+  const [loading, setLoading] = useState<"twitter" | "discord" | "telegram" | null>(null);
+
+  const hasLinkedAny = Object.values(linkedStatus).some(Boolean);
+
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data?.type === "OAUTH_CALLBACK") {
+        const { code, state } = event.data.payload;
+        // state carries the platform
+        const platform = state as "twitter" | "discord" | "telegram";
+        
+        try {
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          if (!supabaseUrl || supabaseUrl === "YOUR_SUPABASE_URL") {
+            console.warn("Supabase not configured, simulating success");
+            setLinkedStatus(prev => ({ ...prev, [platform]: true }));
+            setLoading(null);
+            return;
+          }
+
+          const res = await fetch(`${supabaseUrl}/functions/v1/social-identity`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              platform,
+              code,
+              redirectUri: `${window.location.origin}/auth/callback`,
+              walletAddress: address,
+            }),
+          });
+          
+          if (!res.ok) throw new Error("Failed to link identity");
+          
+          setLinkedStatus(prev => ({ ...prev, [platform]: true }));
+        } catch (error) {
+          console.error(error);
+          alert(`Failed to link ${platform}`);
+        } finally {
+          setLoading(null);
+        }
+      } else if (event.data?.type === "OAUTH_ERROR") {
+        console.error("OAuth Error:", event.data.payload.error);
+        setLoading(null);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [address]);
+
+  const handleLink = async (platform: "twitter" | "discord" | "telegram") => {
+    if (linkedStatus[platform]) return;
+    setLoading(platform);
+
+    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/callback`);
+    let oauthUrl = "";
+
+    if (platform === "discord") {
+      const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+      if (!clientId || clientId === "YOUR_DISCORD_CLIENT_ID") {
+        setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 1000);
+        return;
+      }
+      oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=discord`;
+    } else if (platform === "twitter") {
+      const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
+      if (!clientId || clientId === "YOUR_X_CLIENT_ID") {
+        setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 1000);
+        return;
+      }
+      // Uses PKCE challenge (hardcoded "challenge" to match edge function simplified version)
+      oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=twitter&code_challenge=challenge&code_challenge_method=plain`;
+    } else if (platform === "telegram") {
+      // Telegram uses a widget, but for consistency in mock we simulate
+      setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 1000);
+      return;
+    }
+
+    // Open popup
+    const width = 500;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    window.open(oauthUrl, `Connect ${platform}`, `width=${width},height=${height},left=${left},top=${top}`);
+  };
+
+  const handleContinue = () => {
+    if (hasLinkedAny) {
+      router.push("/deposit");
+    }
+  };
+
   return (
-    <div className="w-full max-w-[420px] flex flex-col pt-12">
+    <div className="w-full max-w-[420px] flex flex-col pt-12 pb-12">
       <div className="mb-10 text-center sm:text-left">
         <h1 className="text-text-primary text-[28px] font-[800]">
           Link social accounts
@@ -14,7 +124,12 @@ export default function LinkSocials() {
 
       <div className="flex flex-col gap-4 mb-4">
         {/* Twitter/X Connect Row */}
-        <Link href="/deposit" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
+        <button 
+          onClick={() => handleLink("twitter")}
+          disabled={loading !== null || linkedStatus.twitter}
+          className={`w-full h-[72px] bg-surface border transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50
+            ${linkedStatus.twitter ? "border-border-emphasis" : "border-border hover:border-border-emphasis"}`}
+        >
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -23,11 +138,22 @@ export default function LinkSocials() {
             </div>
             <span className="text-text-primary text-[15px] font-bold">Connect X (Twitter)</span>
           </div>
-          <span className="text-text-secondary text-[13px] group-hover:text-text-primary transition-colors">Link</span>
-        </Link>
+          {loading === "twitter" ? (
+            <div className="animate-spin h-4 w-4 border-2 border-text-secondary border-t-transparent rounded-full" />
+          ) : (
+            <span className={`text-[13px] font-bold ${linkedStatus.twitter ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary transition-colors"}`}>
+              {linkedStatus.twitter ? "Linked" : "Link"}
+            </span>
+          )}
+        </button>
 
         {/* Discord Connect Row */}
-        <Link href="/deposit" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
+        <button 
+          onClick={() => handleLink("discord")}
+          disabled={loading !== null || linkedStatus.discord}
+          className={`w-full h-[72px] bg-surface border transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50
+            ${linkedStatus.discord ? "border-border-emphasis" : "border-border hover:border-border-emphasis"}`}
+        >
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -36,11 +162,22 @@ export default function LinkSocials() {
             </div>
             <span className="text-text-primary text-[15px] font-bold">Connect Discord</span>
           </div>
-          <span className="text-text-secondary text-[13px] group-hover:text-text-primary transition-colors">Link</span>
-        </Link>
+          {loading === "discord" ? (
+            <div className="animate-spin h-4 w-4 border-2 border-text-secondary border-t-transparent rounded-full" />
+          ) : (
+            <span className={`text-[13px] font-bold ${linkedStatus.discord ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary transition-colors"}`}>
+              {linkedStatus.discord ? "Linked" : "Link"}
+            </span>
+          )}
+        </button>
 
         {/* Telegram Connect Row */}
-        <Link href="/deposit" className="w-full h-[72px] bg-surface border border-border hover:border-border-emphasis transition-colors rounded-[10px] px-5 flex items-center justify-between group">
+        <button 
+          onClick={() => handleLink("telegram")}
+          disabled={loading !== null || linkedStatus.telegram}
+          className={`w-full h-[72px] bg-surface border transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50
+            ${linkedStatus.telegram ? "border-border-emphasis" : "border-border hover:border-border-emphasis"}`}
+        >
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,13 +186,28 @@ export default function LinkSocials() {
             </div>
             <span className="text-text-primary text-[15px] font-bold">Connect Telegram</span>
           </div>
-          <span className="text-text-secondary text-[13px] group-hover:text-text-primary transition-colors">Link</span>
-        </Link>
+          {loading === "telegram" ? (
+            <div className="animate-spin h-4 w-4 border-2 border-text-secondary border-t-transparent rounded-full" />
+          ) : (
+            <span className={`text-[13px] font-bold ${linkedStatus.telegram ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary transition-colors"}`}>
+              {linkedStatus.telegram ? "Linked" : "Link"}
+            </span>
+          )}
+        </button>
       </div>
 
       <p className="text-text-muted text-[12px] text-center sm:text-left mb-10 leading-relaxed">
         Linking allows you to tip any username conditionally in plain language directly on social platforms where tether.arena is available. At least 1 is required.
       </p>
+
+      {hasLinkedAny && (
+        <button 
+          onClick={handleContinue}
+          className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity mt-2"
+        >
+          Continue
+        </button>
+      )}
 
     </div>
   );

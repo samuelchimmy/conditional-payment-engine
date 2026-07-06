@@ -23,6 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${schibsted.variable} antialiased`} suppressHydrationWarning>
+      <head>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+      </head>
       <body className="flex flex-col min-h-screen text-text-primary">
         <ThemeProvider
           attribute="class"

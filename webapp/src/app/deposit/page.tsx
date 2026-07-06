@@ -1,8 +1,36 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import confetti from "canvas-confetti";
 
 export default function Deposit() {
+  const router = useRouter();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const simulateDeposit = () => {
+    // Show success modal
+    setShowSuccessModal(true);
+    
+    // Fire dark orange, white, and black confetti
+    const colors = ["#D53131", "#F2F1EF", "#000000"];
+    
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: colors,
+      disableForReducedMotion: true
+    });
+
+    // Automatically transition to next screen after 2.5 seconds
+    setTimeout(() => {
+      router.push("/approve");
+    }, 2500);
+  };
+
   return (
-    <div className="w-full max-w-[440px] flex flex-col pt-8">
+    <div className="w-full max-w-[440px] flex flex-col pt-8 relative">
       <div className="mb-6 text-center sm:text-left">
         <h1 className="text-text-primary text-[28px] font-[800]">
           Add funds
@@ -53,12 +81,27 @@ export default function Deposit() {
         </button>
       </div>
 
-      <Link 
-        href="/approve"
-        className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity mt-2"
+      <button 
+        onClick={simulateDeposit}
+        className="w-full h-[52px] bg-transparent text-text-primary border border-border font-bold rounded-[10px] flex items-center justify-center hover:bg-surface transition-colors mt-2"
       >
-        I have sent funds
-      </Link>
+        Simulate Deposit Received
+      </button>
+
+      {/* Success Modal Overlay */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border-emphasis p-8 rounded-[16px] flex flex-col items-center justify-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-[#009393]/20 flex items-center justify-center mb-4">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#009393]">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h2 className="text-text-primary text-[20px] font-bold mb-2">Deposit Received!</h2>
+            <p className="text-text-muted text-[14px]">You are ready to proceed.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,11 +6,30 @@ import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { DepositModal } from "@/components/DepositModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { useAccount, useReadContract } from "wagmi";
+import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
+import { formatUnits } from "viem";
 
 export default function Dashboard() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  const { address, isConnected } = useAccount();
+
+  const { data: balanceData } = useReadContract({
+    address: USDTAddressCelo,
+    abi: ERC20ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+    }
+  });
+
+  const formattedBalance = balanceData 
+    ? parseFloat(formatUnits(balanceData as bigint, 6)).toFixed(2) 
+    : "0.00";
 
   return (
     <div className="w-full max-w-[640px] flex flex-col pt-8">
@@ -27,8 +46,8 @@ export default function Dashboard() {
         </span>
         <div className="flex items-center justify-between">
           <span className="font-mono text-[12px] text-text-primary bg-surface px-4 py-2 rounded-[8px] border border-border inline-flex items-center gap-2 cursor-pointer hover:border-border-emphasis transition-colors">
-            <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-            0x4f2a...9c3b
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+            {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not Connected"}
           </span>
           
           <button 
@@ -47,7 +66,7 @@ export default function Dashboard() {
       <div className="flex flex-col items-start w-full mb-16">
         <div className="bg-surface border border-border rounded-[10px] px-6 py-4 flex flex-col mb-3 w-full">
           <span className="text-text-secondary text-[11px] uppercase tracking-wider mb-1">Balance</span>
-          <span className="text-text-primary text-[20px] font-[800] tracking-tight">0.00 <span className="text-text-secondary text-[15px] font-normal">USDT</span></span>
+          <span className="text-text-primary text-[20px] font-[800] tracking-tight">{formattedBalance} <span className="text-text-secondary text-[15px] font-normal">USDT</span></span>
         </div>
         <div className="flex items-center gap-3 w-full">
           <button 
