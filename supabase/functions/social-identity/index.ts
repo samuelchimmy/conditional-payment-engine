@@ -1,138 +1,197 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { corsHeaders } from "../_shared/security.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+const X_CLIENT_ID = Deno.env.get("X_CLIENT_ID")!;
+const X_CLIENT_SECRET = Deno.env.get("X_CLIENT_SECRET")!;
+const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+
+function jsonResponse(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function isValidTelegramId(id: string): boolean {
+  return /^\d{5,15}$/.test(id);
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function verifyOwnership(supabase: any, profileId: string, walletAddress?: string) {
+  if (!walletAddress) {
+    return { error: jsonResponse({ error: "walletAddress is required for this action" }, 400) };
+  }
+  const { data: profile, error } = await supabase
+    .from("wallet_profiles")
+    .select("id, wallet_address")
+    .eq("id", profileId)
+    .single();
+
+  if (error || !profile) {
+    return { error: jsonResponse({ error: "Profile not found" }, 404) };
   }
 
+  const profileWallet = (profile as any).wallet_address as string;
+  if (profileWallet.toLowerCase() !== walletAddress.toLowerCase()) {
+    return { error: jsonResponse({ error: "Ownership verification failed" }, 403) };
+  }
+
+  return { profile };
+}
+
+async function exchangeXOAuthCode(code: string, codeVerifier: string, redirectUri: string) {
+  const tokenParams = new URLSearchParams({
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: redirectUri,
+    code_verifier: codeVerifier,
+    client_id: X_CLIENT_ID,
+  });
+
+  const credentials = btoa(`${X_CLIENT_ID}:${X_CLIENT_SECRET}`);
+
+  const tokenRes = await fetch("https://api.twitter.com/2/oauth2/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${credentials}`,
+    },
+    body: tokenParams.toString(),
+  });
+
+  if (!tokenRes.ok) {
+    throw new Error("Failed to exchange X authorization code");
+  }
+
+  const tokenData = await tokenRes.json();
+  const accessToken = tokenData.access_token;
+  if (!accessToken) throw new Error("No access token returned from X");
+
+  const userRes = await fetch("https://api.twitter.com/2/users/me?user.fields=username", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!userRes.ok) throw new Error("Failed to fetch X user info");
+
+  const userData = await userRes.json();
+  const x_user_id = userData?.data?.id;
+  const x_username = userData?.data?.username;
+
+  if (!x_user_id || !x_username) throw new Error("Invalid user data returned from X");
+  return { x_user_id, x_username };
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const body = await req.json();
+    const { action, profileId, walletAddress } = body;
 
-    const { platform, code, redirectUri, walletAddress } = await req.json();
-
-    if (!platform || !code || !walletAddress) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
+    if (!profileId || !UUID_RE.test(profileId)) {
+      return jsonResponse({ error: "Valid profile ID is required" }, 400);
     }
 
-    let socialId = null;
-    let xUsername = null;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (platform === "discord") {
-      // Exchange code for access token
-      const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: Deno.env.get("DISCORD_CLIENT_ID") ?? "",
-          client_secret: Deno.env.get("DISCORD_CLIENT_SECRET") ?? "",
-          grant_type: "authorization_code",
-          code,
-          redirect_uri: redirectUri,
-        }),
-      });
-      const tokenData = await tokenRes.json();
-      if (!tokenData.access_token) throw new Error("Failed to get Discord access token");
-
-      // Get user profile
-      const userRes = await fetch("https://discord.com/api/users/@me", {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      });
-      const userData = await userRes.json();
-      socialId = userData.id;
-
-    } else if (platform === "x") {
-      // Handle Twitter/X OAuth2 PKCE or standard OAuth
-      // Simplified for this template
-      const tokenRes = await fetch("https://api.twitter.com/2/oauth2/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(Deno.env.get("X_CLIENT_ID") + ":" + Deno.env.get("X_CLIENT_SECRET"))}`,
-        },
-        body: new URLSearchParams({
-          code,
-          grant_type: "authorization_code",
-          client_id: Deno.env.get("X_CLIENT_ID") ?? "",
-          redirect_uri: redirectUri,
-          code_verifier: "challenge", // Needs actual PKCE verifier in prod
-        }),
-      });
-      const tokenData = await tokenRes.json();
-      if (!tokenData.access_token) throw new Error("Failed to get X access token");
-
-      const userRes = await fetch("https://api.twitter.com/2/users/me", {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      });
-      const userData = await userRes.json();
-      socialId = userData.data.id;
-      xUsername = userData.data.username;
+    if (action === "get") {
+      const { data, error } = await supabase
+        .from("wallet_profiles")
+        .select("x_username, x_user_id, x_verified, discord_id, telegram_id")
+        .eq("id", profileId)
+        .single();
+      if (error) return jsonResponse({ error: "Failed to fetch profile" }, 500);
+      return jsonResponse(data);
     }
 
-    if (!socialId) {
-      throw new Error("Failed to resolve social identity");
+    const ownershipResult = await verifyOwnership(supabase, profileId, walletAddress);
+    if ("error" in ownershipResult) return ownershipResult.error;
+
+    if (action === "link-x-oauth") {
+      const { code, codeVerifier, redirectUri } = body;
+      if (!code || !codeVerifier || !redirectUri) return jsonResponse({ error: "Missing parameters" }, 400);
+
+      let x_user_id, x_username;
+      try {
+        ({ x_user_id, x_username } = await exchangeXOAuthCode(code, codeVerifier, redirectUri));
+      } catch (err: any) {
+        return jsonResponse({ error: err.message }, 502);
+      }
+
+      const { data: existingProfile } = await supabase
+        .from("wallet_profiles")
+        .select("id, wallet_address")
+        .eq("x_user_id", x_user_id)
+        .neq("id", profileId)
+        .maybeSingle();
+
+      if (existingProfile) {
+        return jsonResponse({ error: `This X account is already linked to wallet ${existingProfile.wallet_address.substring(0,6)}...` }, 409);
+      }
+
+      const { error: updateErr } = await supabase
+        .from("wallet_profiles")
+        .update({ x_user_id, x_username, x_verified: true })
+        .eq("id", profileId);
+
+      if (updateErr) return jsonResponse({ error: "Failed to link X account" }, 500);
+      return jsonResponse({ success: true, x_username, x_user_id });
     }
 
-    // Upsert the wallet profile
-    const updateData: any = { wallet_address: walletAddress };
-    if (platform === "discord") updateData.discord_id = socialId;
-    if (platform === "x") {
-      updateData.x_user_id = socialId;
-      updateData.x_username = xUsername;
-      updateData.x_verified = true;
+    if (action === "link-telegram") {
+      const { widgetPayload } = body;
+      let telegramId = body.telegramId;
+
+      if (widgetPayload && typeof widgetPayload === "object") {
+        const { hash: providedHash, ...rest } = widgetPayload;
+        if (!providedHash) return jsonResponse({ error: "Missing Telegram widget hash" }, 400);
+
+        const dataCheckString = Object.keys(rest).sort().map((k) => `${k}=${rest[k]}`).join("\n");
+        const enc = new TextEncoder();
+        const secretKey = await crypto.subtle.digest("SHA-256", enc.encode(TELEGRAM_BOT_TOKEN));
+        const hmacKey = await crypto.subtle.importKey("raw", secretKey, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+        const sig = await crypto.subtle.sign("HMAC", hmacKey, enc.encode(dataCheckString));
+        const expectedHash = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+        if (expectedHash !== providedHash) return jsonResponse({ error: "Invalid Telegram signature" }, 401);
+
+        const authDate = parseInt(rest.auth_date || "0", 10);
+        if (!authDate || Date.now() / 1000 - authDate > 86400) {
+          return jsonResponse({ error: "Telegram auth expired" }, 401);
+        }
+
+        telegramId = String(rest.id);
+      }
+
+      if (!telegramId || !isValidTelegramId(telegramId)) return jsonResponse({ error: "Invalid Telegram ID" }, 400);
+
+      const { data: existing } = await supabase
+        .from("wallet_profiles")
+        .select("id, wallet_address")
+        .eq("telegram_id", telegramId)
+        .neq("id", profileId)
+        .maybeSingle();
+
+      if (existing) {
+        return jsonResponse({ error: `This Telegram account is already linked to wallet ${existing.wallet_address.substring(0,6)}...` }, 409);
+      }
+
+      const { error } = await supabase
+        .from("wallet_profiles")
+        .update({ telegram_id: telegramId })
+        .eq("id", profileId);
+
+      if (error) return jsonResponse({ error: "Failed to link Telegram" }, 500);
+      return jsonResponse({ success: true, telegram_id: telegramId });
     }
-    // Telegram is usually handled via bot directly, but keeping structure generic
 
-    const { error } = await supabaseClient
-      .from("wallet_profiles")
-      .upsert(updateData, { onConflict: "wallet_address" });
-
-    if (error) throw error;
-
-    // Auto-scan for pending IOUs
-    let pendingCount = 0;
-    let pendingAmount = 0;
-
-    // We check IOUs for this platform and socialId
-    const { data: pendingIOUs, error: iouError } = await supabaseClient
-      .from("ious")
-      .select("id, amount")
-      .eq("platform", platform)
-      .eq("platform_user_id", socialId)
-      .eq("status", "pending");
-
-    if (!iouError && pendingIOUs && pendingIOUs.length > 0) {
-      pendingCount = pendingIOUs.length;
-      pendingAmount = pendingIOUs.reduce((sum: number, iou: any) => sum + Number(iou.amount), 0);
-
-      // Link them to the newly connected wallet
-      await supabaseClient
-        .from("ious")
-        .update({ recipient_wallet: walletAddress })
-        .in("id", pendingIOUs.map((iou: any) => iou.id));
-    }
-
-    return new Response(JSON.stringify({ success: true, socialId, xUsername, pendingCount, pendingAmount }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return jsonResponse({ error: "Unknown action" }, 400);
   } catch (error: any) {
-    console.error(error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return jsonResponse({ error: error.message }, 500);
   }
 });

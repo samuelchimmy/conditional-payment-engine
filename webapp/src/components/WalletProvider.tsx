@@ -36,6 +36,7 @@ export interface WalletState {
 interface WalletContextType extends WalletState {
   connectWagmi: (connectorId?: string) => Promise<void>;
   connectWdk: () => Promise<void>;
+  restoreWallet: (seedPhrase: string) => Promise<{address: string}>;
   connectGoogle: () => Promise<void>;
   disconnectWallet: () => void;
   isRegistered: boolean;
@@ -119,6 +120,30 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const restoreWallet = async (mnemonic: string) => {
+    try {
+      const signer = new EvmSigner();
+      await signer.init(mnemonic, 'evm');
+      
+      const addresses = signer.getAddresses();
+      if (addresses.length === 0) throw new Error("No addresses generated from mnemonic");
+      
+      const addr = addresses[0];
+
+      setState({
+        isConnected: true,
+        address: addr,
+        authMethod: "wdk",
+        seedPhrase: mnemonic,
+        wdkAccount: signer
+      });
+      setIsRegistered(true);
+      return { address: addr };
+    } catch (e: any) {
+      throw new Error(`Restore failed: ${e.message}`);
+    }
+  };
+
   const connectGoogle = async () => {
     // Mock Google connection
     const mockAddress = "0x" + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
@@ -146,7 +171,7 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <WalletContext.Provider value={{ ...state, connectWagmi, connectWdk, connectGoogle, disconnectWallet, isRegistered }}>
+    <WalletContext.Provider value={{ ...state, connectWagmi, connectWdk, restoreWallet, connectGoogle, disconnectWallet, isRegistered }}>
       {children}
     </WalletContext.Provider>
   );

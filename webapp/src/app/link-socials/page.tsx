@@ -31,42 +31,17 @@ export default function LinkSocials() {
         try {
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
           if (!supabaseUrl || supabaseUrl === "YOUR_SUPABASE_URL") {
-            console.warn("Supabase not configured, simulating success");
-            setLinkedStatus(prev => ({ ...prev, [platform]: true }));
-            setLoading(null);
-            return;
-          }
-
-          const res = await fetch(`${supabaseUrl}/functions/v1/social-identity`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({
-              platform,
-              code,
-              redirectUri: `${window.location.origin}/auth/callback`,
-              walletAddress: address,
-            }),
-          });
-          
-          if (!res.ok) throw new Error("Failed to link identity");
-          
-          const data = await res.json();
-          if (data.pendingCount > 0) {
-            setPendingClaimInfo({ count: data.pendingCount, amount: data.pendingAmount });
-          }
-
-          setLinkedStatus(prev => ({ ...prev, [platform]: true }));
-        } catch (error) {
-          console.error(error);
-          alert(`Failed to link ${platform}`);
-        } finally {
-          setLoading(null);
-        }
-      } else if (event.data?.type === "OAUTH_ERROR") {
-        console.error("OAuth Error:", event.data.payload.error);
+      if (event.data?.type === "x-oauth-success") {
+        setLinkedStatus(prev => ({ ...prev, twitter: true }));
+        setLoading(null);
+      } else if (event.data?.type === "discord-oauth-success") {
+        setLinkedStatus(prev => ({ ...prev, discord: true }));
+        setLoading(null);
+      } else if (event.data?.type === "telegram-oauth-success") {
+        setLinkedStatus(prev => ({ ...prev, telegram: true }));
+        setLoading(null);
+      } else if (event.data?.type === "social-link-conflict") {
+        alert(event.data.message);
         setLoading(null);
       }
     };
@@ -79,7 +54,6 @@ export default function LinkSocials() {
     if (linkedStatus[platform]) return;
     setLoading(platform);
 
-    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/callback`);
     let oauthUrl = "";
 
     if (platform === "discord") {
@@ -88,18 +62,25 @@ export default function LinkSocials() {
         setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 1000);
         return;
       }
-      oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=discord`;
+      const redirectUri = encodeURIComponent(`${window.location.origin}/discord-callback`);
+      // Pass the profile ID and wallet address through the state parameter so the callback page can use them
+      const state = btoa(JSON.stringify({ profileId: profile?.id, walletAddress: address }));
+      oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
     } else if (platform === "twitter") {
       const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
       if (!clientId || clientId === "YOUR_X_CLIENT_ID") {
         setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 1000);
         return;
       }
+      const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
+      const state = btoa(JSON.stringify({ profileId: profile?.id, walletAddress: address }));
       // Uses PKCE challenge (hardcoded "challenge" to match edge function simplified version)
-      oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=twitter&code_challenge=challenge&code_challenge_method=plain`;
+      oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
     } else if (platform === "telegram") {
-      // Telegram uses a widget, but for consistency in mock we simulate
-      setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 1000);
+      // Telegram login requires a widget injected into the DOM. For this flow, we will redirect to a dedicated telegram-login page.
+      // (Assuming you'll implement a standalone Telegram widget page, or we just mock it for now)
+      alert("Telegram widget requires HTML embedding. Please deploy the telegram-widget.html or use Bot deep linking.");
+      setLoading(null);
       return;
     }
 

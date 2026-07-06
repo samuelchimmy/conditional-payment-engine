@@ -25,7 +25,7 @@ export default function ConnectWallet() {
       if (method === "wdk") {
         await connectWdk();
       } else if (method === "google") {
-        await connectGoogle();
+        router.push("/restore");
       } else if (method === "metamask") {
         await connectWagmi("injected");
       } else if (method === "walletconnect") {
