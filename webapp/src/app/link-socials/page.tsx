@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/WalletProvider";
 import { toast } from "react-hot-toast";
+import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LinkSocials() {
   const router = useRouter();
@@ -69,21 +71,40 @@ export default function LinkSocials() {
       const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier: "challenge" }));
       // Uses PKCE challenge (hardcoded "challenge" to match edge function simplified version)
       oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
-    } else if (platform === "telegram") {
-      // Instead of an alert, we can deep link to the bot with the wallet address
-      const botUrl = `https://t.me/tether_arena_bot?start=${address}`;
-      window.open(botUrl, "_blank");
-      // Optionally mock completion locally for UI purposes or wait for an edge function callback
-      setTimeout(() => { setLinkedStatus(prev => ({ ...prev, [platform]: true })); setLoading(null); }, 2000);
-      return;
     }
 
-    // Open popup
-    const width = 500;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    window.open(oauthUrl, `Connect ${platform}`, `width=${width},height=${height},left=${left},top=${top}`);
+    if (platform !== "telegram") {
+      // Open popup
+      const width = 500;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      window.open(oauthUrl, `Connect ${platform}`, `width=${width},height=${height},left=${left},top=${top}`);
+    }
+  };
+
+  const handleTelegramAuth = async (user: any) => {
+    try {
+      setLoading("telegram");
+      // Call edge function to verify and link
+      const response = await supabase.functions.invoke("social-identity", {
+        body: {
+          action: "link-telegram",
+          walletAddress: address,
+          telegramUser: user
+        }
+      });
+      if (response.error || response.data?.error) {
+        toast.error(response.data?.error || response.error?.message || "Failed to link Telegram");
+      } else {
+        setLinkedStatus(prev => ({ ...prev, telegram: true }));
+        toast.success("Telegram linked!");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to link Telegram");
+    } finally {
+      setLoading(null);
+    }
   };
 
   const handleContinue = () => {
@@ -155,15 +176,10 @@ export default function LinkSocials() {
         </button>
 
         {/* Telegram Connect Row */}
-        <button 
-          onClick={() => handleLink("telegram")}
-          disabled={loading !== null || linkedStatus.telegram}
-          className={`w-full h-[72px] bg-surface border transition-colors rounded-[10px] px-5 flex items-center justify-between group disabled:opacity-50
-            ${linkedStatus.telegram ? "border-border-emphasis" : "border-border hover:border-border-emphasis"}`}
-        >
+        <div className={`w-full h-[72px] bg-surface border transition-colors rounded-[10px] px-5 flex items-center justify-between group ${linkedStatus.telegram ? "border-border-emphasis" : "border-border"}`}>
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-primary">
                 <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8C16.49 10.2 15.82 14.11 15.48 15.91C15.34 16.67 15.06 16.93 14.79 16.96C14.19 17.01 13.73 16.56 13.16 16.19C12.26 15.6 11.75 15.24 10.88 14.67C9.88 14.01 10.53 13.65 11.12 13.04C11.27 12.89 13.88 10.51 13.93 10.3C13.94 10.27 13.94 10.16 13.88 10.1C13.82 10.04 13.73 10.06 13.66 10.08C13.56 10.1 11.96 11.16 8.85 13.26C8.39 13.57 7.98 13.72 7.6 13.71C7.19 13.7 6.4 13.48 5.81 13.28C5.09 13.04 4.51 12.91 4.56 12.51C4.59 12.3 4.8 12.08 5.2 11.85C9.04 10.18 11.6 9.08 12.89 8.54C16.58 7.01 17.35 6.74 17.85 6.73C17.96 6.73 18.21 6.76 18.37 6.89C18.5 7 18.53 7.18 18.55 7.3C18.54 7.4 18.56 7.6 18.55 7.7Z" fill="currentColor"/>
               </svg>
             </div>
@@ -171,12 +187,23 @@ export default function LinkSocials() {
           </div>
           {loading === "telegram" ? (
             <div className="animate-spin h-4 w-4 border-2 border-text-secondary border-t-transparent rounded-full" />
+          ) : linkedStatus.telegram ? (
+            <span className="text-[13px] font-bold text-text-primary">Linked</span>
           ) : (
-            <span className={`text-[13px] font-bold ${linkedStatus.telegram ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary transition-colors"}`}>
-              {linkedStatus.telegram ? "Linked" : "Link"}
-            </span>
+            <div className="relative overflow-hidden h-[40px] w-[140px] rounded-[6px]">
+              <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <span className="text-[13px] font-bold text-text-primary">Link</span>
+              </div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[2.5] opacity-0 cursor-pointer">
+                <TelegramLoginWidget
+                  botName="TarenaAi_bot"
+                  onAuth={handleTelegramAuth}
+                  buttonSize="small"
+                />
+              </div>
+            </div>
           )}
-        </button>
+        </div>
       </div>
 
       <p className="text-text-muted text-[12px] text-center sm:text-left mb-6 leading-relaxed">

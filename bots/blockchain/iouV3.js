@@ -1,7 +1,6 @@
 import { keccak256, encodePacked, encodeFunctionData, parseUnits, decodeEventLog, erc20Abi } from 'viem';
-import { buildCeloClients, sendCeloTransaction } from './celoClient.js';
+import { buildCeloClients, sendCeloTransaction, sendTransactionWithNonce } from './celoClient.js';
 
-// The IOURegistryV3 ABI for the necessary functions
 export const IOU_REGISTRY_V3_ABI = [
   { type: 'function', name: 'createConditionalIOU', stateMutability: 'nonpayable', inputs: [{ name: 'amount', type: 'uint256' }, { name: 'recipientId', type: 'bytes32' }, { name: 'conditionHash', type: 'bytes32' }], outputs: [{ name: 'iouId', type: 'uint256' }] },
   { type: 'function', name: 'resolveConditional', stateMutability: 'nonpayable', inputs: [{ name: 'iouId', type: 'uint256' }, { name: 'resolvedInFavor', type: 'uint8' }], outputs: [] },
@@ -17,15 +16,10 @@ export const IOU_REGISTRY_V3_ABI = [
 
 const CELO_USDT = '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e';
 
-// Deterministic identity hash: keccak256("platform:userId")
 export function getRecipientId(platform, userId) {
   return keccak256(encodePacked(['string', 'string', 'string'], [platform, ':', userId]));
 }
 
-/**
- * Executes createConditionalIOU on-chain via the executor wallet.
- * This is called by the bot when a user places a bet.
- */
 export async function createConditionalIOU({ senderAddress, amount, recipientId, conditionHash, jobId }) {
   const { publicClient, walletClient } = buildCeloClients('EXECUTOR_PRIVATE_KEY');
   const registry = process.env.IOU_REGISTRY_V3;
@@ -33,11 +27,8 @@ export async function createConditionalIOU({ senderAddress, amount, recipientId,
   if (!registry) throw new Error('IOU_REGISTRY_V3 address missing');
   if (!walletClient) throw new Error('EXECUTOR_PRIVATE_KEY missing');
 
-  const amountUnits = parseUnits(amount.toString(), 6); // USDT has 6 decimals
+  const amountUnits = parseUnits(amount.toString(), 6);
 
-  // Pre-flight: sender must have allowance to IOURegistryV3
-  // In a real flow, the sender signs a permit or approves this beforehand.
-  // For the sake of the bot executing on behalf, the bot relies on the user having given allowance.
   const allowance = await publicClient.readContract({
     address: CELO_USDT,
     abi: erc20Abi,
@@ -68,18 +59,17 @@ export async function createConditionalIOU({ senderAddress, amount, recipientId,
 
   let gas;
   try {
-    // We estimate gas as the executor, pretending to be the caller
     gas = await publicClient.estimateGas({ account: walletClient.account, to: registry, data });
   } catch (e) {
     throw new Error(`Gas estimation failed: ${e.message}`);
   }
 
-  // Use CIP-64 sendCeloTransaction
-  const hash = await sendCeloTransaction(walletClient, {
+  // Use Mutex sendTransactionWithNonce
+  const hash = await sendTransactionWithNonce(walletClient, publicClient, {
     account: walletClient.account,
     to: registry,
     data,
-    gas: gas + (gas / 5n), // add 20% buffer
+    gas: gas + (gas / 5n),
   });
 
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -88,7 +78,6 @@ export async function createConditionalIOU({ senderAddress, amount, recipientId,
     throw new Error(`On-chain create reverted (${hash})`);
   }
 
-  // Extract iouId
   let iouId = null;
   for (const log of receipt.logs) {
     if (log.address.toLowerCase() !== registry.toLowerCase()) continue;
@@ -104,9 +93,6 @@ export async function createConditionalIOU({ senderAddress, amount, recipientId,
   return { iouId, txHash: hash };
 }
 
-/**
- * Called by the Oracle to resolve the condition
- */
 export async function resolveConditional(iouId, resolvedInFavor) {
   const { publicClient, walletClient } = buildCeloClients('VAULT_PRIVATE_KEY');
   const registry = process.env.IOU_REGISTRY_V3;
@@ -118,7 +104,7 @@ export async function resolveConditional(iouId, resolvedInFavor) {
   });
 
   let gas = await publicClient.estimateGas({ account: walletClient.account, to: registry, data });
-  const hash = await sendCeloTransaction(walletClient, {
+  const hash = await sendTransactionWithNonce(walletClient, publicClient, {
     account: walletClient.account,
     to: registry,
     data,
@@ -129,9 +115,6 @@ export async function resolveConditional(iouId, resolvedInFavor) {
   return hash;
 }
 
-/**
- * Called by the Oracle to push funds to a connected wallet recipient
- */
 export async function claimConditional(iouId, recipientAddress, recipientId) {
   const { publicClient, walletClient } = buildCeloClients('VAULT_PRIVATE_KEY');
   const registry = process.env.IOU_REGISTRY_V3;
@@ -143,7 +126,7 @@ export async function claimConditional(iouId, recipientAddress, recipientId) {
   });
 
   let gas = await publicClient.estimateGas({ account: walletClient.account, to: registry, data });
-  const hash = await sendCeloTransaction(walletClient, {
+  const hash = await sendTransactionWithNonce(walletClient, publicClient, {
     account: walletClient.account,
     to: registry,
     data,

@@ -6,6 +6,9 @@ import { useTheme } from "next-themes";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
+import { useWallet } from "@/components/WalletProvider";
+import { supabase } from "@/lib/supabaseClient";
+import { toast } from "react-hot-toast";
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -27,6 +30,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { theme, setTheme } = useTheme();
+  const { address } = useWallet();
   const [mounted, setMounted] = useState(false);
   const [allowanceAmount, setAllowanceAmount] = useState("50.00");
   const [isAllowanceModalOpen, setIsAllowanceModalOpen] = useState(false);
@@ -34,6 +38,52 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
+
+  const [profile, setProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && address) {
+      setLoadingProfile(true);
+      supabase
+        .from("wallet_profiles")
+        .select("*")
+        .eq("wallet_address", address.toLowerCase())
+        .single()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setProfile(data);
+          }
+          setLoadingProfile(false);
+        });
+    }
+  }, [isOpen, address]);
+
+  const handleDisconnect = async (platform: 'x' | 'discord' | 'telegram') => {
+    if (!profile) return;
+    const updates: any = {};
+    if (platform === 'x') {
+      updates.x_username = null;
+      updates.x_user_id = null;
+      updates.x_verified = false;
+    } else if (platform === 'discord') {
+      updates.discord_id = null;
+    } else if (platform === 'telegram') {
+      updates.telegram_id = null;
+    }
+
+    const { error } = await supabase
+      .from("wallet_profiles")
+      .update(updates)
+      .eq("id", profile.id);
+
+    if (error) {
+      toast.error(`Failed to disconnect ${platform}`);
+    } else {
+      setProfile({ ...profile, ...updates });
+      toast.success(`Disconnected ${platform}`);
+    }
+  };
 
   // Wagmi Hooks for Approval
   const { data: hash, isPending, writeContract, error } = useWriteContract();
@@ -132,11 +182,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <span className="text-text-secondary text-[11px] uppercase tracking-[0.1em] font-bold mb-1">Backup</span>
                 <div className="bg-bg-center border border-border rounded-[10px] p-4 flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-text-primary font-bold text-[13px]">Connected via Google</span>
-                    <span className="text-text-muted text-[12px] mt-0.5">user@example.com</span>
+                    <span className="text-text-primary font-bold text-[13px]">
+                      {profile?.google_email ? "Connected via Google" : "No Cloud Backup"}
+                    </span>
+                    {profile?.google_email && (
+                      <span className="text-text-muted text-[12px] mt-0.5">{profile.google_email}</span>
+                    )}
                     <span className="text-text-muted text-[11px] mt-2 flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></div>
-                      Last backed up: Just now
+                      <div className={`w-1.5 h-1.5 rounded-full ${profile?.google_email ? "bg-[#10B981]" : "bg-text-muted"}`}></div>
+                      {profile?.google_email ? "Backed up" : "Not backed up"}
                     </span>
                   </div>
                   <button className="text-text-primary border border-border hover:bg-border px-4 py-2 rounded-[8px] text-[12px] font-bold transition-colors">
@@ -160,12 +214,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-text-primary text-[14px] font-medium">X (Twitter)</span>
-                        <span className="text-text-muted text-[12px]">@satoshin</span>
+                        <span className="text-text-muted text-[12px]">{profile?.x_username ? `@${profile.x_username}` : "Not connected"}</span>
                       </div>
                     </div>
-                    <button className="text-text-secondary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
-                      Disconnect
-                    </button>
+                    {profile?.x_username ? (
+                      <button onClick={() => handleDisconnect('x')} className="text-text-secondary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
+                        Disconnect
+                      </button>
+                    ) : (
+                      <button onClick={() => window.open("/link-socials", "_blank")} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
+                        Connect
+                      </button>
+                    )}
                   </div>
 
                   {/* Discord */}
@@ -178,12 +238,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-text-primary text-[14px] font-medium">Discord</span>
-                        <span className="text-text-muted text-[12px]">Not connected</span>
+                        <span className="text-text-muted text-[12px]">{profile?.discord_id ? "Connected" : "Not connected"}</span>
                       </div>
                     </div>
-                    <button className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
-                      Connect
-                    </button>
+                    {profile?.discord_id ? (
+                      <button onClick={() => handleDisconnect('discord')} className="text-text-secondary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
+                        Disconnect
+                      </button>
+                    ) : (
+                      <button onClick={() => window.open("/link-socials", "_blank")} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
+                        Connect
+                      </button>
+                    )}
                   </div>
 
                   {/* Telegram */}
@@ -196,12 +262,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-text-primary text-[14px] font-medium">Telegram</span>
-                        <span className="text-text-muted text-[12px]">Not connected</span>
+                        <span className="text-text-muted text-[12px]">{profile?.telegram_id ? "Connected" : "Not connected"}</span>
                       </div>
                     </div>
-                    <button className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
-                      Connect
-                    </button>
+                    {profile?.telegram_id ? (
+                      <button onClick={() => handleDisconnect('telegram')} className="text-text-secondary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
+                        Disconnect
+                      </button>
+                    ) : (
+                      <button onClick={() => window.open("/link-socials", "_blank")} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
+                        Connect
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

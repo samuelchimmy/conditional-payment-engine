@@ -180,7 +180,7 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
                 <button
                   onClick={() => handleBackup()}
                   disabled={pin.length !== 4 || status === 'verifying' || status === 'backing_up'}
-                  className="h-[52px] px-6 bg-[#D53131] hover:bg-[#D53131]/90 text-[#000000] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-[64px] h-[52px] flex-shrink-0 bg-[#D53131] hover:bg-[#D53131]/90 text-[#000000] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {status === 'verifying' || status === 'backing_up' ? (
                     <Loader2 className="w-5 h-5 animate-spin" />

@@ -27,9 +27,9 @@ export default function BackupSeed() {
   };
 
   return (
-    <div className="w-full max-w-[420px] flex flex-col pt-8 pb-12">
-      <div className="mb-8 text-center sm:text-left">
-        <h1 className="text-text-primary text-[28px] font-[800] leading-tight">
+    <div className="w-full max-w-[420px] flex flex-col pt-8 pb-12 mx-auto">
+      <div className="mb-8 text-center">
+        <h1 className="text-text-primary text-[26px] font-[800] leading-tight">
           Backup your wallet
         </h1>
         <p className="text-text-muted text-[14px] mt-2">

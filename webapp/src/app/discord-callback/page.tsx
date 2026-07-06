@@ -42,23 +42,30 @@ export default function DiscordCallbackPage() {
           throw new Error("Supabase client not initialized.");
         }
 
-        const { data, error } = await supabase.functions.invoke("discord-oauth", {
+        const response = await supabase.functions.invoke("discord-oauth", {
           body: { code, redirectUri, profileId, walletAddress },
         });
 
-        if (error) throw error;
-        if (data?.error) {
+        let errMsg = response.data?.error || response.error?.message;
+        if (response.error && (response.error as any).context) {
+          try {
+            const body = await (response.error as any).context.json();
+            if (body.error) errMsg = body.error;
+          } catch(e) {}
+        }
+
+        if (errMsg) {
           setStatus("error");
-          setMessage(data.error);
+          setMessage(errMsg);
           return;
         }
 
         setStatus("success");
-        setMessage(`Connected as ${data.discord_username}!`);
+        setMessage(`Connected as ${response.data.discord_username}!`);
 
         // Notify the opener window and close
         if (window.opener) {
-          window.opener.postMessage({ type: "discord-oauth-success", ...data }, window.location.origin);
+          window.opener.postMessage({ type: "discord-oauth-success", ...response.data }, window.location.origin);
           setTimeout(() => window.close(), 1500);
         }
       } catch (e: any) {
@@ -71,8 +78,8 @@ export default function DiscordCallbackPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
-      <div className="text-center space-y-4 max-w-sm">
+    <div className="w-full max-w-[420px] mx-auto flex flex-col items-center justify-center pt-12 pb-12">
+      <div className="text-center space-y-4 w-full">
         {status === "loading" && (
           <>
             <Loader2 className="w-12 h-12 animate-spin text-[#F2F1EF] mx-auto" />

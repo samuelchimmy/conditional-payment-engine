@@ -1,44 +1,71 @@
 import { createClient } from '@supabase/supabase-js';
 
-let supabaseClient = null;
+let supabase;
+
+export function initSupabase() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    console.warn('[DB] Supabase credentials missing. Database operations will fail.');
+  }
+  supabase = createClient(
+    process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_KEY || 'placeholder'
+  );
+}
 
 export function getSupabase() {
-  if (supabaseClient) return supabaseClient;
-
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
-  }
-
-  supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
-  return supabaseClient;
+  if (!supabase) initSupabase();
+  return supabase;
 }
 
-export async function insertConditionalPayment(paymentData) {
-  const supabase = getSupabase();
-  const { error } = await supabase
-    .from('conditional_payments')
-    .insert(paymentData);
+export async function insertConditionalPayment(data) {
+  const db = getSupabase();
+  const { error } = await db.from('conditional_payments').insert(data);
+  if (error) throw error;
+}
+
+// ---- Social Queue Functions ----
+
+export async function insertAgentTransaction(data) {
+  const db = getSupabase();
+  const { error } = await db.from('agent_transactions').insert(data);
   if (error) {
-    console.error('[DB] Failed to insert conditional payment:', error);
-    throw error;
+    console.error('[DB] Failed to insert agent transaction:', error);
   }
 }
 
-export async function updatePaymentStatus(iouId, status, resolvedInFavor = null) {
-  const supabase = getSupabase();
-  const updateData = { status };
-  if (resolvedInFavor !== null) updateData.resolved_in_favor = resolvedInFavor;
+export async function getUnrepliedTransactions(limit = 5, maxRetries = 3) {
+  const db = getSupabase();
+  const { data, error } = await db
+    .from('agent_transactions')
+    .select('*')
+    .eq('replied', false)
+    .lt('retry_count', maxRetries)
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
-  const { error } = await supabase
-    .from('conditional_payments')
-    .update(updateData)
-    .eq('iou_id', iouId);
-    
-  if (error) {
-    console.error(`[DB] Failed to update payment status for iouId ${iouId}:`, error);
-    throw error;
+  if (error) throw error;
+  return data || [];
+}
+
+export async function markTransactionReplied(transactionId, skipReason = null) {
+  const db = getSupabase();
+  const update = { replied: true };
+  if (skipReason) update.error_reason = skipReason;
+  await db.from('agent_transactions').update(update).eq('id', transactionId);
+}
+
+export async function incrementTransactionRetry(transactionId) {
+  const db = getSupabase();
+  try {
+    const { data: tx, error: fetchError } = await db
+      .from('agent_transactions').select('retry_count').eq('id', transactionId).single();
+    if (fetchError) throw fetchError;
+
+    const { error: updateError } = await db.from('agent_transactions')
+      .update({ retry_count: (tx?.retry_count || 0) + 1 })
+      .eq('id', transactionId);
+    if (updateError) throw updateError;
+  } catch (err) {
+    console.error(`  ❌ Failed to increment retry for ${transactionId}:`, err.message);
   }
 }

@@ -93,8 +93,8 @@ export default function Claim() {
 
         <div className="w-full h-[1px] bg-[#D1D1D1] mb-6"></div>
 
-        <div className="flex flex-col mb-6">
-          <label className="text-[#797977] text-[12px] mb-2">Claim to Wallet</label>
+        <div className="flex flex-col items-center mb-6">
+          <label className="text-[#797977] text-[12px] mb-2 text-center">Claim to Wallet</label>
           <div className="w-full h-[46px] bg-[#E2E1DF] border border-[#D1D1D1] rounded-[10px] px-4 flex items-center justify-center text-[#797977] text-[14px]">
             {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
           </div>

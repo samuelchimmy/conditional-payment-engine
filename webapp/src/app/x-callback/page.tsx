@@ -60,7 +60,14 @@ export default function XCallbackPage() {
           },
         });
 
-        const errMsg = response.data?.error || response.error?.message;
+        let errMsg = response.data?.error || response.error?.message;
+        if (response.error && (response.error as any).context) {
+          try {
+            const body = await (response.error as any).context.json();
+            if (body.error) errMsg = body.error;
+          } catch(e) {}
+        }
+
         if (errMsg) {
           if (/already linked/i.test(errMsg) && window.opener && !window.opener.closed) {
             const m = errMsg.match(/@([a-z0-9_]+)/i);
@@ -104,8 +111,8 @@ export default function XCallbackPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-      <div className="flex flex-col items-center gap-4 p-8 text-center max-w-sm">
+    <div className="w-full max-w-[420px] mx-auto flex flex-col items-center justify-center pt-12 pb-12">
+      <div className="flex flex-col items-center gap-4 p-8 text-center w-full">
         {status === "loading" && (
           <>
             <Loader2 className="w-8 h-8 animate-spin text-[#A5A5A3]" />
