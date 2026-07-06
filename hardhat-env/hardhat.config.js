@@ -24,9 +24,19 @@ export default {
       chainId: 42220
     },
     alfajores: {
-      url: "https://alfajores-forno.celo-testnet.org",
+      url: "https://celo-alfajores.publicnode.com",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 44787
+    },
+    sepolia: {
+      url: "https://ethereum-sepolia-rpc.publicnode.com",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 11155111
+    },
+    mainnet: {
+      url: "https://ethereum-rpc.publicnode.com",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 1
     }
   },
   sourcify: {

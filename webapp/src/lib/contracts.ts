@@ -1,4 +1,4 @@
-export const IOURegistryV3Address = "0x8667BdA2e01462Ea229966E01806BF60F8f2f9f4";
+export const IOURegistryV3Address = "0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C";
 export const USDTAddressCelo = "0x48065fbBE25f71C9282ddf5e1cD6D6A882427259";
 
 export const IOURegistryV3ABI = [
