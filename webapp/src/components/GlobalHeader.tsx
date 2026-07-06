@@ -40,10 +40,13 @@ export function GlobalHeader() {
         </button>
       )}
 
-      <Link href="/" className="flex items-baseline gap-0.5 hover:opacity-90 transition-opacity">
-        <span className="font-[800] text-text-primary text-[28px] tracking-tight">tether</span>
-        <span className="font-[800] text-text-secondary text-[28px]">.</span>
-        <span className="font-[400] text-text-primary text-[28px] tracking-tight">arena</span>
+      <Link href="/" className="flex flex-col items-center gap-2 hover:opacity-90 transition-opacity">
+        <img src="/logo.png" alt="tether.arena logo" className="w-12 h-12 object-contain" />
+        <div className="flex items-baseline gap-0.5">
+          <span className="font-[800] text-text-primary text-[28px] tracking-tight">tether</span>
+          <span className="font-[800] text-text-secondary text-[28px]">.</span>
+          <span className="font-[400] text-text-primary text-[28px] tracking-tight">arena</span>
+        </div>
       </Link>
       <p className="text-text-secondary text-[14px] font-bold mt-1">
         The Conditional Payment Engine

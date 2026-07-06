@@ -55,8 +55,16 @@ export default function Deposit() {
 
           {/* QR Code Expansion Panel */}
           <div className="w-full bg-[#050505] border-x border-b border-border-emphasis p-6 flex flex-col items-center rounded-b-[10px]">
-            <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 flex items-center justify-center">
-              <div className="w-full h-full border-4 border-black border-dashed flex items-center justify-center text-black font-bold text-[11px]">QR CODE</div>
+            <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 relative flex items-center justify-center">
+              {/* This represents a QR code for the Celo address */}
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CeloDeposit`} alt="QR Code" className="w-full h-full" />
+              
+              {/* Logo superimposed in the center */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-white rounded-full p-1 shadow-sm">
+                  <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+                </div>
+              </div>
             </div>
             
             <span className="font-mono text-text-primary text-[15px] tracking-wide mb-2">0x4f2a...8c3b</span>

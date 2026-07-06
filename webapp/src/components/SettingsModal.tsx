@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
-import { ERC20ABI, USDTAddressCelo, IOURegistryV3AddressCelo } from "@/lib/contracts";
+import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -54,7 +54,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [IOURegistryV3AddressCelo, amountParsed],
+        args: [IOURegistryV3Address, amountParsed],
       });
     } catch (e) {
       console.error("Invalid amount", e);

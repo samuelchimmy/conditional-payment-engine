@@ -126,6 +126,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   </div>
                 </div>
 
+                <div className="flex gap-2 w-full mt-4">
                   <button 
                     onClick={() => {
                       if (!balanceData) return;
