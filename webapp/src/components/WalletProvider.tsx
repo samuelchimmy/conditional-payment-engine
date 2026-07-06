@@ -122,23 +122,22 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
 
   const restoreWallet = async (mnemonic: string) => {
     try {
-      const signer = new EvmSigner();
-      await signer.init(mnemonic, 'evm');
-      
-      const addresses = signer.getAddresses();
-      if (addresses.length === 0) throw new Error("No addresses generated from mnemonic");
-      
-      const addr = addresses[0];
+      const root = new SeedSignerEvm(mnemonic);
+      const wallet = new WalletManagerEvm(root, {
+        provider: 'https://forno.celo.org', // Celo mainnet public RPC
+      });
+      const account = await wallet.getAccount(0);
+      const generatedAddress = await account.getAddress();
 
       setState({
         isConnected: true,
-        address: addr,
+        address: generatedAddress,
         authMethod: "wdk",
         seedPhrase: mnemonic,
-        wdkAccount: signer
+        wdkAccount: account,
       });
       setIsRegistered(true);
-      return { address: addr };
+      return { address: generatedAddress };
     } catch (e: any) {
       throw new Error(`Restore failed: ${e.message}`);
     }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/components/WalletProvider";
 
 interface TelegramLoginWidgetProps {
   botName: string;
@@ -21,7 +21,7 @@ export function TelegramLoginWidget({
   usePic = true,
 }: TelegramLoginWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { profile, address } = useWallet();
+  const { address } = useWallet();
 
   useEffect(() => {
     // Add global callback function for the widget
@@ -40,7 +40,7 @@ export function TelegramLoginWidget({
     script.setAttribute("data-onauth", "onTelegramAuth(user)");
     script.async = true;
 
-    // We pass state (profileId, address) to the API manually via the onAuth callback, 
+    // We pass state (address) to the API manually via the onAuth callback, 
     // so we don't need a redirect URL here.
     
     if (containerRef.current) {
