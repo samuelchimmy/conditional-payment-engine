@@ -162,7 +162,7 @@ export function SocialLinkingCard() {
             disabled={loading !== null || linkedStatus.twitter}
             className={`h-[36px] px-5 rounded-[8px] text-[12px] font-bold flex items-center justify-center transition-all duration-300 min-w-[90px]
               ${linkedStatus.twitter 
-                ? "bg-transparent border border-[#3A3A3A] text-[#F2F1EF]" 
+                ? "bg-success text-[#F2F1EF]" 
                 : "bg-accent text-accent-text hover:opacity-90 disabled:opacity-50"}`}
           >
             {loading === "twitter" ? (
@@ -190,7 +190,7 @@ export function SocialLinkingCard() {
             disabled={loading !== null || linkedStatus.discord}
             className={`h-[36px] px-5 rounded-[8px] text-[12px] font-bold flex items-center justify-center transition-all duration-300 min-w-[90px]
               ${linkedStatus.discord 
-                ? "bg-transparent border border-[#3A3A3A] text-[#F2F1EF]" 
+                ? "bg-success text-[#F2F1EF]" 
                 : "bg-accent text-accent-text hover:opacity-90 disabled:opacity-50"}`}
           >
             {loading === "discord" ? (
@@ -218,7 +218,7 @@ export function SocialLinkingCard() {
               disabled={loading !== null || linkedStatus.telegram}
               className={`h-[36px] px-5 rounded-[8px] text-[12px] font-bold flex items-center justify-center transition-all duration-300 min-w-[90px]
                 ${linkedStatus.telegram 
-                  ? "bg-transparent border border-[#3A3A3A] text-[#F2F1EF]" 
+                  ? "bg-success text-[#F2F1EF]" 
                   : "bg-accent text-accent-text hover:opacity-90 disabled:opacity-50"}`}
             >
               {loading === "telegram" ? (

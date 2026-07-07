@@ -138,7 +138,7 @@ export function ApproveCard() {
           disabled={isPending || isConfirming || !address || justApproved}
           className={`h-[46px] px-6 font-bold rounded-[8px] flex items-center justify-center text-[13px] min-w-[120px] transition-all duration-300
             ${justApproved 
-              ? "bg-transparent border border-[#3A3A3A] text-[#F2F1EF]" 
+              ? "bg-success text-[#F2F1EF]" 
               : "bg-accent text-accent-text hover:opacity-90 disabled:opacity-50"}`}
         >
           {isPending || isConfirming ? (

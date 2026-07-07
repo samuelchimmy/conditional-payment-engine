@@ -12,6 +12,7 @@
   --text-muted: #797977;
   --accent: #D53131;
   --accent-text: #000000;
+  --success: #009393;
 }
 
 .light {
@@ -26,6 +27,7 @@
   --text-muted: #797977;
   --accent: #D53131;
   --accent-text: #FFFFFF;
+  --success: #009393;
 }
 
 @theme inline {
@@ -40,6 +42,7 @@
   --color-text-muted: var(--text-muted);
   --color-accent: var(--accent);
   --color-accent-text: var(--accent-text);
+  --color-success: var(--success);
   --font-sans: var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
