@@ -127,7 +127,18 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
             <Cloud className="w-5 h-5 text-[#F2F1EF]" />
           )}
         </div>
-        <div className="flex-1"/>
+        <div className="flex-1 flex flex-col">
+          <span className="text-[#F2F1EF] font-bold text-[13px]">
+            {lastBackup ? "Connected via Google" : "No Cloud Backup"}
+          </span>
+          {lastBackup && existingBackupDate && (
+            <span className="text-[#797977] text-[12px] mt-0.5">Last: {formatDate(existingBackupDate)}</span>
+          )}
+          <span className="text-[#797977] text-[11px] mt-2 flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${lastBackup ? "bg-[#10B981]" : "bg-[#797977]"}`}></div>
+            {lastBackup ? "Backed up" : "Not backed up"}
+          </span>
+        </div>
 
         {!showPinInput && status !== 'success' && (
           <button

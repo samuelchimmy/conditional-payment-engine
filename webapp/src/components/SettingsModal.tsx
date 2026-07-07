@@ -282,39 +282,35 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               {/* Backup Info */}
               <div className="flex flex-col gap-2">
                 <span className="text-text-secondary text-[11px] uppercase tracking-[0.1em] font-bold mb-1">Backup</span>
-                <div className="bg-bg-center border border-border rounded-[10px] p-4 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-text-primary font-bold text-[13px]">
-                      {(profile?.google_email || authMethod === 'google') ? "Connected via Google" : "No Cloud Backup"}
-                    </span>
-                    {(profile?.google_email || authMethod === 'google') && (
+                {(profile?.google_email || authMethod === 'google') ? (
+                  <div className="bg-bg-center border border-border rounded-[10px] p-4 flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-text-primary font-bold text-[13px]">
+                        Connected via Google
+                      </span>
                       <span className="text-text-muted text-[12px] mt-0.5">{profile?.google_email || "Active via Auth"}</span>
-                    )}
-                    <span className="text-text-muted text-[11px] mt-2 flex items-center gap-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${(profile?.google_email || authMethod === 'google') ? "bg-[#10B981]" : "bg-text-muted"}`}></div>
-                      {(profile?.google_email || authMethod === 'google') ? "Backed up" : "Not backed up"}
-                    </span>
-                  </div>
-                  {(profile?.google_email || authMethod === 'google') ? (
+                      <span className="text-text-muted text-[11px] mt-2 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></div>
+                        Backed up
+                      </span>
+                    </div>
                     <button className="text-text-primary border border-border hover:bg-border px-4 py-2 rounded-[8px] text-[12px] font-bold transition-colors">
                       Manage
                     </button>
-                  ) : (
-                    <div className="scale-75 origin-right">
-                      <GoogleDriveBackup 
-                        payloadToBackup={seedPhrase || ""} 
-                        payTag={address || "unknown"} 
-                        onSuccess={() => {
-                           if (address) {
-                             getProfile(address).then(({ data }) => {
-                               if (data) setProfile(data);
-                             });
-                           }
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <GoogleDriveBackup 
+                    payloadToBackup={seedPhrase || ""} 
+                    payTag={address || "unknown"} 
+                    onSuccess={() => {
+                       if (address) {
+                         getProfile(address).then(({ data }) => {
+                           if (data) setProfile(data);
+                         });
+                       }
+                    }}
+                  />
+                )}
               </div>
 
               {/* Connected Socials */}
