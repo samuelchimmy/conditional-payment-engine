@@ -10,6 +10,7 @@ import { useWallet } from "@/components/WalletProvider";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "react-hot-toast";
 import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
+import { GoogleDriveBackup } from "@/components/GoogleDriveBackup";
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -31,7 +32,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { theme, setTheme } = useTheme();
-  const { address, disconnectWallet, authMethod } = useWallet();
+  const { address, disconnectWallet, authMethod, seedPhrase } = useWallet();
   const [mounted, setMounted] = useState(false);
   const [allowanceAmount, setAllowanceAmount] = useState("50.00");
   const [isAllowanceModalOpen, setIsAllowanceModalOpen] = useState(false);
@@ -43,6 +44,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [paymentAlertsEnabled, setPaymentAlertsEnabled] = useState(true);
 
   useEffect(() => {
     if (isOpen && address) {
@@ -295,9 +298,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       {(profile?.google_email || authMethod === 'google') ? "Backed up" : "Not backed up"}
                     </span>
                   </div>
-                  <button className="text-text-primary border border-border hover:bg-border px-4 py-2 rounded-[8px] text-[12px] font-bold transition-colors">
-                    Manage
-                  </button>
+                  {(profile?.google_email || authMethod === 'google') ? (
+                    <button className="text-text-primary border border-border hover:bg-border px-4 py-2 rounded-[8px] text-[12px] font-bold transition-colors">
+                      Manage
+                    </button>
+                  ) : (
+                    <div className="scale-75 origin-right">
+                      <GoogleDriveBackup 
+                        payloadToBackup={seedPhrase || ""} 
+                        payTag={address || "unknown"} 
+                        onSuccess={() => {
+                           if (address) {
+                             supabase.from("wallet_profiles").select("*").eq("wallet_address", address.toLowerCase()).single().then(({data}) => {
+                               if(data) setProfile(data);
+                             });
+                           }
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -399,7 +418,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">
                     <span className="text-text-primary text-[14px] font-medium">Notifications</span>
-                    <ToggleSwitch checked={true} onChange={() => {}} />
+                    <ToggleSwitch checked={notificationsEnabled} onChange={(c) => setNotificationsEnabled(c)} />
                   </div>
                   
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">
@@ -407,7 +426,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <span className="text-text-primary text-[14px] font-medium">Payment alerts & updates</span>
                       <span className="text-text-muted text-[12px] mt-0.5">Receive updates when funds move</span>
                     </div>
-                    <ToggleSwitch checked={true} onChange={() => {}} />
+                    <ToggleSwitch checked={paymentAlertsEnabled} onChange={(c) => setPaymentAlertsEnabled(c)} />
                   </div>
 
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">

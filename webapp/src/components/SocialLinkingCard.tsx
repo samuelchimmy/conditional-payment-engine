@@ -22,15 +22,15 @@ export function SocialLinkingCard() {
     const fetchStatus = async () => {
       const { data } = await supabase
         .from('wallet_profiles')
-        .select('x_username, discord_username, telegram_username')
+        .select('x_username, discord_id, telegram_id')
         .eq('wallet_address', address.toLowerCase())
         .single();
         
       if (data) {
         setLinkedStatus({
           twitter: !!data.x_username,
-          discord: !!data.discord_username,
-          telegram: !!data.telegram_username
+          discord: !!data.discord_id,
+          telegram: !!data.telegram_id
         });
       }
     };

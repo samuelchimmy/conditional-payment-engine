@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { useWatchContractEvent } from "wagmi";
+import { useReadContract } from "wagmi";
 import confetti from "canvas-confetti";
 import { useWallet } from "@/components/WalletProvider";
 import { playConfettiSound } from "@/lib/sounds";
@@ -21,25 +21,35 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [depositSuccess, setDepositSuccess] = useState(false);
   const [receivedAmount, setReceivedAmount] = useState<string | null>(null);
 
-  // Watch for incoming USDT transfers
-  useWatchContractEvent({
+  const [initialBalance, setInitialBalance] = useState<bigint | null>(null);
+
+  const { data: currentBalance } = useReadContract({
     address: USDTAddressCelo,
     abi: ERC20ABI,
-    eventName: "Transfer",
-    args: {
-      to: address,
-    },
-    onLogs(logs) {
-      if (!isOpen || !logs || logs.length === 0) return;
-      
-      const log = logs[0] as any;
-      if (log && log.args && log.args.value) {
-        const amountFormatted = formatUnits(log.args.value, 6);
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: {
+      enabled: isOpen && !!address,
+      refetchInterval: 3000,
+    }
+  });
+
+  useEffect(() => {
+    if (isOpen && currentBalance !== undefined && initialBalance === null) {
+      setInitialBalance(currentBalance as bigint);
+    }
+  }, [isOpen, currentBalance, initialBalance]);
+
+  useEffect(() => {
+    if (isOpen && initialBalance !== null && currentBalance !== undefined) {
+      const curr = currentBalance as bigint;
+      if (curr > initialBalance) {
+        const diff = curr - initialBalance;
+        const amountFormatted = formatUnits(diff, 6);
         setReceivedAmount(amountFormatted);
         setDepositSuccess(true);
         playConfettiSound();
       
-        // Trigger dark orange/white/black confetti
         confetti({
           particleCount: 150,
           spread: 70,
@@ -47,22 +57,15 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
           colors: ['#D53131', '#F2F1EF', '#050505', '#181818']
         });
 
-        // Auto close after 4 seconds
         setTimeout(() => {
           onClose();
           setDepositSuccess(false);
           setReceivedAmount(null);
+          setInitialBalance(null);
         }, 4000);
       }
-
-      // Auto close after 4 seconds
-      setTimeout(() => {
-        onClose();
-        setDepositSuccess(false);
-        setReceivedAmount(null);
-      }, 4000);
-    },
-  });
+    }
+  }, [currentBalance, initialBalance, isOpen, onClose]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -70,6 +73,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       document.body.style.overflow = "hidden";
       setDepositSuccess(false);
       setReceivedAmount(null);
+      setInitialBalance(null);
     } else {
       document.body.style.overflow = "unset";
     }

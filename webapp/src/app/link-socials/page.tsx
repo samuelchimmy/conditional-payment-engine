@@ -24,6 +24,26 @@ export default function LinkSocials() {
   const hasLinkedAll = Object.values(linkedStatus).every(Boolean);
 
   useEffect(() => {
+    if (!address) return;
+    const fetchStatus = async () => {
+      const { data } = await supabase
+        .from('wallet_profiles')
+        .select('x_username, discord_id, telegram_id')
+        .eq('wallet_address', address.toLowerCase())
+        .single();
+        
+      if (data) {
+        setLinkedStatus({
+          twitter: !!data.x_username,
+          discord: !!data.discord_id,
+          telegram: !!data.telegram_id
+        });
+      }
+    };
+    fetchStatus();
+  }, [address]);
+
+  useEffect(() => {
     if (hasLinkedAll) {
       handleContinue();
     }
@@ -138,7 +158,7 @@ export default function LinkSocials() {
   };
 
   return (
-    <div className="w-full max-w-[420px] flex flex-col pt-12 pb-12">
+    <div className="w-full max-w-[420px] flex flex-col pt-12 pb-12 mx-auto">
       <div className="mb-10 text-center sm:text-left">
         <h1 className="text-text-primary text-[28px] font-[800]">
           Link social accounts

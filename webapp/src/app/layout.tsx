@@ -78,23 +78,23 @@ export default function RootLayout({
           position="bottom-center"
           toastOptions={{
             style: {
-              background: '#0D0D0D',
-              color: '#F2F1EF',
-              border: '1px solid #2A2A2A',
+              background: 'var(--surface)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border)',
               fontSize: '14px',
               fontWeight: 500,
               borderRadius: '10px'
             },
             success: {
               iconTheme: {
-                primary: '#F2F1EF',
-                secondary: '#0D0D0D',
+                primary: 'var(--success)',
+                secondary: 'var(--surface)',
               },
             },
             error: {
               iconTheme: {
-                primary: '#D53131',
-                secondary: '#0D0D0D',
+                primary: 'var(--accent)',
+                secondary: 'var(--surface)',
               },
             },
           }}
