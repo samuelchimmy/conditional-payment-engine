@@ -65,6 +65,13 @@ body {
 }
 
 /* Theme-aware Logo Filters */
+.theme-logo-main {
+  filter: invert(1) hue-rotate(180deg);
+}
+.light .theme-logo-main {
+  filter: none;
+}
+
 .theme-logo-wdk, .theme-logo-wc {
   filter: none;
 }

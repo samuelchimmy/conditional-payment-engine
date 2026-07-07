@@ -41,7 +41,7 @@ export function GlobalHeader() {
       )}
 
       <Link href="/" className="flex flex-col items-center gap-2 hover:opacity-90 transition-opacity">
-        <img src="/logo.png" alt="tether.arena logo" className="w-12 h-12 object-contain" />
+        <img src="/logo.png" alt="tether.arena logo" className="w-16 h-16 object-contain theme-logo-main transition-all duration-300" />
         <div className="flex items-baseline gap-0.5">
           <span className="font-[800] text-text-primary text-[28px] tracking-tight">tether</span>
           <span className="font-[800] text-text-secondary text-[28px]">.</span>
