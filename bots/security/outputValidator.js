@@ -17,7 +17,8 @@ const ALLOWED_TYPES = new Set([
   'conditional_payment', 'simple_payment', 'claim', 'balance', 'injection_attempt'
 ]);
 
-const ALLOWED_CHAINS = new Set(['celo', 'base', 'bsc', 'polygon', 'ethereum', 'ink']);
+// Tether Arena settles exclusively on Celo (native USDT + CIP-64 gas-in-USDT).
+const ALLOWED_CHAINS = new Set(['celo']);
 
 /**
  * Validates the parsed command from the AI.

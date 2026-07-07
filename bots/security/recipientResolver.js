@@ -4,7 +4,7 @@
  * Prevents username-hijacking attacks (C1).
  */
 
-import { supabase } from '../db/supabase.js';
+import { getSupabase } from '../db/supabase.js';
 
 /**
  * Resolve a recipient @handle to their immutable platform user ID.
@@ -21,6 +21,7 @@ export async function resolveRecipientToId(platform, handle) {
   const cleanHandle = handle.replace(/^@/, '').toLowerCase().trim();
 
   // Step 1: Check our database first — fastest path
+  const supabase = getSupabase();
   if (supabase) {
     try {
       let query = supabase.from('wallet_profiles').select('x_user_id, discord_id, telegram_id');

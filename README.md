@@ -1,15 +1,12 @@
 <div align="center">
-<div align="center">
 
 <img src="https://em-content.zobj.net/source/apple/391/soccer-ball_26bd.png" width="80" height="80" />
 
 # Tether Arena
 
-</div>
+**Put Your Money Where Your Mouth Is.**
 
-**Put Your Money Where Your Mouth Is..** 
-
-AI powered Conditional USDT payments for football fans, settled onchain.
+AI-powered conditional USDT payments for football fans, settled on-chain.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Chain: Celo](https://img.shields.io/badge/Chain-Celo-35D07F)](https://celo.org)
@@ -17,124 +14,183 @@ AI powered Conditional USDT payments for football fans, settled onchain.
 [![Wallet: WDK](https://img.shields.io/badge/Wallet-WDK-26A17B)](https://wdk.tether.io)
 [![Built for: Tether Developers Cup](https://img.shields.io/badge/Built%20for-Tether%20Developers%20Cup-green)](https://cup.tether.io)
 
----
+**🌐 [tarena.xyz](https://tarena.xyz) · 📹 [Demo Video](#demo) · 🏆 Tether Developers Cup — WDK Track**
 
 </div>
 
-## What Is Tether Arena?
-**Tether Arena** is the first AI-powered conditional payment engine for football. A fan types a bet in plain language on X, Discord, or Telegram, and the money locks in USDT escrow instantly, settles automatically when the match ends, and pays the winner without either party touching a wallet.
+---
 
-Tether Arena lets football fans make conditional USDT payments in plain language on X, Discord, or Telegram and the money moves automatically when the match settles.
-
-```
-@TetherArena send 15 USDT to @jade if Nigeria beats Brazil
-```
-
-That's it. The AI agent parses the intent, locks 15 USDT in escrow on Celo, waits for Nigeria vs Brazil to finish, and if Nigeria wins pays @jade automatically. If Nigeria loses, the 15 USDT goes back to the sender immediately.
-
-No prediction markets. No liquidity pools. No odds. No blockchain knowledge needed. Just conditional escrow and an AI agent living in your social feed.
+> ```
+> @TetherArena send 15 USDT to @jade if Nigeria beats Brazil
+> ```
+> The AI parses the intent, locks 15 USDT in self-custodial escrow on Celo, waits for the match to settle, and pays @jade automatically if Nigeria wins — or refunds the sender if they don't. **No prediction markets. No odds. No liquidity pools. No blockchain knowledge required.**
 
 ---
 
-## Core Ideas
+## 📹 Demo
 
-### 1. Conditional P2P
-Lock USDT against a match outcome. The contract holds funds; the oracle verifies the result from 3 independent sources; funds move automatically.
+> **▶️ Watch the 60-second demo:** [YouTube link — add before submission]
 
-### 2. MagicPay (Social Escrow)
-If the recipient has no wallet, funds are locked under their social identity hash (`keccak256("twitter:user_id")`). They claim it later by verifying their account their first-ever USDT, no prior crypto experience needed.
+*(Embed the demo GIF/video here — judges watch before they read.)*
 
-### 3. AI-Powered Intent Parsing
-Users talk naturally. Gemini 2.5 Flash extracts structured intent, routes it to the correct condition plugin, and the agent confirms or asks a clarifying question. English, Pidgin, Spanish, French — all supported.
+---
+
+## What Is Tether Arena?
+
+**Tether Arena** is an AI-powered conditional payment engine for football fans. A fan writes a bet in plain language on Telegram, Discord, or X, and the money locks in USDT escrow instantly, settles automatically when the match ends, and pays the winner — without either party needing to understand wallets, gas, or crypto.
+
+Three ideas make it work:
+
+### 1. Conditional P2P Escrow
+Lock USDT against a match outcome. A self-custodial smart contract holds the funds; an independent multi-source oracle verifies the result; funds move automatically on settlement.
+
+### 2. MagicPay — Social Escrow
+If the recipient has no wallet, funds are locked under their **social identity hash** (`keccak256("platform:user_id")`). They claim later by verifying their account and creating a wallet in ~30 seconds — often their first-ever USDT, with no prior crypto experience.
+
+### 3. AI-Powered Intent
+Users talk naturally. The agent extracts structured intent, routes it to the correct condition plugin, and confirms or asks a clarifying question before any money moves.
 
 ---
 
 ## How It Works
 
 ```
-Fan tweets: "@TetherArena send 10 USDT to @sam if the super eagles beat brazil"
+Fan: "@TetherArena send 10 USDT to @sam if the super eagles beat brazil"
                     │
                     ▼
     ┌───────────────────────────────┐
-    │   AI Intent Parser            │  Gemini 2.5 Flash
-    │   amount: 10 USDT             │  → structured JSON
-    │   recipient: @sam             │  → validated by Zod
+    │   AI Intent Parser            │  → structured JSON
+    │   amount: 10 USDT             │  → validated by Zod schema
+    │   recipient: @sam             │  → injection-hardened
     │   condition: Nigeria wins     │
     └──────────────┬────────────────┘
-                   │
                    ▼
     ┌───────────────────────────────┐
     │  Football Plugin              │  Normalizes "super eagles" → "nigeria"
-    │  Finds fixture: NG vs BR      │  Returns matchId + conditionPayload
-    │  Outcome: home_win required   │
+    │  Finds fixture: NG vs BR      │  Returns matchId + condition payload
     └──────────────┬────────────────┘
-                   │
                    ▼
     ┌───────────────────────────────┐
     │  IOURegistryV3 (Celo)         │  createConditionalIOU()
     │  10 USDT locked in escrow     │  conditionHash = keccak256(jobId)
-    │  Fee: 0.10 USDT → treasury    │  CIP-64: gas paid in USDT
+    │  Fee → treasury               │  CIP-64: executor pays gas in USDT
     └──────────────┬────────────────┘
                    │
         [ Match plays. Nigeria wins 2-0. ]
-                   │
                    ▼
     ┌───────────────────────────────┐
-    │  3-Source Oracle              │  football-data.org + API-Football
-    │  Consensus: NG 2-0 BR ✓       │  + openfootball — 2-of-3 agreement
-    │  Stability window: 10 min     │
+    │  Multi-Source Oracle          │  football-data.org · API-Football
+    │  Result: NG 2-0 BR ✓          │  · openfootball — cross-checked
     └──────────────┬────────────────┘
-                   │
                    ▼
     ┌───────────────────────────────┐
-    │  resolveConditional()         │  resolvedInFavor = 2 (recipient)
+    │  resolveConditional() → 2     │  outcome written on-chain (immutable)
     │  claimConditional()           │  10 USDT → @sam's wallet
     └───────────────────────────────┘
 
-Bot reply to sender: "🏆 Nigeria won 2-0! 10 USDT was sent to @sam."
-Bot DM to @sam:     "🎉 You won! @fan bet 10 USDT that Nigeria would beat Brazil. It's yours."
+Bot reply: "🏆 Nigeria won 2-0! 10 USDT was sent to @sam."
 ```
 
 ---
 
-## Architecture
+## ⚡ Quickstart
 
+> A judge should be able to clone and run this in minutes. Setup is split into the **web app** (the WDK wallet + escrow UI) and the **agent** (the multi-platform bot + oracle).
+
+### Prerequisites
+- Node.js 22+
+- A Supabase project (URL + service key)
+- A Celo wallet with a little CELO for gas (for the bot executor / for WDK wallets)
+- A Google AI (Gemini) API key
+- Platform bot tokens for whichever channels you demo (Telegram is the simplest)
+
+### 1. Web app
+```bash
+cd webapp
+npm install
+cp .env.example .env.local     # fill in Supabase + platform client IDs
+npm run dev                     # → http://localhost:3000
 ```
- SOCIAL PLATFORMS
-  X · Discord · Telegram
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  AI AGENT  (Node.js)                        │
-│  Platform Adapters → Pre-Filter → Gemini 2.5 Flash          │
-│  → Condition Plugin Router → Job Queue (Supabase)           │
-└─────────────────┬───────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│         IOURegistryV3 — Celo Mainnet (UUPS Proxy)           │
-│  createConditionalIOU · resolveConditional                  │
-│  claimConditional · refundConditional                       │
-└─────────────────┬───────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│         3-Source Consensus Oracle + Plugin Engine           │
-│  football.plugin · x_post.plugin · custom_api.plugin        │
-└─────────────────┬───────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Supabase — profiles · scheduled_jobs · match_results       │
-│  Edge Functions — create · resolve · claim · refund · notify│
-└─────────────────────────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Web App (Next.js) — Invisible Web3                         │
-│  /place · /claim · /dashboard · /admin                      │
-└─────────────────────────────────────────────────────────────┘
+
+### 2. Agent (bot + oracle)
+```bash
+cd bots
+npm install
+cp .env.example .env            # fill in Gemini, Celo keys, Supabase, bot tokens
+npm start                       # boots adapters + oracle workers
 ```
+
+### 3. Contract & database
+The contract (`IOURegistryV3`) is already deployed on Celo (see [address](#contract)). To redeploy or run the full stack, see [`docs/`](docs/) for the Hardhat and Supabase setup.
+
+**Environment variables** are documented in each folder's `.env.example`. The app degrades gracefully — a missing platform token disables only that adapter, not the whole agent.
+
+---
+
+## 🔑 WDK Integration (Wallets Track)
+
+Tether Arena is built on the **[Wallet Development Kit](https://wdk.tether.io)**. WDK powers the entire self-custodial experience:
+
+| WDK Capability | Where We Use It |
+|---|---|
+| **Wallet creation** | `WalletProvider.tsx` — a new self-custodial wallet is generated from a BIP-39 mnemonic via `WalletManagerEvm` / `SeedSignerEvm`, connected to Celo. |
+| **Signing & sending** | `lib/sendTx.ts` — a unified `useSendTx()` hook routes every on-chain write (approve, escrow lock, withdraw) through the WDK account's `sendTransaction()`. The self-custodial wallet signs its own transactions — no external connector. |
+| **Accounts** | `wallet.getAccount(0)` derives the account; balances and allowances are read directly from the WDK account. |
+| **Encrypted backup** | `lib/googleDriveBackup.ts` — the seed is encrypted client-side with **AES-GCM + PBKDF2** (random salt/IV) before optional Google Drive backup. The user always holds their own keys. |
+
+**Clean separation of concerns:** app/agent logic never touches raw keys. Wallet execution is isolated behind the WDK account interface, and the escrow contract enforces spending limits independently on-chain.
+
+> **Note:** the installed WDK EVM beta signs standard Celo transactions (gas in native CELO). CIP-64 gas-in-USDT is used by the **bot executor** path via a custom viem transaction builder.
+
+---
+
+## 🔐 Security Architecture
+
+Security is layered across the AI agent, the off-chain resolver, and the on-chain contract. Every claim below is implemented in this repository.
+
+### 1. AI Agent — 4-Layer Command Pipeline
+Every natural-language payment command passes through four independent gates before any money moves:
+
+1. **Input Sanitization** — 500-char cap, Unicode homoglyph normalization, HTML/JSON stripping. (`bots/security/inputSanitizer.js`)
+2. **Injection Regex Guard** — blocks known instruction-override / persona-hijack / prompt-extraction patterns *before* the LLM is called. (`bots/security/inputSanitizer.js`)
+3. **Isolated LLM Extraction** — the user message is wrapped in `<user_message>` tags and treated strictly as data, not instructions. Output is JSON-only. (`bots/parser/intentParser.js`)
+4. **Output Schema Validation** — every parsed command is validated against a **Zod schema**: amount cap, allowed intent types, recipient format, forbidden-handle blocklist. Schema mismatch = silently ignored. (`bots/security/outputValidator.js`, `bots/parser/intentSchema.js`)
+
+### 2. Recipient Resolution — Anti Username-Hijacking
+Handles are **not** trusted. Every recipient `@handle` is resolved to its immutable, platform-specific numeric ID (Twitter ID, Discord snowflake, Telegram ID) before any escrow lock. All database lookups and escrow locks key on this immutable ID — a user changing their handle cannot intercept pending payments. (`bots/security/recipientResolver.js`)
+
+### 3. Identity Hashing — No Plaintext Handles On-Chain
+Social identifiers are never written to Celo in plaintext. They are hashed before contract execution:
+```
+keccak256(abi.encodePacked(platform, ":", userId))
+```
+Only the 32-byte hash is recorded, preventing block explorers from mapping escrow records to real-world usernames — while still allowing deterministic verification when a user links their account.
+
+### 4. Secure Claim — Verified Identity → Hash → Claim
+MagicPay funds are locked under a recipient's identity hash. To claim, the recipient must prove ownership of the social account through verified cryptographic proof:
+
+| Platform | Verification |
+|---|---|
+| **Telegram** | Server-side HMAC — widget payloads are signed with the bot token's SHA-256 hash and verified by the `social-identity` edge function. |
+| **Twitter / X** | OAuth 2.0 with PKCE against X's official identity endpoints. |
+| **Discord** | Confidential-client OAuth 2.0 — the code is exchanged server-side via the `discord-oauth` edge function. |
+
+Only after the identity is verified does the vault release funds to the claimant's wallet. Every link request also validates that the active wallet session owns the profile row, and unique-handle constraints prevent double-linking.
+
+### 5. On-Chain Contract Controls (`IOURegistryV3`)
+- **UUPS upgradeable** proxy with a **48-hour upgrade timelock** (`scheduleUpgrade` → wait → upgrade).
+- **Ownable2Step** ownership; owner has **no custody or withdrawal rights** over active escrow. Locked funds can only be claimed by the verified recipient or returned to the sender after expiry.
+- **ReentrancyGuard** on all state-changing entrypoints.
+- **Pausable** — deposits/claims can be paused in a black-swan event; escrowed funds remain safe.
+- **SafeERC20** for all token movements (safe integration with USDT).
+- **Role separation** — the *executor* (bot) can only create escrows, bounded by a per-tx max amount; the privileged *vault* resolves and claims. They are distinct keys.
+- Compiled with **Solidity 0.8.20** (built-in overflow/underflow protection).
+
+### 6. Off-Chain Data Protection
+- All client↔edge-function traffic over **HTTPS / TLS 1.3**.
+- **PostgreSQL Row-Level Security** isolates profile data to verified owners.
+- Frontend never touches the database directly — all reads/writes route through authenticated Supabase **edge functions** (`db-proxy`), gated by **SIWE** wallet authentication.
+- Per-user rate limiting on the agent (sliding window).
 
 ---
 
@@ -142,340 +198,137 @@ Bot DM to @sam:     "🎉 You won! @fan bet 10 USDT that Nigeria would beat Braz
 
 | Feature | Why It Matters |
 |---|---|
-| **CIP-64 Fee Delegation** | Users pay gas in USDT. They never need to buy CELO. True invisible web3. |
+| **CIP-64 Fee Delegation** | The bot executor pays gas in USDT — users never need to buy CELO for agent-driven flows. |
 | **Native USDT** | Tether issues USDT natively on Celo — no bridge risk, no wrapped tokens. |
-| **Sub-cent gas** | A 5 USDT bet doesn't lose 30% to fees. Economics work at any scale. |
-| **Mobile-first** | Celo was built for emerging markets — exactly the fan demographic we serve. |
-| **EVM-compatible** | Our entire viem/ethers toolchain works unchanged. |
+| **Sub-cent gas** | A 5 USDT bet doesn't lose a third to fees. Economics work at any scale. |
+| **Mobile-first** | Built for emerging markets — exactly the fan demographic we serve. |
+| **EVM-compatible** | Our entire viem / WDK toolchain works unchanged. |
 
 ---
 
-## Contract: IOURegistryV3
+## <a name="contract"></a>Contract: IOURegistryV3
 
-**Deployed on**: Celo Mainnet - `0x8667BdA2e01462Ea229966E01806BF60F8f2f9f4`  
-**Testnet (Alfajores)**: `0x[TBD after deployment]`  
-**Pattern**: UUPS Upgradeable Proxy + 48h timelock on upgrades
+**Chain**: Celo Mainnet
+**Address**: `0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C` *(verify on [CeloScan](https://celoscan.io/address/0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C) before submission)*
+**Pattern**: UUPS Upgradeable Proxy + 48h upgrade timelock
 
-### Key Functions
-
-| Function | Who Calls It | What It Does |
+| Function | Caller | Purpose |
 |---|---|---|
 | `createConditionalIOU()` | Executor (bot) | Locks USDT; sends fee to treasury; stores conditionHash |
-| `resolveConditional()` | Vault only | Writes outcome on-chain (immutable). Does NOT move funds. |
-| `claimConditional()` | Vault only | Pays recipient. Available immediately once resolvedInFavor=2 |
-| `refundConditional()` | Sender or executor | Returns funds based on refund rules (see below) |
-| `executeCreate()` | Executor | Standard IOU (backward-compatible with V2) |
-| `batchClaim()` | Vault only | Standard IOU batch claim |
+| `resolveConditional()` | Vault | Writes the outcome on-chain (immutable). Does not move funds. |
+| `claimConditional()` | Vault | Pays the recipient once resolved in their favor |
+| `refundConditional()` | Sender / executor | Returns funds per the refund rules below |
+| `batchRefund()` | Sender | Reclaims multiple expired escrows |
 
 ### Refund Rules
-
 ```
-resolvedInFavor = SENDER_WIN (1)
-  → Refund available immediately. Condition was not met. ✅
-
-resolvedInFavor = RECIPIENT_WIN (2)
-  → Refund locked for 7 days from resolvedAt.
-  → After 7 days: safety valve activates if recipient never claimed. ✅
-
-resolvedInFavor = UNRESOLVED (0)
-  → Refund available after IOU expiry (covers: postponed match, oracle dispute). ✅
+Resolved for SENDER    → refund available immediately (condition not met)
+Resolved for RECIPIENT → sender refund locked for the hold window;
+                         safety valve returns funds if recipient never claims
+UNRESOLVED             → refund available after expiry (postponed match / dispute)
 ```
 
-### Why Separate Resolve from Claim?
-
-The old V2 combined resolution and payment into one atomic oracle transaction. V3 separates them:
-
-1. **Resolve** (vault, once): writes the outcome to the blockchain permanently. This is tamper-evident proof of who won.
-2. **Claim** (vault, on behalf of recipient): transfers funds. Can happen asynchronously — recipient may need to create a wallet first (MagicPay flow).
-3. **Refund** (sender-triggered): always verifiable on-chain without relying on our backend.
-
-This means even if our backend disappears, users can interact with the contract directly to claim or refund.
+**Resolve is separate from claim** so the outcome is permanently recorded on-chain even if the recipient needs time to create a wallet (MagicPay). Even if our backend disappears, users can refund or claim directly from the contract.
 
 ---
 
-## AI Agent
+## Architecture
 
-### Intent Parser
-
-The agent uses **Gemini 2.5 Flash** with structured JSON output (no JSON parsing errors) and low temperature (0.1) for deterministic, consistent extractions.
-
-**Languages supported**: English, Nigerian Pidgin, Yoruba, Hausa, Igbo, French, Spanish, Portuguese, and more — the LLM handles language detection automatically.
-
-**Security**:
-- System prompt explicitly classifies injection attempts
-- All output validated against a Zod schema — if it fails, the message is silently ignored
-- Rate limits: 10 bets per user per 24h, 3 per hour
-- Amount cap: configurable max per single conditional payment
-- Input sanitized (HTML stripped, max 1000 chars) before LLM sees it
-
-### Condition Plugin System
-
-Every condition type is a plugin implementing a standard interface. Admin can add new condition types from the Supabase dashboard without code deployment.
-
-**Built-in plugins:**
-- `football_match` — WC2026 match outcome (win / loss / draw / exact score)
-- `x_post_engagement` — Twitter engagement metrics (likes, retweets, views)
-- `custom_api` — Admin-configured: any JSON API as a condition source
-
-**Add a new condition** (no code required):
-1. Go to Supabase admin → `condition_plugins` table
-2. Insert a row with `plugin_type = 'custom_api'` and fill the `config` JSON:
-```json
-{
-  "endpoint": "https://api.example.com/result",
-  "jsonPath": "$.data.winner",
-  "expectedValue": "nigeria",
-  "pollIntervalMinutes": 10
-}
 ```
-3. Agent hot-reloads via Supabase realtime. New condition type is live.
+ SOCIAL PLATFORMS   Telegram · Discord · X
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  AI AGENT  (Node.js, ESM)                    │
+│  Platform Adapters → Sanitizer → Injection Guard →           │
+│  LLM Intent Parse → Zod Validation → Condition Plugins       │
+└─────────────────┬───────────────────────────────────────────┘
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│         IOURegistryV3 — Celo Mainnet (UUPS Proxy)            │
+│  createConditionalIOU · resolveConditional · claimConditional│
+│  refundConditional · batchRefund   (ReentrancyGuard·Pausable)│
+└─────────────────┬───────────────────────────────────────────┘
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│         Multi-Source Oracle + Condition Plugin Engine        │
+└─────────────────┬───────────────────────────────────────────┘
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Supabase — profiles · payments · match results             │
+│  Edge Functions — auth · db-proxy · social-identity · claim  │
+└─────────────────┬───────────────────────────────────────────┘
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Web App (Next.js) — WDK self-custodial wallet + escrow UI   │
+│  /connect · /place · /dashboard · claim                      │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## MagicPay — Social Escrow
+## Tech Stack
 
-The recipient has no wallet? No problem.
+| Layer | Technology |
+|---|---|
+| **Web app** | Next.js 16 (App Router), React 19, Tailwind v4, wagmi + viem |
+| **Wallet** | `@tetherto/wdk` + `@tetherto/wdk-wallet-evm` (self-custodial, Celo) |
+| **Agent** | Node.js 22 (ESM), viem, Gemini 2.5 Flash, Zod |
+| **Platforms** | `twitter-api-v2`, `discord.js` v14, `node-telegram-bot-api` |
+| **Backend** | Supabase (Postgres + RLS + Edge Functions) |
+| **Contract** | Solidity 0.8.20, OpenZeppelin Upgradeable (UUPS) |
 
-1. Sender locks USDT under `keccak256("twitter:recipient_user_id")`
-2. Recipient gets a notification: *"You have 15 USDT waiting. Tap to claim."*
-3. They visit the web app, create a WDK wallet in 30 seconds (or connect existing)
-4. They verify their social account via OAuth
-5. Vault calls `claimConditional` → USDT lands in their wallet
-6. This may be their first-ever crypto. They didn't need to buy CELO or understand gas.
-
-### 🔐 Social Account Verification
-
-To prevent profile hijacking, linking a social account requires verified cryptographic proof from the platform:
-
-| Platform | Verification Method |
-|----------|-------------------|
-| **Telegram** | Server-side HMAC verification — callback payloads from Telegram's widget are signed with the Bot Token's SHA-256 hash and verified by the social-identity edge function before registration |
-| **Twitter/X** | OAuth 2.0 with PKCE directly against X's official identity endpoints |
-| **Discord** | Confidential Client OAuth 2.0 — authorization code exchanged server-side via the `discord-oauth` edge function using a hidden client secret |
-#### Hijack & Duplication Protection
-
-Every linking request validates that the active wallet session owns the profile database row. The backend enforces unique social handle mappings across both database contexts (`profiles` and `wallet_profiles`) to prevent double-linking.
-
-#### Data Transit & Encryption
-
-- All client-to-edge-function requests are encrypted in transit over **HTTPS/TLS 1.3**
-- Profile metadata is isolated using **PostgreSQL Row-Level Security (RLS)** policies
-- Database records are accessible only by verified profile owners
 ---
 
 ## Repository Structure
-
 ```
-conditional-payment-engine/
-├── contracts/
-│   ├── IOURegistryV3.sol          ← Main contract (UUPS upgradeable)
-│   └── IOURegistryV2.sol          ← Previous version (reference only)
-├── oracle/
-│   ├── sportsOracle.js            ← 3-source consensus match sync
-│   ├── evaluator.js               ← Job evaluation against settled matches
-│   ├── resolver.js                ← On-chain resolution + claim execution
-│   ├── blockchain.js              ← Celo viem clients + CIP-64 transactions
-│   └── plugins/
-│       ├── registry.js            ← Plugin loader (Supabase realtime)
-│       ├── football.plugin.js     ← WC2026 match outcome
-│       ├── x_post.plugin.js       ← X/Twitter engagement
-│       └── custom_api.plugin.js   ← Admin-configured generic API
-├── agent/
-│   ├── index.js                   ← Entry point
-│   ├── adapters/
-│   │   ├── x.adapter.js
-│   │   ├── discord.adapter.js
-│   │   └── telegram.adapter.js
-│   ├── parser/
-│   │   ├── intentParser.js        ← Gemini 2.5 Flash
-│   │   ├── intentSchema.js        ← Zod schema
-│   │   └── preFilter.js
-│   ├── handler.js                 ← Message routing
-│   └── security/
-│       └── rateLimiter.js
-├── backend/
-│   ├── claim-social-funds.ts      ← Supabase edge function
-│   ├── create-conditional-iou.ts  ← Supabase edge function
-│   ├── resolve-conditional.ts     ← Supabase edge function
-│   └── refund-conditional.ts      ← Supabase edge function
-├── webapp/                        ← Next.js 14 App Router
-│   └── (see PROMPT_WEBAPP.md)
-├── TETHER_CUP_UPGRADE.md          ← Full architecture deep-dive
-├── PROMPT_WEBAPP.md               ← Web app build specification
-├── PROMPT_AGENT.md                ← Agent backend build specification
-├── PROMPT_DATABASE.md             ← Database + edge functions specification
-└── HACKATHON_REQUIREMENTS.md      ← Competition rules reference
-```
-
----
-
-## Local Setup
-
-### Prerequisites
-- Node.js 22+
-- A Supabase project
-- Celo Alfajores test wallet with test CELO + test USDT
-- Google AI API key (Gemini 2.5 Flash)
-
-### 1. Clone and install
-
-```bash
-git clone https://github.com/samuelchimmy/conditional-payment-engine.git
-cd conditional-payment-engine
-npm install
-```
-
-### 2. Environment variables
-
-Copy `.env.example` to `.env` and fill in all values:
-
-```env
-# Celo
-CELO_RPC_URL=https://alfajores-forno.celo-testnet.org  # Alfajores for dev
-EXECUTOR_PRIVATE_KEY=0x...   # Bot executor (limited: createConditionalIOU only)
-VAULT_PRIVATE_KEY=0x...      # Vault (privileged: resolve + claim)
-IOU_REGISTRY_V3=0x...        # After deployment
-
-# AI
-GEMINI_API_KEY=
-
-# Supabase
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_KEY=
-
-# X/Twitter
-TWITTER_BEARER_TOKEN=
-TWITTER_API_KEY=
-TWITTER_API_SECRET=
-TWITTER_ACCESS_TOKEN=
-TWITTER_ACCESS_SECRET=
-
-# Discord
-DISCORD_BOT_TOKEN=
-
-# Telegram
-TELEGRAM_BOT_TOKEN=
-
-# Sports APIs
-FOOTBALL_DATA_API_KEY=
-API_FOOTBALL_API_KEY=
-```
-
-### 3. Deploy the contract
-
-```bash
-# Install Hardhat dependencies
-npm install --save-dev hardhat @openzeppelin/contracts-upgradeable
-
-# Deploy to Alfajores testnet
-npx hardhat run scripts/deploy-v3.js --network alfajores
-
-# Verify on Celoscan
-npx hardhat verify --network alfajores <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
-```
-
-### 4. Set up Supabase
-
-```bash
-# Push schema migrations
-supabase db push
-
-# Deploy edge functions
-supabase functions deploy create-conditional-iou
-supabase functions deploy resolve-conditional
-supabase functions deploy claim-social-funds
-supabase functions deploy refund-conditional
-supabase functions deploy notify-parties
-
-# Set secrets in Supabase Vault
-supabase secrets set VAULT_PRIVATE_KEY=0x...
-supabase secrets set GEMINI_API_KEY=...
-```
-
-### 5. Start the agent
-
-```bash
-node agent/index.js
-```
-
-### 6. Start the web app
-
-```bash
-cd webapp
-npm install
-npm run dev
-# → http://localhost:3000
+tether-arena/
+├── webapp/            ← Next.js app: WDK wallet + escrow UI
+├── bots/              ← AI agent: platform adapters, parser, oracle, plugins
+├── contracts/         ← IOURegistryV3.sol (UUPS upgradeable escrow)
+├── supabase/          ← migrations + edge functions
+├── docs/              ← build specs & architecture deep-dives
+├── LICENSE            ← MIT
+└── README.md
 ```
 
 ---
 
 ## Placing a Bet (Examples)
 
-### Via X/Twitter
-```
-@TetherArena send 10 USDT to @sam if Nigeria beats Brazil
-@TetherArena if the super eagles win tonight, send @jade 25 USDT
-@TetherArena envía 5 USDT a @carlos si Argentina empata España
-@TetherArena abeg send 8 USDT give @bola if Nigeria chop Argentina 3-1
-```
-
-### Via Discord
-```
-/bet send 15 USDT to @jade if Nigeria beats Brazil
-```
-
-### Via Telegram
+**Telegram**
 ```
 /bet Send 20 USDT to @sam if Morocco draw France
 ```
-
----
-
-## Hackathon Track: WDK (Wallets)
-
-**Why this wins the WDK track:**
-
-| WDK Criterion | How We Deliver |
-|---|---|
-| Real use of WDK | Wallet creation, signing, accounts, ERC-20 approvals all through WDK |
-| Technical ambition | Upgradeable V3 contract + CIP-64 gasless + Gemini AI agent + 3-source oracle + plugin engine |
-| User experience | Natural language → zero friction → 30-second wallet creation for recipients |
-| Real-world utility | WC2026 is live. These bets work right now. Unbanked fans receive USDT for the first time. |
-| Creativity | No existing product has this combination. No liquidity pools. No odds. Conditional escrow + AI + social identity. |
+**Discord**
+```
+/bet send 15 USDT to @jade if Nigeria beats Brazil
+```
+**X / Twitter**
+```
+@TetherArena send 10 USDT to @sam if Nigeria beats Brazil
+```
 
 ---
 
 ## Prior Work Disclosure
 
-This project builds on my existing MoniPay/MoniBot production codebase. Pre-existing components:
-- `IOURegistryV2.sol` — basic escrow (V3 is a full redesign with conditional logic)
-- `sportsOracle.js` — 3-source consensus oracle (plugin refactor and AI integration are new)
-- `blockchain.js` — multi-chain viem utilities (Celo CIP-64 additions are new)
+This project builds on our existing MoniPay / MoniBot codebase. Reused components:
+- Base escrow patterns and multi-source sports oracle (refactored for conditional logic + AI).
+- Multi-chain viem utilities (Celo CIP-64 additions are new).
 
-All new work built during the Tether Developers Cup:
-- `IOURegistryV3.sol` — upgradeable, conditional escrow, dynamic refund rules, 48h upgrade timelock
-- Gemini 2.5 Flash AI intent parser with injection-hardened system prompt
-- Condition plugin system (`registry.js`, `x_post.plugin.js`, `custom_api.plugin.js`)
-- Next.js web app (entire new build)
-- Supabase schema redesign for conditional IOUs
-- CIP-64 Celo fee delegation in all transactions
+Built during the Tether Developers Cup:
+- `IOURegistryV3.sol` — upgradeable, conditional escrow, dynamic refund rules, 48h upgrade timelock.
+- AI intent parser with injection-hardened 4-layer pipeline.
+- Condition plugin system.
+- Next.js web app with full WDK self-custodial wallet integration.
+- Supabase schema + edge functions for conditional IOUs and secure claim.
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
-
----
-
-## Demo
-
-📹 Demo video: [YouTube link — TBD before July 8 submission]
-
-🔗 Live app: [TBD]
-
-🔗 Contract on CeloScan: [0x8667BdA2e01462Ea229966E01806BF60F8f2f9f4](https://celoscan.io/address/0x8667BdA2e01462Ea229966E01806BF60F8f2f9f4)
+MIT — see [LICENSE](LICENSE).
 
 ---
 

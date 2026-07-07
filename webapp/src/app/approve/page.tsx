@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useWriteContract } from "wagmi";
 import { parseUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
+import { useSendTx } from "@/lib/sendTx";
 
 function ApproveContent() {
   const searchParams = useSearchParams();
@@ -15,7 +15,7 @@ function ApproveContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const { writeContractAsync } = useWriteContract();
+  const { sendTx } = useSendTx();
 
   useEffect(() => {
     if (amountParam) {
@@ -29,7 +29,7 @@ function ApproveContent() {
       setIsProcessing(true);
       const amountParsed = parseUnits(amount, 6);
       
-      await writeContractAsync({
+      await sendTx({
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",

@@ -3,10 +3,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
+import { useSendTx } from "@/lib/sendTx";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "react-hot-toast";
 import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
@@ -181,7 +182,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
 
   // Wagmi Hooks for Approval
-  const { data: hash, isPending, writeContract, error } = useWriteContract();
+  const { sendTx } = useSendTx();
+  const [hash, setHash] = useState<`0x${string}` | undefined>();
+  const [isPending, setIsPending] = useState(false);
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
   useEffect(() => {
@@ -192,24 +195,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   }, [isConfirmed]);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error.message || "Failed to approve allowance");
-    }
-  }, [error]);
-
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!tempAllowance) return;
     try {
       const amountParsed = parseUnits(tempAllowance, 6);
-      writeContract({
+      setIsPending(true);
+      const h = await sendTx({
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
         args: [IOURegistryV3Address as `0x${string}`, amountParsed],
       });
-    } catch (e) {
-      console.error("Invalid amount", e);
+      setHash(h);
+    } catch (e: any) {
+      console.error("approve error", e);
+      toast.error(e?.shortMessage || e?.message || "Failed to approve allowance");
+    } finally {
+      setIsPending(false);
     }
   };
 

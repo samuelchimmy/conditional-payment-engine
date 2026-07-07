@@ -1,5 +1,5 @@
 export const IOURegistryV3Address = "0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C";
-export const USDTAddressCelo = "0x48065fbBE25f71C9282ddf5e1cD6D6A882427259";
+export const USDTAddressCelo = "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e";
 
 export const ERC20ABI = [
   {

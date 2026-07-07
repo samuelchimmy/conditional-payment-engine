@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useReadContract, useWriteContract } from "wagmi";
+import { useReadContract } from "wagmi";
 import { useWallet } from "@/components/WalletProvider";
 import { parseUnits, formatUnits, keccak256, toHex } from "viem";
 import { ERC20ABI, IOURegistryV3ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
+import { useSendTx } from "@/lib/sendTx";
 import { supabase } from "@/lib/supabaseClient";
 import { insertPayment } from "@/lib/dbProxy";
 
@@ -28,9 +29,10 @@ export default function PlaceBet() {
     args: address ? [address as `0x${string}`] : undefined,
   });
 
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { sendTx } = useSendTx();
   const [isProcessing, setIsProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const formattedBalance = balanceData 
     ? parseFloat(formatUnits(balanceData as bigint, 6)).toFixed(2) 
@@ -38,12 +40,22 @@ export default function PlaceBet() {
 
   const handleLockFunds = async () => {
     if (!amount || !counterparty || !query) return;
+    // Validate recipient address before hitting viem/parseUnits
+    if (!/^0x[a-fA-F0-9]{40}$/.test(counterparty.trim())) {
+      setErrorMsg("Enter a valid recipient wallet address (0x…).");
+      return;
+    }
+    if (isNaN(Number(amount)) || Number(amount) <= 0) {
+      setErrorMsg("Enter a valid amount.");
+      return;
+    }
     try {
+      setErrorMsg(null);
       setIsProcessing(true);
       const amountParsed = parseUnits(amount, 6);
-      
+
       // 1. Approve
-      await writeContractAsync({
+      await sendTx({
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
@@ -51,8 +63,8 @@ export default function PlaceBet() {
       });
 
       // 2. Create Condition
-      await writeContractAsync({
-        address: IOURegistryV3Address,
+      const createHash = await sendTx({
+        address: IOURegistryV3Address as `0x${string}`,
         abi: IOURegistryV3ABI,
         functionName: "createCondition",
         args: [conditionId, query, USDTAddressCelo, amountParsed, counterparty as `0x${string}`],
@@ -67,14 +79,15 @@ export default function PlaceBet() {
           amount: amount,
           currency: "USDT",
           condition_str: query,
-          tx_hash: "webapp_tx",
+          tx_hash: createHash,
         });
         if (dbError) console.error("[PlaceBet] Failed to record payment:", dbError);
       }
 
       setSuccess(true);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setErrorMsg(e?.shortMessage || e?.message || "Transaction failed. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -155,13 +168,17 @@ export default function PlaceBet() {
           </div>
         </div>
 
-        <button 
+        <button
           onClick={handleLockFunds}
           disabled={!amount || !counterparty || !query || isProcessing}
           className="w-full h-[46px] bg-accent text-accent-text text-[14px] font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {isProcessing ? "Processing (Approve & Lock)..." : "Review and Lock Funds"}
         </button>
+
+        {errorMsg && (
+          <p className="text-[13px] text-red-400 text-center mt-1 break-words">{errorMsg}</p>
+        )}
       </div>
     </div>
   );

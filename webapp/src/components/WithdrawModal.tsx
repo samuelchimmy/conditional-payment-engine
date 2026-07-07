@@ -2,9 +2,11 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
+import { useWallet } from "@/components/WalletProvider";
+import { useSendTx } from "@/lib/sendTx";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -12,7 +14,7 @@ interface WithdrawModalProps {
 }
 
 export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
-  const { address } = useAccount();
+  const { address } = useWallet(); // was useAccount() — empty for WDK/Google wallets
   const [amount, setAmount] = useState("");
   const [destination, setDestination] = useState("");
 
@@ -26,7 +28,9 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     }
   });
 
-  const { writeContract, data: txHash, isPending } = useWriteContract();
+  const { sendTx } = useSendTx();
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const [isPending, setIsPending] = useState(false);
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
 
   const formattedBalance = balanceData 
@@ -48,14 +52,23 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     };
   }, [isOpen]);
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (!amount || !destination) return;
-    writeContract({
-      address: USDTAddressCelo,
-      abi: ERC20ABI,
-      functionName: "transfer",
-      args: [destination as `0x${string}`, parseUnits(amount, 6)],
-    });
+    if (!/^0x[a-fA-F0-9]{40}$/.test(destination.trim())) return;
+    try {
+      setIsPending(true);
+      const h = await sendTx({
+        address: USDTAddressCelo,
+        abi: ERC20ABI,
+        functionName: "transfer",
+        args: [destination as `0x${string}`, parseUnits(amount, 6)],
+      });
+      setTxHash(h);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

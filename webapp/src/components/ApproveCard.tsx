@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
+import { useSendTx } from "@/lib/sendTx";
 import { toast } from "react-hot-toast";
 import { playSuccessSound, playErrorSound } from "@/lib/sounds";
 
@@ -24,7 +25,9 @@ export function ApproveCard() {
     }
   });
 
-  const { data: hash, isPending, writeContract, error } = useWriteContract();
+  const { sendTx } = useSendTx();
+  const [hash, setHash] = useState<`0x${string}` | undefined>();
+  const [isPending, setIsPending] = useState(false);
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
   useEffect(() => {
@@ -38,27 +41,20 @@ export function ApproveCard() {
     }
   }, [isConfirmed, refetchAllowance]);
 
-  useEffect(() => {
-    if (error) {
-      playErrorSound();
-      toast.error(error.message || "Failed to approve allowance");
-    }
-  }, [error]);
-
-  const currentAllowanceFormatted = mockedAllowance 
+  const currentAllowanceFormatted = mockedAllowance
     ? parseFloat(mockedAllowance).toFixed(2)
     : currentAllowanceData 
       ? parseFloat(formatUnits(currentAllowanceData as bigint, 6)).toFixed(2)
       : "0.00";
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!allowanceInput || isNaN(Number(allowanceInput)) || Number(allowanceInput) <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
-    
-    // For prototype purposes: If using WDK or Google Mock, simulate the approval
-    if (authMethod === 'wdk' || authMethod === 'google') {
+
+    // Google Mock mode has no signer — simulate the approval for the prototype.
+    if (authMethod === 'google') {
       const loadingToast = toast.loading("Approving allowance...");
       setTimeout(() => {
         toast.dismiss(loadingToast);
@@ -72,40 +68,24 @@ export function ApproveCard() {
       }, 1500);
       return;
     }
-    
+
+    // Real on-chain approval — works for MetaMask AND WDK (via useSendTx).
     try {
       const amountParsed = parseUnits(allowanceInput.toString(), 6);
-      writeContract({
+      setIsPending(true);
+      const h = await sendTx({
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
         args: [IOURegistryV3Address as `0x${string}`, amountParsed],
-      }, {
-        onError: (err) => {
-          if (err.message.includes("connector not connected") || err.message.includes("Connector not found")) {
-            console.warn("Wagmi connector missing. Simulating approval for prototype...");
-            const loadingToast = toast.loading("Approving allowance (Simulated)...");
-            setTimeout(() => {
-              toast.dismiss(loadingToast);
-              toast.success("Allowance approved successfully!");
-              playSuccessSound();
-              setMockedAllowance(allowanceInput);
-              setAllowanceInput("");
-              refetchAllowance();
-              setJustApproved(true);
-              setTimeout(() => setJustApproved(false), 3000);
-            }, 1500);
-          } else {
-            console.error("writeContract error", err);
-            playErrorSound();
-            toast.error(err.message || "Failed to approve allowance.");
-          }
-        }
       });
+      setHash(h);
     } catch (e: any) {
-      console.error("Invalid amount", e);
+      console.error("approve error", e);
       playErrorSound();
-      toast.error("Invalid amount");
+      toast.error(e?.shortMessage || e?.message || "Failed to approve allowance.");
+    } finally {
+      setIsPending(false);
     }
   };
 
