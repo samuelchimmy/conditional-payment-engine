@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 
 import { downloadBackup, decryptFromBackup } from '@/lib/googleDriveBackup';
 import { supabase } from '@/lib/supabaseClient'; // Ensure you have a generic supabase client exported here
+import { playSuccessSound, playErrorSound } from '@/lib/sounds';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
@@ -35,17 +36,19 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
       if (!backup) {
         setStatus('not_found');
         setError('No backup found on Google Drive');
+        playErrorSound();
         return;
       }
 
       setBackupData(backup);
-      setShowPinInput(true);
-      setStatus('idle');
-    },
-    onError: () => {
-      setStatus('error');
-      setError('Google sign-in failed');
-    },
+    setShowPinInput(true);
+    setStatus('idle');
+  },
+  onError: () => {
+    setStatus('error');
+    setError('Google sign-in failed');
+    playErrorSound();
+  },
     scope: 'openid email profile https://www.googleapis.com/auth/drive.appdata',
   });
 
@@ -75,6 +78,7 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
 
       if (result.success) {
         setStatus('success');
+        playSuccessSound();
 
         if (accessToken && result.profileId && result.walletAddress && supabase) {
           (async () => {
@@ -106,12 +110,14 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
       } else {
         setError(result.error || 'Restore failed');
         setStatus('error');
+        playErrorSound();
       }
     } catch (e) {
       console.error('Decryption error:', e);
       setError('Incorrect PIN');
       setStatus('idle');
       setShake(true);
+      playErrorSound();
       setTimeout(() => setShake(false), 500);
     }
   };

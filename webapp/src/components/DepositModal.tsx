@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useWatchContractEvent } from "wagmi";
 import confetti from "canvas-confetti";
 import { useWallet } from "@/components/WalletProvider";
+import { playConfettiSound } from "@/lib/sounds";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { formatUnits } from "viem";
 import { QRCodeSVG } from "qrcode.react";
@@ -32,20 +33,27 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
       if (!isOpen || !logs || logs.length === 0) return;
       
       const log = logs[0] as any;
-      if (log && log.args && log.args.amount) {
-        const amountFormatted = formatUnits(log.args.amount, 6);
+      if (log && log.args && log.args.value) {
+        const amountFormatted = formatUnits(log.args.value, 6);
         setReceivedAmount(amountFormatted);
-      }
-
-      setDepositSuccess(true);
+        setDepositSuccess(true);
+        playConfettiSound();
       
-      // Trigger dark orange/white/black confetti
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#D53131', '#F2F1EF', '#050505', '#181818']
-      });
+        // Trigger dark orange/white/black confetti
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#D53131', '#F2F1EF', '#050505', '#181818']
+        });
+
+        // Auto close after 4 seconds
+        setTimeout(() => {
+          onClose();
+          setDepositSuccess(false);
+          setReceivedAmount(null);
+        }, 4000);
+      }
 
       // Auto close after 4 seconds
       setTimeout(() => {

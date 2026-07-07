@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useWallet } from "@/components/WalletProvider";
 import { toast } from "react-hot-toast";
 import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
+import { playSuccessSound, playErrorSound } from "@/lib/sounds";
 
 export function SocialLinkingCard() {
   const { address } = useWallet();
@@ -44,6 +45,7 @@ export function SocialLinkingCard() {
           setLinkedStatus(prev => ({ ...prev, twitter: true }));
           setLoading(null);
           toast.success("X (Twitter) linked successfully!");
+          playSuccessSound();
         }
       }, 2000);
       return () => clearInterval(interval);
@@ -65,6 +67,7 @@ export function SocialLinkingCard() {
         setLoading(null);
       } else if (event.data?.type === "social-link-conflict") {
         toast.error(event.data.message);
+        playErrorSound();
         setLoading(null);
       }
     };
@@ -120,12 +123,15 @@ export function SocialLinkingCard() {
       });
       if (response.error || response.data?.error) {
         toast.error(response.data?.error || response.error?.message || "Failed to link Telegram");
+        playErrorSound();
       } else {
         setLinkedStatus(prev => ({ ...prev, telegram: true }));
         toast.success("Telegram linked!");
+        playSuccessSound();
       }
     } catch (e: any) {
       toast.error(e.message || "Failed to link Telegram");
+      playErrorSound();
     } finally {
       setLoading(null);
     }

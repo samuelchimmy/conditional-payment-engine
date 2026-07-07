@@ -6,6 +6,7 @@ import { parseUnits, formatUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
 import { toast } from "react-hot-toast";
+import { playSuccessSound, playErrorSound } from "@/lib/sounds";
 
 export function ApproveCard() {
   const { address, authMethod } = useWallet();
@@ -29,6 +30,7 @@ export function ApproveCard() {
   useEffect(() => {
     if (isConfirmed) {
       toast.success("Allowance approved successfully!");
+      playSuccessSound();
       refetchAllowance();
       setAllowanceInput("");
       setJustApproved(true);
@@ -38,6 +40,7 @@ export function ApproveCard() {
 
   useEffect(() => {
     if (error) {
+      playErrorSound();
       toast.error(error.message || "Failed to approve allowance");
     }
   }, [error]);
@@ -60,6 +63,7 @@ export function ApproveCard() {
       setTimeout(() => {
         toast.dismiss(loadingToast);
         toast.success("Allowance approved successfully!");
+        playSuccessSound();
         setMockedAllowance(allowanceInput); // visually mock the updated allowance
         setAllowanceInput("");
         refetchAllowance();
@@ -84,6 +88,7 @@ export function ApproveCard() {
             setTimeout(() => {
               toast.dismiss(loadingToast);
               toast.success("Allowance approved successfully!");
+              playSuccessSound();
               setMockedAllowance(allowanceInput);
               setAllowanceInput("");
               refetchAllowance();
@@ -92,12 +97,14 @@ export function ApproveCard() {
             }, 1500);
           } else {
             console.error("writeContract error", err);
-            toast.error(err.message || "Invalid amount or connection error");
+            playErrorSound();
+            toast.error(err.message || "Failed to approve allowance.");
           }
         }
       });
     } catch (e: any) {
       console.error("Invalid amount", e);
+      playErrorSound();
       toast.error("Invalid amount");
     }
   };

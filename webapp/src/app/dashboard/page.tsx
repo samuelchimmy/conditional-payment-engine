@@ -16,6 +16,8 @@ import { useReadContract } from "wagmi";
 import { useWallet } from "@/components/WalletProvider";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { formatUnits } from "viem";
+import { playSuccessSound } from "@/lib/sounds";
+import { toast } from "react-hot-toast";
 
 export default function Dashboard() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
@@ -111,7 +113,15 @@ export default function Dashboard() {
           DASHBOARD / MY BETS
         </span>
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[12px] text-text-primary bg-surface px-4 py-2 rounded-[8px] border border-border inline-flex items-center gap-2 cursor-pointer hover:border-border-emphasis transition-colors">
+          <span 
+            onClick={() => {
+              if (!address) return;
+              navigator.clipboard.writeText(address);
+              toast.success("Address copied!");
+              playSuccessSound();
+            }}
+            className="font-mono text-[12px] text-text-primary bg-surface px-4 py-2 rounded-[8px] border border-border inline-flex items-center gap-2 cursor-pointer hover:border-border-emphasis transition-colors"
+          >
             <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
             {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not Connected"}
           </span>
@@ -182,7 +192,7 @@ export default function Dashboard() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 h-[85vh] bg-[#050505] border-t border-border z-[70] rounded-t-[24px] flex flex-col"
+              className="fixed bottom-0 left-0 right-0 h-[85vh] bg-bg-center border-t border-border z-[70] rounded-t-[24px] flex flex-col"
             >
               <div className="p-6 flex flex-col h-full">
                 <div className="w-12 h-1 bg-border rounded-full mx-auto mb-6 shrink-0" />
