@@ -92,13 +92,13 @@ export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolea
 
         <div className="mb-6">
           <span className="text-[#797977] text-[10px] font-normal uppercase tracking-[0.1em]">
-            CLAIM · STEP 1 OF 2
+            CLAIM - STEP 1 OF 2
           </span>
           <h1 className="text-[#050505] text-[36px] font-[800] leading-none mt-2 mb-2 tracking-tight">
             You won.
           </h1>
           <p className="text-[#797977] text-[14px]">
-            {bet.condition_str} · {amount.toFixed(2)} {bet.currency || 'USDT'}
+            {bet.condition_str} - {amount.toFixed(2)} {bet.currency || 'USDT'}
           </p>
         </div>
 

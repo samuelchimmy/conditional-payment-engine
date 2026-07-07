@@ -42,7 +42,7 @@ export function ReceiptModal({ isOpen, onClose, bet }: { isOpen: boolean; onClos
             Transaction Details
           </h1>
           <p className="text-[#797977] text-[14px]">
-            {bet.condition_str} · {amount.toFixed(2)} {bet.currency || 'USDT'}
+            {bet.condition_str} - {amount.toFixed(2)} {bet.currency || 'USDT'}
           </p>
         </div>
 
