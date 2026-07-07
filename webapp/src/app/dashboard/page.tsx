@@ -11,6 +11,7 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { ClaimModal } from "@/components/ClaimModal";
 import { ReceiptModal } from "@/components/ReceiptModal";
 import { ApproveCard } from "@/components/ApproveCard";
+import { SocialLinkingCard } from "@/components/SocialLinkingCard";
 import { useReadContract } from "wagmi";
 import { useWallet } from "@/components/WalletProvider";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
@@ -160,8 +161,10 @@ export default function Dashboard() {
             Deposit
           </button>
         </div>
-        {/* Approve Allowance Card */}
         <ApproveCard />
+        
+        {/* Social Linking Card */}
+        <SocialLinkingCard />
       </div>
 
       <AnimatePresence>

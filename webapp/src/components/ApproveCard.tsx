@@ -11,6 +11,7 @@ export function ApproveCard() {
   const { address, authMethod } = useWallet();
   const [allowanceInput, setAllowanceInput] = useState("50");
   const [mockedAllowance, setMockedAllowance] = useState<string | null>(null);
+  const [justApproved, setJustApproved] = useState(false);
 
   const { data: currentAllowanceData, refetch: refetchAllowance } = useReadContract({
     address: USDTAddressCelo,
@@ -30,6 +31,8 @@ export function ApproveCard() {
       toast.success("Allowance approved successfully!");
       refetchAllowance();
       setAllowanceInput("");
+      setJustApproved(true);
+      setTimeout(() => setJustApproved(false), 3000);
     }
   }, [isConfirmed, refetchAllowance]);
 
@@ -60,6 +63,8 @@ export function ApproveCard() {
         setMockedAllowance(allowanceInput); // visually mock the updated allowance
         setAllowanceInput("");
         refetchAllowance();
+        setJustApproved(true);
+        setTimeout(() => setJustApproved(false), 3000);
       }, 1500);
       return;
     }
@@ -82,6 +87,8 @@ export function ApproveCard() {
               setMockedAllowance(allowanceInput);
               setAllowanceInput("");
               refetchAllowance();
+              setJustApproved(true);
+              setTimeout(() => setJustApproved(false), 3000);
             }, 1500);
           } else {
             console.error("writeContract error", err);
@@ -121,11 +128,16 @@ export function ApproveCard() {
         
         <button 
           onClick={handleApprove}
-          disabled={isPending || isConfirming || !address}
-          className="h-[46px] px-6 bg-accent text-accent-text font-bold rounded-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center text-[13px] min-w-[120px]"
+          disabled={isPending || isConfirming || !address || justApproved}
+          className={`h-[46px] px-6 font-bold rounded-[8px] flex items-center justify-center text-[13px] min-w-[120px] transition-all duration-300
+            ${justApproved 
+              ? "bg-transparent border border-[#3A3A3A] text-[#F2F1EF]" 
+              : "bg-accent text-accent-text hover:opacity-90 disabled:opacity-50"}`}
         >
           {isPending || isConfirming ? (
             <div className="animate-spin h-4 w-4 border-2 border-accent-text border-t-transparent rounded-full" />
+          ) : justApproved ? (
+            "Approved ✓"
           ) : (
             "Approve"
           )}
