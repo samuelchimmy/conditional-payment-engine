@@ -129,21 +129,21 @@ export default function Dashboard() {
 
       {/* Balance Card & Buttons (Mobile Layout on all devices) */}
       <div className="flex flex-col items-start w-full mb-12">
-        <div className="flex items-center gap-3 w-full mb-3">
-          <div className="bg-surface border border-border rounded-[10px] px-6 py-4 flex flex-col w-full">
+        <div className="bg-surface border border-border rounded-[10px] px-6 py-4 flex items-center justify-between mb-3 w-full">
+          <div className="flex flex-col">
             <span className="text-text-secondary text-[11px] uppercase tracking-wider mb-1">Balance</span>
             <span className="text-text-primary text-[20px] font-[800] tracking-tight">{formattedBalance} <span className="text-text-secondary text-[13px] font-normal">USDT</span></span>
           </div>
           <button 
             onClick={() => setIsHistorySheetOpen(true)}
-            className="w-[84px] h-[84px] shrink-0 bg-surface border border-border rounded-[10px] flex flex-col items-center justify-center hover:bg-border transition-colors text-text-secondary hover:text-text-primary"
+            className="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary transition-colors shrink-0"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 3v5h5"></path>
               <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
               <path d="M12 7v5l4 2"></path>
             </svg>
-            <span className="text-[11px] mt-1.5 font-bold">History</span>
+            <span className="text-[10px] mt-1 font-bold">History</span>
           </button>
         </div>
         <div className="flex items-center gap-3 w-full mb-6">
