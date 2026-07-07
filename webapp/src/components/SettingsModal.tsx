@@ -70,7 +70,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         const { data } = await supabase.from('wallet_profiles').select('x_username').eq('wallet_address', address.toLowerCase()).single();
         if (data && data.x_username) {
           setLinkingPlatform(null);
-          setProfile(prev => ({ ...prev, x_username: data.x_username }));
+          setProfile((prev: any) => ({ ...prev, x_username: data.x_username }));
           toast.success("Account linked successfully!");
         }
       }, 2000);
