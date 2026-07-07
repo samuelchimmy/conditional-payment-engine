@@ -114,11 +114,14 @@ export function SocialLinkingCard() {
   const handleTelegramAuth = async (user: any) => {
     try {
       setLoading("telegram");
+      const widgetPayload = Object.fromEntries(
+        Object.entries(user).map(([key, value]) => [key, String(value)])
+      );
       const response = await supabase.functions.invoke("social-identity", {
         body: {
           action: "link-telegram",
           walletAddress: address,
-          telegramUser: user
+          widgetPayload
         }
       });
       if (response.error || response.data?.error) {
