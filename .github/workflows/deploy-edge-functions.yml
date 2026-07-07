@@ -31,3 +31,12 @@ jobs:
 
       - name: Deploy social-identity
         run: supabase functions deploy social-identity --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+
+      - name: Deploy auth-session
+        run: supabase functions deploy auth-session --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+
+      - name: Deploy db-proxy
+        run: supabase functions deploy db-proxy --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+
+      - name: Deploy notifications
+        run: supabase functions deploy notifications --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
