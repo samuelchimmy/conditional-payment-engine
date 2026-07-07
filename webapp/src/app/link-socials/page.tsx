@@ -29,6 +29,21 @@ export default function LinkSocials() {
     }
   }, [hasLinkedAll]);
 
+  // Polling for X (Twitter) linking in case the popup gets stuck on mobile
+  useEffect(() => {
+    if (loading === 'twitter' && address) {
+      const interval = setInterval(async () => {
+        const { data } = await supabase.from('wallet_profiles').select('x_username').eq('wallet_address', address.toLowerCase()).single();
+        if (data && data.x_username) {
+          setLinkedStatus(prev => ({ ...prev, twitter: true }));
+          setLoading(null);
+          toast.success("Account linked successfully!");
+        }
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [loading, address]);
+
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
@@ -204,8 +219,8 @@ export default function LinkSocials() {
           </div>
           
           {!linkedStatus.telegram && loading !== "telegram" && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 cursor-pointer overflow-hidden">
-              <div className="scale-[5] origin-center">
+            <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 cursor-pointer">
+              <div className="w-full h-full flex items-center justify-center scale-[3] origin-center cursor-pointer">
                 <TelegramLoginWidget
                   botName="TarenaAi_bot"
                   onAuth={handleTelegramAuth}

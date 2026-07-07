@@ -9,6 +9,7 @@ import { DepositModal } from "@/components/DepositModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { ClaimModal } from "@/components/ClaimModal";
 import { ReceiptModal } from "@/components/ReceiptModal";
+import { ApproveCard } from "@/components/ApproveCard";
 import { useReadContract } from "wagmi";
 import { useWallet } from "@/components/WalletProvider";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
@@ -155,10 +156,6 @@ export default function Dashboard() {
             {bets.filter(b => b.status === 'pending').length} Active · {bets.filter(b => b.status !== 'pending').length} Completed
           </p>
         </div>
-        
-        <Link href="/place" className="h-[40px] px-6 bg-accent text-accent-text font-bold rounded-[8px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity">
-          New Bet
-        </Link>
       </div>
 
       <div className="flex flex-col mb-16">
@@ -197,6 +194,9 @@ export default function Dashboard() {
           ))
         )}
       </div>
+
+      {/* Approve Allowance Card */}
+      <ApproveCard />
 
       {/* Start Tipping Section */}
       <div className="w-full mb-16 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-6 border-t border-divider">

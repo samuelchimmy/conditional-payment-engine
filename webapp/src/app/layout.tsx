@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { WalletProvider } from "@/components/WalletProvider";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Toaster } from "react-hot-toast";
+import { NotificationListener } from "@/components/NotificationListener";
 
 const schibsted = Schibsted_Grotesk({
   variable: "--font-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
         >
           <WalletProvider>
             <AuthGuard>
+              <NotificationListener />
               {/* Global Nav / Header moved to template/pages */}
 
               <main className="flex-1 flex flex-col items-center justify-center px-4 w-full">

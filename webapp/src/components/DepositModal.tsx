@@ -6,6 +6,7 @@ import { useAccount, useWatchContractEvent } from "wagmi";
 import confetti from "canvas-confetti";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { formatUnits } from "viem";
+import { QRCodeSVG } from "qrcode.react";
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -152,13 +153,19 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 {/* QR Code Expansion Panel */}
                 <div className="w-full bg-[#050505] border-x border-b border-border-emphasis p-6 flex flex-col items-center rounded-b-[10px]">
                   <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 flex items-center justify-center">
-                    {/* Placeholder QR Code image. Typically you'd use a real library or image here */}
-                    <div className="w-full h-full border-4 border-black border-dashed flex items-center justify-center text-black font-bold text-[11px]">QR CODE</div>
+                    {address ? (
+                      <QRCodeSVG value={address} size={124} />
+                    ) : (
+                      <div className="w-full h-full border-4 border-black border-dashed flex items-center justify-center text-black font-bold text-[11px]">QR CODE</div>
+                    )}
                   </div>
                   
-                  <span className="font-mono text-text-primary text-[13px] tracking-wide mb-2">
+                  <button 
+                    onClick={handleCopy}
+                    className="font-mono text-text-primary text-[13px] tracking-wide mb-2 hover:text-text-muted transition-colors"
+                  >
                     {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
-                  </span>
+                  </button>
                   
                   <button 
                     onClick={handleCopy}

@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+
+  const isOnboarding = ['/place', '/link-socials', '/deposit'].includes(pathname);
 
   useEffect(() => {
     setMounted(true);
@@ -40,11 +44,19 @@ export function Header() {
         </button>
       )}
 
-      <Link href="/" className="flex items-baseline gap-0.5 hover:opacity-90 transition-opacity">
-        <span className="font-[800] text-text-primary text-[28px] tracking-tight">tether</span>
-        <span className="font-[800] text-text-secondary text-[28px]">.</span>
-        <span className="font-[400] text-text-primary text-[28px] tracking-tight">arena</span>
-      </Link>
+      {isOnboarding ? (
+        <div className="flex items-baseline gap-0.5 opacity-90">
+          <span className="font-[800] text-text-primary text-[28px] tracking-tight">tether</span>
+          <span className="font-[800] text-text-secondary text-[28px]">.</span>
+          <span className="font-[400] text-text-primary text-[28px] tracking-tight">arena</span>
+        </div>
+      ) : (
+        <Link href="/" className="flex items-baseline gap-0.5 hover:opacity-90 transition-opacity">
+          <span className="font-[800] text-text-primary text-[28px] tracking-tight">tether</span>
+          <span className="font-[800] text-text-secondary text-[28px]">.</span>
+          <span className="font-[400] text-text-primary text-[28px] tracking-tight">arena</span>
+        </Link>
+      )}
       <p className="text-text-secondary text-[14px] font-bold mt-1">
         The Conditional Payment Engine
       </p>

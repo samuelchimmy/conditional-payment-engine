@@ -14,7 +14,14 @@ const publicPaths = [
   '/support', 
   '/x-callback', 
   '/discord-callback', 
+  '/discord-callback', 
   '/telegram-callback'
+];
+
+const onboardingPaths = [
+  '/place',
+  '/link-socials',
+  '/deposit'
 ];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -25,6 +32,20 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isConnected && !publicPaths.includes(pathname)) {
       router.push('/');
+      return;
+    }
+
+    if (isConnected) {
+      if (onboardingPaths.includes(pathname) || pathname === '/dashboard') {
+        localStorage.setItem('onboarding_step', pathname);
+      } else if (pathname === '/') {
+        const lastStep = localStorage.getItem('onboarding_step');
+        if (lastStep && lastStep !== '/') {
+          router.push(lastStep);
+        } else {
+          router.push('/dashboard');
+        }
+      }
     }
   }, [isConnected, pathname, router]);
 

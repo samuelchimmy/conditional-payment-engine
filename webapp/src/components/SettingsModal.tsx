@@ -9,6 +9,7 @@ import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts
 import { useWallet } from "@/components/WalletProvider";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "react-hot-toast";
+import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -30,7 +31,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { theme, setTheme } = useTheme();
-  const { address } = useWallet();
+  const { address, disconnectWallet } = useWallet();
   const [mounted, setMounted] = useState(false);
   const [allowanceAmount, setAllowanceAmount] = useState("50.00");
   const [isAllowanceModalOpen, setIsAllowanceModalOpen] = useState(false);
@@ -58,6 +59,96 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         });
     }
   }, [isOpen, address]);
+
+  // Social Linking Logic from link-socials
+  const [linkingPlatform, setLinkingPlatform] = useState<string | null>(null);
+
+  // Polling for X (Twitter) linking in case the popup gets stuck on mobile
+  useEffect(() => {
+    if (linkingPlatform === 'twitter' && address) {
+      const interval = setInterval(async () => {
+        const { data } = await supabase.from('wallet_profiles').select('x_username').eq('wallet_address', address.toLowerCase()).single();
+        if (data && data.x_username) {
+          setLinkingPlatform(null);
+          setProfile(prev => ({ ...prev, x_username: data.x_username }));
+          toast.success("Account linked successfully!");
+        }
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [linkingPlatform, address]);
+
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data?.type === "x-oauth-success" || event.data?.type === "discord-oauth-success" || event.data?.type === "telegram-oauth-success") {
+        setLinkingPlatform(null);
+        // Refresh profile to show connected state
+        if (address) {
+          const { data } = await supabase.from("wallet_profiles").select("*").eq("wallet_address", address.toLowerCase()).single();
+          if (data) setProfile(data);
+        }
+        toast.success("Account linked successfully!");
+      } else if (event.data?.type === "social-link-conflict") {
+        toast.error(event.data.message);
+        setLinkingPlatform(null);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [address]);
+
+  const handleLink = async (platform: "twitter" | "discord") => {
+    setLinkingPlatform(platform);
+
+    let oauthUrl = "";
+
+    if (platform === "discord") {
+      const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+      const redirectUri = encodeURIComponent(`${window.location.origin}/discord-callback`);
+      const state = btoa(JSON.stringify({ walletAddress: address }));
+      oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
+    } else if (platform === "twitter") {
+      const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
+      const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
+      const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier: "challenge" }));
+      oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
+    }
+
+    const width = 500;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    window.open(oauthUrl, `Connect ${platform}`, `width=${width},height=${height},left=${left},top=${top}`);
+  };
+
+  const handleTelegramAuth = async (user: any) => {
+    try {
+      setLinkingPlatform("telegram");
+      const response = await supabase.functions.invoke("social-identity", {
+        body: {
+          action: "link-telegram",
+          walletAddress: address,
+          telegramUser: user
+        }
+      });
+      if (response.error || response.data?.error) {
+        toast.error(response.data?.error || response.error?.message || "Failed to link Telegram");
+      } else {
+        if (address) {
+          const { data } = await supabase.from("wallet_profiles").select("*").eq("wallet_address", address.toLowerCase()).single();
+          if (data) setProfile(data);
+        }
+        toast.success("Telegram linked!");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to link Telegram");
+    } finally {
+      setLinkingPlatform(null);
+    }
+  };
 
   const handleDisconnect = async (platform: 'x' | 'discord' | 'telegram') => {
     if (!profile) return;
@@ -93,8 +184,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (isConfirmed) {
       setAllowanceAmount(tempAllowance || "0.00");
       setIsAllowanceModalOpen(false);
+      toast.success("Allowance approved successfully!");
     }
   }, [isConfirmed]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message || "Failed to approve allowance");
+    }
+  }, [error]);
 
   const handleApprove = () => {
     if (!tempAllowance) return;
@@ -222,8 +320,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         Disconnect
                       </button>
                     ) : (
-                      <button onClick={() => window.open("/link-socials", "_blank")} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
-                        Connect
+                      <button onClick={() => handleLink('twitter')} disabled={linkingPlatform === 'twitter'} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors disabled:opacity-50">
+                        {linkingPlatform === 'twitter' ? "Connecting..." : "Connect"}
                       </button>
                     )}
                   </div>
@@ -246,8 +344,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         Disconnect
                       </button>
                     ) : (
-                      <button onClick={() => window.open("/link-socials", "_blank")} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
-                        Connect
+                      <button onClick={() => handleLink('discord')} disabled={linkingPlatform === 'discord'} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors disabled:opacity-50">
+                        {linkingPlatform === 'discord' ? "Connecting..." : "Connect"}
                       </button>
                     )}
                   </div>
@@ -266,13 +364,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
                     </div>
                     {profile?.telegram_id ? (
-                      <button onClick={() => handleDisconnect('telegram')} className="text-text-secondary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
+                      <button onClick={() => handleDisconnect('telegram')} className="text-text-secondary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors relative z-20">
                         Disconnect
                       </button>
                     ) : (
-                      <button onClick={() => window.open("/link-socials", "_blank")} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors">
-                        Connect
-                      </button>
+                      <div className="relative">
+                        <button disabled={linkingPlatform === 'telegram'} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors disabled:opacity-50">
+                          {linkingPlatform === 'telegram' ? "Connecting..." : "Connect"}
+                        </button>
+                        {!linkingPlatform && (
+                          <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 cursor-pointer">
+                            <div className="w-full h-full flex items-center justify-center scale-[3] origin-center cursor-pointer">
+                              <TelegramLoginWidget
+                                botName="TarenaAi_bot"
+                                onAuth={handleTelegramAuth}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -331,7 +441,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
 
               {/* Language */}
-              <div className="flex flex-col gap-2 mb-2">
+              <div className="flex flex-col gap-2">
                 <span className="text-text-secondary text-[11px] uppercase tracking-[0.1em] font-bold mb-1">Language</span>
                 <div 
                   onClick={() => setIsLanguageModalOpen(true)}
@@ -345,6 +455,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </svg>
                   </div>
                 </div>
+              </div>
+
+              {/* Logout Button */}
+              <div className="flex flex-col mb-4 mt-2">
+                <button 
+                  onClick={async () => {
+                    await disconnectWallet();
+                    localStorage.removeItem('onboarding_step');
+                    onClose();
+                  }}
+                  className="w-full h-[52px] border border-border hover:border-[#D53131] hover:text-[#D53131] text-text-primary text-[14px] font-bold rounded-[10px] transition-colors"
+                >
+                  Log out
+                </button>
               </div>
 
             </div>

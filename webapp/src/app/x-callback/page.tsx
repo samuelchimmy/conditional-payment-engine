@@ -123,7 +123,19 @@ export default function XCallbackPage() {
           <>
             <CheckCircle className="w-8 h-8 text-[#F2F1EF]" />
             <p className="text-[15px] font-bold text-[#F2F1EF]">{message}</p>
-            <p className="text-[13px] text-[#797977]">You can close this window</p>
+            <p className="text-[13px] text-[#797977] mb-2">You can safely close this window.</p>
+            <button
+              onClick={() => {
+                if (window.opener) {
+                  window.close();
+                } else {
+                  window.location.href = '/link-socials';
+                }
+              }}
+              className="mt-2 h-[48px] px-8 bg-transparent border border-[#2A2A2A] text-[#F2F1EF] rounded-[10px] hover:border-[#3A3A3A] transition-colors font-bold text-[13px]"
+            >
+              Return to app
+            </button>
           </>
         )}
         {status === "error" && (
@@ -131,10 +143,16 @@ export default function XCallbackPage() {
             <XCircle className="w-8 h-8 text-[#D53131]" />
             <p className="text-[15px] font-bold text-[#D53131]">{message}</p>
             <button
-              onClick={() => window.close()}
-              className="mt-4 h-[52px] px-8 bg-transparent border border-[#2A2A2A] text-[#F2F1EF] rounded-[10px] hover:border-[#3A3A3A] transition-colors"
+              onClick={() => {
+                if (window.opener) {
+                  window.close();
+                } else {
+                  window.location.href = '/link-socials';
+                }
+              }}
+              className="mt-4 h-[48px] px-8 bg-transparent border border-[#2A2A2A] text-[#F2F1EF] rounded-[10px] hover:border-[#3A3A3A] transition-colors font-bold text-[13px]"
             >
-              Close window
+              Return to app
             </button>
           </>
         )}

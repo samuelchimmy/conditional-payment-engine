@@ -11,7 +11,7 @@ export default function Deposit() {
   const router = useRouter();
 
   return (
-    <div className="w-full max-w-[440px] flex flex-col pt-8 relative mx-auto">
+    <div className="w-full max-w-[320px] flex flex-col pt-8 relative mx-auto">
       <div className="mb-6 text-center">
         <h1 className="text-text-primary text-[22px] font-[800]">
           Add funds
@@ -68,6 +68,14 @@ export default function Deposit() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-text-secondary">
             <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
+        </button>
+
+        {/* Deposit Later Button */}
+        <button 
+          onClick={() => router.push('/dashboard')}
+          className="w-full h-[52px] bg-transparent border border-border text-text-primary font-bold rounded-[10px] hover:border-border-emphasis transition-colors mt-2 text-[14px]"
+        >
+          Deposit later
         </button>
       </div>
     </div>
