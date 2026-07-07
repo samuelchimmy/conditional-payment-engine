@@ -34,7 +34,7 @@ export default function Dashboard() {
 
       let orQueries = [`sender_id.eq.${address}`, `recipient_handle.eq.${address}`];
       
-      let userHandles: string[] = [address];
+      let userHandles: string[] = [address as string];
       
       if (profile) {
         if (profile.x_username) {
