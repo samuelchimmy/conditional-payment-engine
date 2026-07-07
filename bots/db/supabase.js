@@ -3,13 +3,18 @@ import { createClient } from '@supabase/supabase-js';
 let supabase;
 
 export function initSupabase() {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-    console.warn('[DB] Supabase credentials missing. Database operations will fail.');
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+
+  // M4 FIX: Throw immediately if credentials are missing — never silently use a placeholder
+  if (!url || url === 'https://placeholder.supabase.co') {
+    throw new Error('[DB] SUPABASE_URL is not configured. Set it in your .env file.');
   }
-  supabase = createClient(
-    process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.SUPABASE_SERVICE_KEY || 'placeholder'
-  );
+  if (!key || key === 'placeholder') {
+    throw new Error('[DB] SUPABASE_SERVICE_KEY is not configured. Set it in your .env file.');
+  }
+
+  supabase = createClient(url, key);
 }
 
 export function getSupabase() {
@@ -52,7 +57,9 @@ export async function insertAgentTransaction(data) {
   const db = getSupabase();
   const { error } = await db.from('agent_transactions').insert(data);
   if (error) {
+    // M4 FIX: Throw so callers know the transaction wasn't recorded
     console.error('[DB] Failed to insert agent transaction:', error);
+    throw new Error(`[DB] insertAgentTransaction failed: ${error.message}`);
   }
 }
 

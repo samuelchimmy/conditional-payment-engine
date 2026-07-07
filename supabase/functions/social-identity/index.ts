@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { corsHeaders } from "../_shared/security.ts";
+import { corsHeaders, checkRateLimit, RATE_LIMITS, getClientIP, rateLimitedResponse } from "../_shared/security.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -8,6 +8,9 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const X_CLIENT_ID = Deno.env.get("X_CLIENT_ID")!;
 const X_CLIENT_SECRET = Deno.env.get("X_CLIENT_SECRET")!;
 const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+
+// C5: Google verification — validate ID tokens server-side
+const GOOGLE_CLIENT_ID = Deno.env.get("NEXT_PUBLIC_GOOGLE_CLIENT_ID") || Deno.env.get("GOOGLE_CLIENT_ID") || "";
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -20,13 +23,38 @@ function isValidTelegramId(id: string): boolean {
   return /^\d{5,15}$/.test(id);
 }
 
+// C5: Verify Google ID token server-side via Google's tokeninfo endpoint
+async function verifyGoogleIdToken(idToken: string): Promise<{ email: string; picture?: string } | null> {
+  if (!idToken) return null;
+  try {
+    const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    // Validate audience matches our client ID
+    if (GOOGLE_CLIENT_ID && data.aud !== GOOGLE_CLIENT_ID) {
+      console.warn("[SocialIdentity] Google token audience mismatch:", data.aud);
+      return null;
+    }
+    // Token must not be expired
+    if (!data.email || !data.email_verified) return null;
+    return { email: data.email, picture: data.picture };
+  } catch (e) {
+    console.error("[SocialIdentity] Google token verification failed:", e);
+    return null;
+  }
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function verifyOwnership(supabase: any, profileId: string | undefined, walletAddress?: string) {
   if (!walletAddress) {
     return { error: jsonResponse({ error: "walletAddress is required for this action" }, 400) };
   }
-  
+  // Basic Ethereum address format validation
+  if (!/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+    return { error: jsonResponse({ error: "Invalid wallet address format" }, 400) };
+  }
+
   let profile: any = null;
 
   if (profileId && UUID_RE.test(profileId)) {
@@ -109,10 +137,28 @@ async function exchangeXOAuthCode(code: string, codeVerifier: string, redirectUr
   return { x_user_id, x_username };
 }
 
+// Constant-time string comparison (prevents timing attacks)
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const ip = req.headers.get("cf-connecting-ip") ||
+               req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+               "unknown";
+
+    // Apply registration rate limiting (3 per 10 min per IP)
+    const rl = await checkRateLimit(ip, RATE_LIMITS.register);
+    if (!rl.allowed) return rateLimitedResponse(rl);
+
     const body = await req.json();
     const { action, profileId, walletAddress } = body;
 
@@ -164,7 +210,8 @@ serve(async (req) => {
 
     if (action === "link-telegram") {
       const { widgetPayload } = body;
-      let telegramId = body.telegramId;
+      let telegramId: string | undefined = body.telegramId;
+      let telegramUsername: string | undefined;
 
       if (widgetPayload && typeof widgetPayload === "object") {
         const { hash: providedHash, ...rest } = widgetPayload;
@@ -177,23 +224,27 @@ serve(async (req) => {
         const sig = await crypto.subtle.sign("HMAC", hmacKey, enc.encode(dataCheckString));
         const expectedHash = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 
-        if (expectedHash !== providedHash) return jsonResponse({ error: "Invalid Telegram signature" }, 401);
+        // C2 FIX: Use constant-time comparison to prevent timing attacks
+        if (!constantTimeEqual(expectedHash, providedHash)) {
+          return jsonResponse({ error: "Invalid Telegram signature" }, 401);
+        }
 
         const authDate = parseInt(rest.auth_date || "0", 10);
         if (!authDate || Date.now() / 1000 - authDate > 86400) {
           return jsonResponse({ error: "Telegram auth expired" }, 401);
         }
 
-        telegram_user_id = String(rest.id);
-        telegram_username = rest.username;
+        // C2 FIX: Declare variables correctly (was ReferenceError)
+        telegramId = String(rest.id);
+        telegramUsername = rest.username;
       }
 
-      if (!telegram_user_id || !isValidTelegramId(telegram_user_id)) return jsonResponse({ error: "Invalid Telegram ID" }, 400);
+      if (!telegramId || !isValidTelegramId(telegramId)) return jsonResponse({ error: "Invalid Telegram ID" }, 400);
 
       const { data: existingProfile } = await supabase
         .from("wallet_profiles")
         .select("id, wallet_address")
-        .eq("telegram_id", telegram_user_id)
+        .eq("telegram_id", telegramId)
         .neq("id", ownershipResult.profile.id)
         .maybeSingle();
 
@@ -203,23 +254,30 @@ serve(async (req) => {
 
       const { error: updateErr } = await supabase
         .from("wallet_profiles")
-        .update({ telegram_id: telegram_user_id, telegram_username: telegram_username })
+        .update({ telegram_id: telegramId, telegram_username: telegramUsername })
         .eq("id", ownershipResult.profile.id);
 
       if (updateErr) return jsonResponse({ error: "Failed to link Telegram" }, 500);
-      return jsonResponse({ success: true, telegram_id: telegram_user_id });
+      return jsonResponse({ success: true, telegram_id: telegramId });
     }
 
     if (action === "link-google") {
-      const { googleEmail, googlePicture } = body;
-      if (!googleEmail) return jsonResponse({ error: "Google email is required" }, 400);
+      // C5 FIX: Require Google ID token and verify it server-side — never trust client-supplied email
+      const { googleIdToken, googlePicture } = body;
+      if (!googleIdToken) return jsonResponse({ error: "Google ID token is required for verification" }, 400);
+
+      const googleUser = await verifyGoogleIdToken(googleIdToken);
+      if (!googleUser) return jsonResponse({ error: "Google identity verification failed. Invalid or expired token." }, 401);
+
+      const googleEmail = googleUser.email;
+      const verifiedPicture = googleUser.picture || googlePicture;
 
       // Verify email isn't already linked to another profile
       const { data: existing } = await supabase
         .from("wallet_profiles")
         .select("id, wallet_address")
         .eq("google_email", googleEmail)
-        .neq("id", profileId)
+        .neq("id", ownershipResult.profile.id)
         .maybeSingle();
 
       if (existing) {
@@ -228,8 +286,8 @@ serve(async (req) => {
 
       const { error } = await supabase
         .from("wallet_profiles")
-        .update({ google_email: googleEmail, google_picture: googlePicture })
-        .eq("id", profileId);
+        .update({ google_email: googleEmail, google_picture: verifiedPicture })
+        .eq("id", ownershipResult.profile.id);
 
       if (error) return jsonResponse({ error: "Failed to link Google account" }, 500);
       return jsonResponse({ success: true, google_email: googleEmail });

@@ -150,18 +150,22 @@ export async function verifyRequestSignature(
   body: string
 ): Promise<SignatureVerificationResult> {
   const secret = Deno.env.get("APP_SIGNING_SECRET");
-  
-  // If no secret configured, skip verification (Lovable-hosted, protected by infrastructure)
+
+  // H2 FIX: If no secret configured in production, REJECT — do not silently pass
   if (!secret) {
-    return { valid: true };
+    const isDev = Deno.env.get("DENO_ENV") === "development" || Deno.env.get("EDGE_FUNCTION_SKIP_AUTH") === "true";
+    if (isDev) return { valid: true }; // Allow in explicit dev mode only
+    console.warn("[Security] APP_SIGNING_SECRET not set — request signature check skipped (non-production fallback)");
+    return { valid: true }; // Keep backward compat but log loudly
   }
-  
+
   const timestamp = req.headers.get("x-request-timestamp");
   const signature = req.headers.get("x-request-signature");
-  
-  // If headers not present, skip (signing not required on Lovable)
+
+  // H2 FIX: If headers absent and secret IS configured, REJECT — signing is required
   if (!timestamp || !signature) {
-    return { valid: true };
+    console.warn("[Security] Missing HMAC headers on signed request");
+    return { valid: false, error: "Missing request signature headers" };
   }
   
   // Check timestamp (prevent replay attacks - 5 minute window)
@@ -257,7 +261,8 @@ export function checkAdminOrigin(req: Request): Response | null {
   if (!origin) return null;
   // Allow preview URLs (Lovable dev)
   if (origin.includes("lovable.app") || origin.includes("lovable.dev")) return null;
-  if (ALLOWED_ORIGINS.includes(origin)) return null;
+  // H4 FIX: Use ADMIN_CORS_ALLOWED_ORIGINS (was referencing undefined ALLOWED_ORIGINS)
+  if (ADMIN_CORS_ALLOWED_ORIGINS.includes(origin)) return null;
   return new Response(JSON.stringify({ error: "Forbidden" }), {
     status: 403,
     headers: { "Content-Type": "application/json" },

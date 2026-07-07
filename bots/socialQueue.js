@@ -51,7 +51,9 @@ export async function processSocialQueue() {
         
         let text = '';
         if (tx.error_reason) {
-          text = `❌ Error processing your request: ${tx.error_reason}`;
+          // Sanitize: never echo raw internal error messages to users
+          // Use a fixed friendly message instead
+          text = `❌ We couldn't process your request. Please visit ${process.env.WEBAPP_URL || 'https://tarena.xyz'} to check status.`;
         } else if (tx.tx_hash) {
           if (tx.intent_type === 'conditional_payment') {
             text = `🏟️ Escrow locked! ${tx.amount} USDT reserved for @${tx.recipient}. IOU ID: ${tx.tx_hash}`;

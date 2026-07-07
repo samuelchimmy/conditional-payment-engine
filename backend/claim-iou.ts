@@ -97,14 +97,42 @@ Deno.serve(async (req) => {
 
     // ─── CLAIM: Mark IOU as claimed and assign to profile ───
     if (action === "claim") {
-      const { iouDbId, claimantProfileId } = body;
+      const { iouDbId, claimantProfileId, walletAddress } = body;
       if (!iouDbId || !claimantProfileId) {
         return new Response(JSON.stringify({ error: "iouDbId and claimantProfileId required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Fetch the IOU
+      // C4 FIX: Verify the caller actually owns claimantProfileId before allowing claim
+      // walletAddress must be provided and must match the profile row
+      if (!walletAddress) {
+        return new Response(JSON.stringify({ error: "walletAddress is required to authenticate claim" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Look up the profile to verify ownership
+      const { data: claimantProfile, error: profileLookupErr } = await supabase
+        .from("profiles")
+        .select("id, wallet_address")
+        .eq("id", claimantProfileId)
+        .maybeSingle();
+
+      if (profileLookupErr || !claimantProfile) {
+        return new Response(JSON.stringify({ error: "Claimant profile not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Verify the provided walletAddress matches the profile
+      if (claimantProfile.wallet_address?.toLowerCase() !== walletAddress.toLowerCase()) {
+        return new Response(JSON.stringify({ error: "Wallet address does not match profile. Claim denied." }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Fetch the IOU after ownership is confirmed
       const { data: iou, error: fetchErr } = await supabase
         .from("ious")
         .select("*")
@@ -114,19 +142,6 @@ Deno.serve(async (req) => {
 
       if (fetchErr || !iou) {
         return new Response(JSON.stringify({ error: "IOU not found or already claimed" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Get claimant's wallet address
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("wallet_address, pay_tag")
-        .eq("id", claimantProfileId)
-        .maybeSingle();
-
-      if (!profile) {
-        return new Response(JSON.stringify({ error: "Claimant profile not found" }), {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

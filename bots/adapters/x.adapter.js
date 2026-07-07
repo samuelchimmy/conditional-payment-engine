@@ -17,7 +17,7 @@ export async function startXAdapter() {
       appKey: process.env.X_API_KEY,
       appSecret: process.env.X_API_SECRET,
       accessToken: process.env.X_ACCESS_TOKEN,
-      accessSecret: process.env.X_REFRESH_TOKEN, // Assuming accessSecret is stored here based on typical env vars
+      accessSecret: process.env.X_ACCESS_SECRET, // OAuth 1.0a access token secret
     });
 
     // We use the read-only client to set up the stream
@@ -52,10 +52,12 @@ export async function startXAdapter() {
 
     stream.autoReconnect = true;
 
+    const BOT_USER_ID = process.env.X_BOT_USER_ID; // Set to the numeric ID of @TetherArenaBot
+
     stream.on('data', async (tweetEvent) => {
-      // Avoid processing our own tweets
-      // We can check if the author is our bot ID, but let's pass it to handler
       const tweet = tweetEvent.data;
+      // Filter out our own bot's tweets to prevent reply loops
+      if (BOT_USER_ID && tweet.author_id === BOT_USER_ID) return;
       const author = tweetEvent.includes?.users?.find(u => u.id === tweet.author_id);
       
       console.log(`[Adapter: X] Received tweet from @${author?.username || tweet.author_id}`);
@@ -87,7 +89,8 @@ export async function startXAdapter() {
   }
 }
 
-async function replyToTweet(tweetId, text) {
+// Exported so socialQueue.js can use it
+export async function replyToTweet(tweetId, text) {
   try {
     // Truncate to 280 chars if necessary, or split into threads
     // For now, basic truncation for safety

@@ -48,8 +48,11 @@ const IOU_REGISTRY_ABI = [
     stateMutability: "nonpayable",
     inputs: [
       { name: "iouIds", type: "uint256[]" },
-      { name: "claimant", type: "address" },
+      // C6 FIX: token parameter was missing — contract signature:
+      // batchClaim(uint256[] iouIds, address token, bytes32 recipientId, address claimant)
+      { name: "token", type: "address" },
       { name: "recipientId", type: "bytes32" },
+      { name: "claimant", type: "address" },
     ],
     outputs: [],
   },
@@ -76,6 +79,13 @@ Deno.serve(async (req) => {
 
     if (!chain || !platform || !platformUserId || !Array.isArray(iouIds) || iouIds.length === 0 || !claimantAddress) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // C6 FIX: tokenAddress must be provided so batchClaim can transfer the right token
+    const tokenAddress = (body as any).tokenAddress as string | undefined;
+    if (!tokenAddress || !/^0x[0-9a-fA-F]{40}$/.test(tokenAddress)) {
+      return new Response(JSON.stringify({ error: "tokenAddress (ERC-20 contract address) is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -175,7 +185,8 @@ Deno.serve(async (req) => {
     const data = encodeFunctionData({
       abi: IOU_REGISTRY_ABI,
       functionName: "batchClaim",
-      args: [ids, claimantAddress as `0x${string}`, recipientId],
+      // C6 FIX: Pass token address as second arg (was missing, causing all claims to revert)
+      args: [ids, tokenAddress as `0x${string}`, recipientId, claimantAddress as `0x${string}`],
     });
 
     let gas: bigint;

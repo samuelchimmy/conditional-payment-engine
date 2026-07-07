@@ -1,7 +1,10 @@
+import { keccak256, stringToBytes } from 'viem';
+
 const TEAM_ALIASES = {
   // Group A
   'usa': 'united states', 'us': 'united states', 'usmnt': 'united states',
   'united states': 'united states', 'america': 'united states', '🇺🇸': 'united states',
+
   'mexico': 'mexico', 'mex': 'mexico', 'el tri': 'mexico', '🇲🇽': 'mexico',
   'canada': 'canada', 'can': 'canada', 'canmnt': 'canada', '🇨🇦': 'canada',
 
@@ -79,12 +82,31 @@ export function resolveAlias(name) {
 
 export const footballPlugin = {
   id: 'football_wc2026',
-  
+
   parseConditionClause(clause) {
+    if (!clause || typeof clause !== 'object') return null;
+
+    // Extract params from the AI-parsed condition object
+    const params = clause.params || {};
+    const teamA = resolveAlias(params.teamA || '');
+    const teamB = resolveAlias(params.teamB || '');
+    const outcome = params.outcome || 'win'; // 'win' | 'lose' | 'draw'
+    const rawText = clause.rawText || JSON.stringify(params);
+
+    // Build a canonical condition string for hashing
+    const conditionStr = teamB
+      ? `${teamA}:${outcome}:vs:${teamB}`
+      : `${teamA}:${outcome}`;
+
+    // Compute deterministic conditionHash — keccak256 of canonical string
+    // This is what gets recorded on-chain in the IOURegistry
+    const conditionHash = keccak256(stringToBytes(conditionStr));
+
     return {
       type: 'football_match',
-      // Rely on the intent parser to pass the team names
-      // We do alias resolution at evaluation time to be safe
+      conditionHash,
+      conditionStr,
+      metadata: { teamA, teamB, outcome, rawText },
     };
   },
 

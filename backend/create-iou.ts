@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { keccak256, toBytes } from "https://esm.sh/viem@2.37.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,8 +44,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate recipientId hash matching the contract: keccak256(platform:userId)
-    const recipientId = `${platform}:${platformUserId}`;
+    // C7 FIX: Compute keccak256(platform:userId) to match the on-chain IOURegistry hash.
+    // The contract uses: keccak256(abi.encodePacked(platform, ":", userId))
+    // Using keccak256(toBytes(`${platform}:${userId}`)) produces the same result.
+    const recipientId = keccak256(toBytes(`${platform.toLowerCase()}:${platformUserId}`));
 
     const { data, error } = await supabase.from("ious").insert({
       iou_id: String(iouId),

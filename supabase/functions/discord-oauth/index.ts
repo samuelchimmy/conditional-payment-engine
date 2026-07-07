@@ -1,10 +1,34 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/security.ts";
+import { corsHeaders, checkRateLimit, RATE_LIMITS, getClientIP, rateLimitedResponse } from "../_shared/security.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID")!;
 const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET")!;
+
+// H7: Whitelist of allowed redirect URIs for Discord OAuth code exchange
+// Prevents open-redirect attacks where attacker supplies a malicious redirectUri
+const ALLOWED_REDIRECT_URIS = [
+  "https://tarena.xyz/settings",
+  "https://tarena.xyz/onboarding",
+  "https://tarena.xyz/link-socials",
+  "https://www.tarena.xyz/settings",
+  "https://www.tarena.xyz/onboarding",
+  "https://www.tarena.xyz/link-socials",
+  "http://localhost:3000/settings",
+  "http://localhost:3000/onboarding",
+  "http://localhost:3000/link-socials",
+];
+
+// Allow Vercel/Lovable preview URLs in non-production
+function isAllowedRedirectUri(uri: string): boolean {
+  if (ALLOWED_REDIRECT_URIS.includes(uri)) return true;
+  if (Deno.env.get("DENO_ENV") !== "production") {
+    // Allow preview deployment URLs during development
+    if (uri.includes("vercel.app") || uri.includes("lovable.app") || uri.includes("localhost")) return true;
+  }
+  return false;
+}
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -19,11 +43,22 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Rate limiting: 3 social link attempts per 10 minutes per IP
+    const ip = getClientIP(req);
+    const rl = await checkRateLimit(ip, RATE_LIMITS.register);
+    if (!rl.allowed) return rateLimitedResponse(rl);
+
     const { code, redirectUri, profileId, walletAddress } = await req.json();
 
     if (!code || typeof code !== "string") return jsonResponse({ error: "Authorization code is required" }, 400);
     if (!walletAddress || typeof walletAddress !== "string") return jsonResponse({ error: "Wallet address is required" }, 400);
     if (!redirectUri || typeof redirectUri !== "string") return jsonResponse({ error: "Redirect URI is required" }, 400);
+
+    // H7: Validate redirect URI against whitelist
+    if (!isAllowedRedirectUri(redirectUri)) {
+      console.warn(`[discord-oauth] Blocked disallowed redirectUri: ${redirectUri}`);
+      return jsonResponse({ error: "Invalid redirect URI" }, 400);
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

@@ -8,6 +8,33 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
+// C3: In-memory nonce store (single-use claim prevention)
+// Each nonce is the SHA-256 hash of the signed message — prevents replay
+const usedNonces = new Map<string, number>(); // nonce → timestamp used
+
+// Clean up nonces older than 24 hours
+function cleanExpiredNonces() {
+  const cutoff = Date.now() - 86_400_000;
+  for (const [nonce, ts] of usedNonces.entries()) {
+    if (ts < cutoff) usedNonces.delete(nonce);
+  }
+}
+
+// C3: Extract and validate timestamp from the signed message
+// Expected format: "Claim IOUs for 0xADDRESS at TIMESTAMP"
+function extractMessageTimestamp(message: string): number | null {
+  const match = message.match(/at (\d{10,13})$/);
+  if (!match) return null;
+  return parseInt(match[1], 10);
+}
+
+function jsonResp(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  })
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -26,12 +53,10 @@ serve(async (req) => {
     const { action, walletAddress, signature, message } = await req.json()
 
     if (action !== "claim-all" || !walletAddress || !signature || !message) {
-      return new Response(JSON.stringify({ error: "Invalid request. Action must be 'claim-all' and walletAddress, signature, message are required." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
+      return jsonResp({ error: "Invalid request. Action must be 'claim-all' and walletAddress, signature, message are required." }, 400)
     }
 
-    // 1. Verify EVM Signature to mathematically prove wallet ownership
+    // 1. Verify EVM Signature
     const isValidSignature = await verifyMessage({
       address: walletAddress,
       message,
@@ -39,29 +64,48 @@ serve(async (req) => {
     });
 
     if (!isValidSignature) {
-      return new Response(JSON.stringify({ error: "Invalid signature. Cannot verify wallet ownership." }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
+      return jsonResp({ error: "Invalid signature. Cannot verify wallet ownership." }, 401)
     }
 
-    // Protect against replay attacks (in production you'd use a nonce or timestamp in the message)
-    if (!message.includes("Claim IOUs for") || !message.includes(walletAddress)) {
-      return new Response(JSON.stringify({ error: "Invalid message format." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
+    // 2. Validate message format
+    if (!message.includes("Claim IOUs for") || !message.toLowerCase().includes(walletAddress.toLowerCase())) {
+      return jsonResp({ error: "Invalid message format." }, 400)
     }
 
-    // 2. Fetch the caller's wallet profile to get linked social identities
+    // C3: Timestamp validation — message must include a recent timestamp
+    // Format: "Claim IOUs for 0xADDRESS at 1720000000000"
+    const msgTimestamp = extractMessageTimestamp(message);
+    if (!msgTimestamp) {
+      return jsonResp({ error: "Message must include a timestamp: 'Claim IOUs for 0xADDRESS at TIMESTAMP'" }, 400)
+    }
+    const ageMs = Date.now() - (msgTimestamp > 1e12 ? msgTimestamp : msgTimestamp * 1000);
+    if (ageMs < 0 || ageMs > 300_000) { // 5-minute window
+      return jsonResp({ error: "Claim message has expired. Please re-sign with a fresh timestamp." }, 400)
+    }
+
+    // C3: Nonce check — prevent replay of the same signed message
+    // Use SHA-256 of the signature as the nonce
+    const sigBytes = new TextEncoder().encode(signature);
+    const nonceBuffer = await crypto.subtle.digest("SHA-256", sigBytes);
+    const nonce = Array.from(new Uint8Array(nonceBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    if (usedNonces.has(nonce)) {
+      return jsonResp({ error: "This signed message has already been used. Please sign a new claim request." }, 400)
+    }
+
+    // Mark nonce as used immediately to prevent race conditions
+    usedNonces.set(nonce, Date.now());
+    cleanExpiredNonces();
+
+    // 3. Fetch the caller's wallet profile to get linked social identities
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("wallet_profiles")
-      .select("wallet_address, discord_id, x_user_id, telegram_id")
+      .select("id, wallet_address, discord_id, x_user_id, telegram_id")
       .eq("wallet_address", walletAddress)
       .maybeSingle()
 
     if (profileError || !profile) {
-      return new Response(JSON.stringify({ error: "Wallet profile not found. Please link social accounts first." }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
+      return jsonResp({ error: "Wallet profile not found. Please link social accounts first." }, 404)
     }
 
     let claimedCount = 0;
@@ -74,9 +118,7 @@ serve(async (req) => {
     if (profile.telegram_id) linkedIdentities.push({ platform: "telegram", id: profile.telegram_id });
 
     if (linkedIdentities.length === 0) {
-      return new Response(JSON.stringify({ error: "No social identities linked to this wallet." }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
+      return jsonResp({ error: "No social identities linked to this wallet." }, 403)
     }
 
     for (const identity of linkedIdentities) {
@@ -89,7 +131,7 @@ serve(async (req) => {
 
       if (pendingIOUs && pendingIOUs.length > 0) {
         for (const iou of pendingIOUs) {
-          // Update IOU
+          // Update IOU status to claimed
           await supabaseAdmin.from("ious").update({
             status: "claimed",
             recipient_wallet: walletAddress,
@@ -98,7 +140,7 @@ serve(async (req) => {
 
           // Log Transaction
           await supabaseAdmin.from("transactions").insert({
-            profile_id: profile.id, // Or just use wallet_address depending on schema
+            profile_id: profile.id,
             type: "iou_claim",
             amount: iou.amount,
             counterparty: iou.sender_pay_tag,
@@ -113,15 +155,13 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+    return jsonResp({
+      success: true,
       claimedCount,
       totalClaimedAmount,
-      message: claimedCount > 0 
-        ? `Successfully securely claimed ${claimedCount} IOUs totaling ${totalClaimedAmount} USDT` 
+      message: claimedCount > 0
+        ? `Successfully securely claimed ${claimedCount} IOUs totaling ${totalClaimedAmount} USDT`
         : `No pending IOUs found for your linked accounts.`
-    }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     })
 
   } catch (error) {
