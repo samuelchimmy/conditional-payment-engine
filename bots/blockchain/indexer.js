@@ -1,7 +1,7 @@
 import { decodeEventLog } from 'viem';
 import { buildCeloClients } from './celoClient.js';
 import { IOU_REGISTRY_V3_ABI } from './iouV3.js';
-import { supabase } from '../db/supabase.js';
+import { getSupabase } from '../db/supabase.js';
 
 // Push Notification Helper
 async function triggerPushNotification(payload) {
@@ -51,7 +51,7 @@ export async function startIndexer() {
             const recipientId = decoded.args.recipientId;
 
             // 1. Trustlessly Insert into conditional_payments
-            await supabase.from('conditional_payments').upsert({
+            await getSupabase().from('conditional_payments').upsert({
               iou_id: iouId,
               sender_id: sender,
               amount: amount,
@@ -74,12 +74,12 @@ export async function startIndexer() {
           
           if (decoded.eventName === 'ConditionalIOUClaimed') {
             const iouId = decoded.args.iouId.toString();
-            await supabase.from('conditional_payments').update({
+            await getSupabase().from('conditional_payments').update({
               status: 'claimed'
             }).eq('iou_id', iouId);
 
             // Fetch payment details to notify
-            const { data } = await supabase.from('conditional_payments').select('sender_id').eq('iou_id', iouId).single();
+            const { data } = await getSupabase().from('conditional_payments').select('sender_id').eq('iou_id', decoded.args.iouId.toString()).single();
             if (data) {
               await triggerPushNotification({
                 targetWalletAddresses: [data.sender_id],

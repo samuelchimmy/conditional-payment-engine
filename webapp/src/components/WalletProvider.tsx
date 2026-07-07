@@ -9,6 +9,8 @@ import { generateMnemonic, english } from 'viem/accounts';
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm';
 import { SeedSignerEvm } from '@tetherto/wdk-wallet-evm/signers';
 import { supabase } from '@/lib/supabaseClient';
+import { getProfile } from '@/lib/dbProxy';
+
 
 // Wagmi config
 const wagmiConfig = createConfig({
@@ -110,14 +112,9 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     let mounted = true;
     const checkRegistration = async (addr: string) => {
       try {
-        if (!supabase) return;
-        const { data, error } = await supabase
-          .from("wallet_profiles")
-          .select("id, paytag")
-          .eq("wallet_address", addr)
-          .single();
+        const { data } = await getProfile(addr);
         if (mounted) {
-          setIsRegistered(!!(data && data.paytag));
+          setIsRegistered(!!data);
         }
       } catch (err) {
         console.error("Failed to check registration", err);

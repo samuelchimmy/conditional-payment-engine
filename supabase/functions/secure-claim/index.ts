@@ -8,11 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
-// C3: In-memory nonce store (single-use claim prevention)
-// Each nonce is the SHA-256 hash of the signed message — prevents replay
+// In-memory nonce store (single-use claim prevention)
 const usedNonces = new Map<string, number>(); // nonce → timestamp used
 
-// Clean up nonces older than 24 hours
 function cleanExpiredNonces() {
   const cutoff = Date.now() - 86_400_000;
   for (const [nonce, ts] of usedNonces.entries()) {
@@ -20,12 +18,17 @@ function cleanExpiredNonces() {
   }
 }
 
-// C3: Extract and validate timestamp from the signed message
+// Extract and validate timestamp from the signed message
 // Expected format: "Claim IOUs for 0xADDRESS at TIMESTAMP"
 function extractMessageTimestamp(message: string): number | null {
-  const match = message.match(/at (\d{10,13})$/);
+  const match = message.match(/at (\d{10,13})$/) || message.match(/at (.+)$/);
   if (!match) return null;
-  return parseInt(match[1], 10);
+  // Handle both numeric timestamps and ISO strings
+  const raw = match[1];
+  const numeric = parseInt(raw, 10);
+  if (!isNaN(numeric)) return numeric;
+  const fromIso = new Date(raw).getTime();
+  return isNaN(fromIso) ? null : fromIso;
 }
 
 function jsonResp(data: unknown, status = 200) {
@@ -50,10 +53,11 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { action, walletAddress, signature, message } = await req.json()
+    const { action, walletAddress, signature, message, betId } = await req.json()
 
-    if (action !== "claim-all" || !walletAddress || !signature || !message) {
-      return jsonResp({ error: "Invalid request. Action must be 'claim-all' and walletAddress, signature, message are required." }, 400)
+    // Accept both "claim-all" (dashboard) and "claim-single" (individual bet)
+    if (!["claim-all", "claim-single"].includes(action) || !walletAddress || !signature || !message) {
+      return jsonResp({ error: "Invalid request. walletAddress, signature, and message are required." }, 400)
     }
 
     // 1. Verify EVM Signature
@@ -72,19 +76,17 @@ serve(async (req) => {
       return jsonResp({ error: "Invalid message format." }, 400)
     }
 
-    // C3: Timestamp validation — message must include a recent timestamp
-    // Format: "Claim IOUs for 0xADDRESS at 1720000000000"
+    // Timestamp validation — message must include a recent timestamp
     const msgTimestamp = extractMessageTimestamp(message);
     if (!msgTimestamp) {
-      return jsonResp({ error: "Message must include a timestamp: 'Claim IOUs for 0xADDRESS at TIMESTAMP'" }, 400)
+      return jsonResp({ error: "Message must include a timestamp." }, 400)
     }
     const ageMs = Date.now() - (msgTimestamp > 1e12 ? msgTimestamp : msgTimestamp * 1000);
     if (ageMs < 0 || ageMs > 300_000) { // 5-minute window
       return jsonResp({ error: "Claim message has expired. Please re-sign with a fresh timestamp." }, 400)
     }
 
-    // C3: Nonce check — prevent replay of the same signed message
-    // Use SHA-256 of the signature as the nonce
+    // Nonce check — prevent replay of the same signed message
     const sigBytes = new TextEncoder().encode(signature);
     const nonceBuffer = await crypto.subtle.digest("SHA-256", sigBytes);
     const nonce = Array.from(new Uint8Array(nonceBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -101,7 +103,7 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("wallet_profiles")
       .select("id, wallet_address, discord_id, x_user_id, telegram_id")
-      .eq("wallet_address", walletAddress)
+      .ilike("wallet_address", walletAddress.toLowerCase())
       .maybeSingle()
 
     if (profileError || !profile) {
@@ -111,46 +113,104 @@ serve(async (req) => {
     let claimedCount = 0;
     let totalClaimedAmount = 0;
 
-    // Check all possible linked identities
-    const linkedIdentities = [];
-    if (profile.discord_id) linkedIdentities.push({ platform: "discord", id: profile.discord_id });
-    if (profile.x_user_id) linkedIdentities.push({ platform: "x", id: profile.x_user_id });
-    if (profile.telegram_id) linkedIdentities.push({ platform: "telegram", id: profile.telegram_id });
-
-    if (linkedIdentities.length === 0) {
-      return jsonResp({ error: "No social identities linked to this wallet." }, 403)
-    }
-
-    for (const identity of linkedIdentities) {
-      const { data: pendingIOUs } = await supabaseAdmin
-        .from("ious")
+    // Build query depending on action
+    if (action === "claim-single" && betId) {
+      // Claim a specific conditional payment by ID
+      const { data: payment, error: paymentErr } = await supabaseAdmin
+        .from("conditional_payments")
         .select("*")
-        .eq("platform", identity.platform)
-        .eq("platform_user_id", String(identity.id))
+        .eq("id", betId)
         .eq("status", "pending")
+        .maybeSingle();
 
-      if (pendingIOUs && pendingIOUs.length > 0) {
-        for (const iou of pendingIOUs) {
-          // Update IOU status to claimed
-          await supabaseAdmin.from("ious").update({
-            status: "claimed",
-            recipient_wallet: walletAddress,
-            claimed_at: new Date().toISOString(),
-          }).eq("id", iou.id);
+      if (paymentErr || !payment) {
+        return jsonResp({ error: "Payment not found or already claimed." }, 404)
+      }
 
-          // Log Transaction
-          await supabaseAdmin.from("transactions").insert({
-            profile_id: profile.id,
-            type: "iou_claim",
-            amount: iou.amount,
-            counterparty: iou.sender_pay_tag,
-            source: "iou",
-            status: "completed",
-            metadata: { iou_id: iou.iou_id, chain: iou.chain, platform: iou.platform },
-          });
+      // Verify the claimer is the recipient by checking linked identities
+      const linkedIds = [
+        profile.discord_id,
+        profile.x_user_id,
+        profile.telegram_id,
+        walletAddress.toLowerCase(),
+        walletAddress,
+      ].filter(Boolean).map(String);
 
-          claimedCount++;
-          totalClaimedAmount += Number(iou.amount);
+      const recipientNumeric = (payment.recipient_numeric_id || "").toLowerCase();
+      const recipientHandle = (payment.recipient_handle || "").toLowerCase();
+      
+      const isRecipient =
+        linkedIds.some(id => id.toLowerCase() === recipientNumeric) ||
+        linkedIds.some(id => id.toLowerCase() === recipientHandle) ||
+        (payment.recipient_wallet && payment.recipient_wallet.toLowerCase() === walletAddress.toLowerCase());
+
+      if (!isRecipient) {
+        return jsonResp({ error: "You are not the recipient of this payment." }, 403)
+      }
+
+      // Mark as claimed
+      await supabaseAdmin.from("conditional_payments").update({
+        status: "claimed",
+        recipient_wallet: walletAddress,
+        claimed_at: new Date().toISOString(),
+      }).eq("id", payment.id);
+
+      // Log transaction
+      await supabaseAdmin.from("transactions").insert({
+        profile_id: profile.id,
+        type: "iou_claim",
+        amount: payment.amount,
+        counterparty: payment.sender_id,
+        source: "conditional_payment",
+        status: "completed",
+        metadata: { iou_id: payment.iou_id, platform: payment.platform, bet_id: payment.id },
+      });
+
+      claimedCount = 1;
+      totalClaimedAmount = Number(payment.amount);
+
+    } else {
+      // claim-all: claim all pending conditional_payments across all linked identities
+      const linkedIdentities: { platform: string; id: string }[] = [];
+      if (profile.discord_id) linkedIdentities.push({ platform: "discord", id: profile.discord_id });
+      if (profile.x_user_id) linkedIdentities.push({ platform: "x", id: profile.x_user_id });
+      if (profile.telegram_id) linkedIdentities.push({ platform: "telegram", id: profile.telegram_id });
+
+      if (linkedIdentities.length === 0) {
+        return jsonResp({ error: "No social identities linked to this wallet." }, 403)
+      }
+
+      for (const identity of linkedIdentities) {
+        // Query conditional_payments where recipient_numeric_id OR recipient_handle matches the linked social ID
+        // Supabase `or` syntax requires a string like `recipient_numeric_id.eq.123,recipient_handle.eq.123`
+        const { data: pendingPayments } = await supabaseAdmin
+          .from("conditional_payments")
+          .select("*")
+          .eq("platform", identity.platform)
+          .or(`recipient_numeric_id.eq.${identity.id},recipient_handle.eq.${identity.id}`)
+          .eq("status", "pending")
+
+        if (pendingPayments && pendingPayments.length > 0) {
+          for (const payment of pendingPayments) {
+            await supabaseAdmin.from("conditional_payments").update({
+              status: "claimed",
+              recipient_wallet: walletAddress,
+              claimed_at: new Date().toISOString(),
+            }).eq("id", payment.id);
+
+            await supabaseAdmin.from("transactions").insert({
+              profile_id: profile.id,
+              type: "iou_claim",
+              amount: payment.amount,
+              counterparty: payment.sender_id,
+              source: "conditional_payment",
+              status: "completed",
+              metadata: { iou_id: payment.iou_id, platform: payment.platform, bet_id: payment.id },
+            });
+
+            claimedCount++;
+            totalClaimedAmount += Number(payment.amount);
+          }
         }
       }
     }
@@ -160,8 +220,8 @@ serve(async (req) => {
       claimedCount,
       totalClaimedAmount,
       message: claimedCount > 0
-        ? `Successfully securely claimed ${claimedCount} IOUs totaling ${totalClaimedAmount} USDT`
-        : `No pending IOUs found for your linked accounts.`
+        ? `Successfully claimed ${claimedCount} payment(s) totaling ${totalClaimedAmount} USDT`
+        : `No pending payments found for your linked accounts.`
     })
 
   } catch (error) {

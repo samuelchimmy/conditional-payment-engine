@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS public.conditional_payments (
   platform text,
   sender_id text,
   recipient_handle text,
+  recipient_numeric_id text,
   amount numeric,
   currency text DEFAULT 'USDT',
   condition_str text,
