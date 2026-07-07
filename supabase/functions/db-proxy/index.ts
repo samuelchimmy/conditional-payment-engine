@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jwtVerify } from "https://deno.land/x/jose@v4.14.4/index.ts";
 import { corsHeaders } from "../_shared/security.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const jwtSecret = Deno.env.get("JWT_SECRET") || "fallback_secret_for_dev";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -29,6 +31,24 @@ serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const walletLower = walletAddress.toLowerCase();
+
+    // ─── AUTHENTICATION ────────────────────────────────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return json({ error: "Missing or invalid Authorization header" }, 401);
+    }
+
+    try {
+      const token = authHeader.split(" ")[1];
+      const secret = new TextEncoder().encode(jwtSecret);
+      const { payload } = await jwtVerify(token, secret);
+      
+      if (payload.wallet_address !== walletLower) {
+        return json({ error: "Unauthorized: Token does not match wallet address" }, 403);
+      }
+    } catch (err) {
+      return json({ error: "Invalid or expired token" }, 401);
+    }
 
     // ─── GET PROFILE ───────────────────────────────────────────────────────────
     if (action === "get-profile") {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { WagmiProvider, createConfig, http, useAccount, useConnect, useDisconnect } from "wagmi";
+import { WagmiProvider, createConfig, http, useAccount, useConnect, useDisconnect, useSignMessage } from "wagmi";
 import { mainnet, polygon, celo } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { injected, walletConnect } from "wagmi/connectors";
@@ -49,6 +49,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 function WalletProviderInner({ children }: { children: React.ReactNode }) {
   const { connectAsync, connectors } = useConnect();
   const { disconnectAsync } = useDisconnect();
+  const { signMessageAsync } = useSignMessage();
 
   const [state, setState] = useState<WalletState>({
     isConnected: false,
@@ -124,17 +125,35 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     };
 
     if (isConnected && address) {
+      // Don't re-authenticate if we already have a valid token for this address
+      const existingToken = localStorage.getItem(`tarena_jwt`);
+      let needsAuth = true;
+      if (existingToken) {
+        try {
+          const payload = JSON.parse(atob(existingToken.split('.')[1]));
+          if (payload.wallet_address === address.toLowerCase() && payload.exp * 1000 > Date.now()) {
+            needsAuth = false;
+          }
+        } catch (e) {
+          // invalid token
+        }
+      }
+
       setState(prev => ({
         ...prev,
         isConnected: true,
         address: address,
-        authMethod: "metamask", // For now we assume Metamask/Wagmi
+        authMethod: "metamask",
       }));
-      // checkRegistration(address); // Original check
-      // --- NEW SIWE AUTH WIRING ---
-      // authenticateWallet(address).then(() => checkRegistration(address));
-      // For now, we just mock the registration check so as not to break the UI
-      setIsRegistered(true);
+
+      if (needsAuth) {
+        authenticateWallet(address).then((token) => {
+          if (token) checkRegistration(address);
+          else disconnectWallet(); // disconnect if auth fails
+        });
+      } else {
+        checkRegistration(address);
+      }
     } else if (state.authMethod === "metamask") {
       setState(prev => ({
         ...prev,
@@ -143,11 +162,12 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
         authMethod: null,
       }));
       setIsRegistered(false);
+      localStorage.removeItem('tarena_jwt');
     }
     return () => { mounted = false; };
   }, [isConnected, address]);
 
-  // SIWE Authentication helper (wired but not enforced to avoid breaking hackathon UX)
+  // SIWE Authentication helper
   const authenticateWallet = async (addr: string) => {
     try {
       const resNonce = await supabase.functions.invoke('auth-session', {
@@ -157,8 +177,7 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
       const { nonce } = resNonce.data;
   
       const message = `Sign this message to authenticate with tether.arena.\nNonce: ${nonce}`;
-      // Logic for signing goes here (useSignMessage from wagmi)
-      const signature = "0xMockSignature"; // Replace with actual signature in production
+      const signature = await signMessageAsync({ message });
   
       const resVerify = await supabase.functions.invoke('auth-session', {
         body: { action: 'verify', message, signature, wallet_address: addr }

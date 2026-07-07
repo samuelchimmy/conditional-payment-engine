@@ -11,8 +11,15 @@ export async function callDbProxy<T = any>(
   extra?: Record<string, any>
 ): Promise<{ data: T | null; error: string | null }> {
   try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tarena_jwt') : null;
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await supabase.functions.invoke("db-proxy", {
       body: { action, walletAddress, ...extra },
+      headers,
     });
 
     if (response.error) {

@@ -10,7 +10,7 @@ async function triggerPushNotification(payload) {
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !key) return;
 
-    await fetch(`${url}/functions/v1/onesignal`, {
+    await fetch(`${url}/functions/v1/notifications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
