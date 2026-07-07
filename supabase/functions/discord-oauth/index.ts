@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       .from("wallet_profiles")
       .select("id, wallet_address")
       .eq("discord_id", discordId)
-      .neq("id", profileId)
+      .neq("id", profile.id)
       .maybeSingle();
 
     if (existing) {
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabase
       .from("wallet_profiles")
       .update({ discord_id: discordId })
-      .eq("id", profileId);
+      .eq("id", profile.id);
 
     if (updateError) return jsonResponse({ error: "Failed to link Discord account" }, 500);
 

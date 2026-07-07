@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import { Cloud, Loader2, AlertTriangle, Download, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import { downloadBackup, decryptFromBackup } from '@/lib/googleDriveBackup';
 import { supabase } from '@/lib/supabaseClient'; // Ensure you have a generic supabase client exported here
@@ -15,6 +16,7 @@ interface GoogleDriveRestoreProps {
 }
 
 function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<'idle' | 'authenticating' | 'downloading' | 'decrypting' | 'restoring' | 'success' | 'error' | 'not_found'>('idle');
   const [pin, setPin] = useState('');
   const [showPinInput, setShowPinInput] = useState(false);
@@ -97,6 +99,10 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
             }
           })();
         }
+        
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
       } else {
         setError(result.error || 'Restore failed');
         setStatus('error');
@@ -120,7 +126,7 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
         <div className="w-16 h-16 rounded-[10px] bg-[#181818] flex items-center justify-center mb-4">
           <Check className="w-8 h-8 text-[#F2F1EF]" />
         </div>
-        <p className="text-[15px] font-bold text-[#F2F1EF] mb-1">Wallet Restored!</p>
+        <p className="text-[15px] font-bold text-text-primary mb-1">Wallet Restored!</p>
         <p className="text-[13px] text-[#797977]">Logging you in...</p>
       </motion.div>
     );

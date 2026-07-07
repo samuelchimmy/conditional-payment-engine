@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { DepositModal } from "@/components/DepositModal";
@@ -15,8 +16,65 @@ export default function Dashboard() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [bets, setBets] = useState<any[]>([]);
 
   const { address, isConnected } = useWallet();
+
+  useEffect(() => {
+    if (!address || !supabase) return;
+
+    const fetchBets = async () => {
+      // Fetch user profile to get all linked handles
+      const { data: profile } = await supabase
+        .from('wallet_profiles')
+        .select('x_username, telegram_username, discord_id')
+        .ilike('wallet_address', address)
+        .maybeSingle();
+
+      let orQueries = [`sender_id.eq.${address}`, `recipient_handle.eq.${address}`];
+      
+      let userHandles: string[] = [address];
+      
+      if (profile) {
+        if (profile.x_username) {
+          orQueries.push(`sender_id.eq.${profile.x_username}`);
+          orQueries.push(`recipient_handle.eq.${profile.x_username}`);
+          orQueries.push(`sender_id.eq.@${profile.x_username}`);
+          orQueries.push(`recipient_handle.eq.@${profile.x_username}`);
+          userHandles.push(profile.x_username, `@${profile.x_username}`);
+        }
+        if (profile.telegram_username) {
+          orQueries.push(`sender_id.eq.${profile.telegram_username}`);
+          orQueries.push(`recipient_handle.eq.${profile.telegram_username}`);
+          orQueries.push(`sender_id.eq.@${profile.telegram_username}`);
+          orQueries.push(`recipient_handle.eq.@${profile.telegram_username}`);
+          userHandles.push(profile.telegram_username, `@${profile.telegram_username}`);
+        }
+        if (profile.discord_id) {
+          orQueries.push(`sender_id.eq.${profile.discord_id}`);
+          orQueries.push(`recipient_handle.eq.${profile.discord_id}`);
+          userHandles.push(profile.discord_id);
+        }
+      }
+
+      const { data } = await supabase
+        .from('conditional_payments')
+        .select('*')
+        .or(orQueries.join(','))
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        // Mark bets where user is recipient so we know when to show Claim vs Receipt
+        const decoratedBets = data.map(b => {
+          const isRecipient = userHandles.includes(b.recipient_handle);
+          return { ...b, isRecipient };
+        });
+        setBets(decoratedBets);
+      }
+    };
+
+    fetchBets();
+  }, [address]);
 
   const { data: balanceData } = useReadContract({
     address: USDTAddressCelo,
@@ -91,7 +149,7 @@ export default function Dashboard() {
             My Bets
           </h1>
           <p className="text-text-secondary text-[13px] mt-1">
-            3 Active · 1 Completed
+            {bets.filter(b => b.status === 'pending').length} Active · {bets.filter(b => b.status !== 'pending').length} Completed
           </p>
         </div>
         
@@ -101,39 +159,34 @@ export default function Dashboard() {
       </div>
 
       <div className="flex flex-col mb-16">
-        <div className="h-[72px] flex items-center justify-between border-t border-divider">
-          <div className="flex flex-col">
-            <span className="text-text-primary text-[14px] font-bold">Trandition as endrepo vs havatim...</span>
-            <span className="text-text-muted text-[12px]">50 USDT · Locked 2 days ago</span>
+        {bets.length === 0 ? (
+          <div className="py-8 text-center text-text-muted text-[13px]">
+            No bets found. Place a bet to get started!
           </div>
-          <span className="text-text-muted text-[14px] font-medium">Pending</span>
-        </div>
-
-        <div className="h-[72px] flex items-center justify-between border-t border-divider">
-          <div className="flex flex-col">
-            <span className="text-text-primary text-[14px] font-bold">Trandition as endrepo vs havatim...</span>
-            <span className="text-text-muted text-[12px]">50 USDT · Locked 2 days ago</span>
-          </div>
-          <span className="text-text-muted text-[14px] font-medium">Pending</span>
-        </div>
-
-        <div className="h-[72px] flex items-center justify-between border-t border-divider">
-          <div className="flex flex-col">
-            <span className="text-text-primary text-[14px] font-bold">Trandition as endrepo vs nagatim...</span>
-            <span className="text-text-muted text-[12px]">50 USDT · Locked 2 days ago</span>
-          </div>
-          <span className="text-text-muted text-[14px] font-medium">Resolved</span>
-        </div>
-
-        <div className="h-[72px] flex items-center justify-between border-t border-divider">
-          <div className="flex flex-col">
-            <span className="text-text-primary text-[14px] font-bold">Trandition as endrepo vs nasatim...</span>
-            <span className="text-text-muted text-[12px]">50 USDT · Locked 2 days ago</span>
-          </div>
-          <Link href="/claim" className="h-[32px] px-[18px] bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity">
-            Claim
-          </Link>
-        </div>
+        ) : (
+          bets.map((bet) => (
+            <div key={bet.id} className="h-[72px] flex items-center justify-between border-t border-divider">
+              <div className="flex flex-col">
+                <span className="text-text-primary text-[14px] font-bold">
+                  {bet.condition_str || "Custom Condition"}
+                </span>
+                <span className="text-text-muted text-[12px]">
+                  {bet.amount} {bet.currency || "USDT"} · {new Date(bet.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {bet.status === 'pending' && bet.isRecipient ? (
+                <Link href={`/claim?id=${bet.id}`} className="h-[32px] px-[18px] bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity">
+                  Claim
+                </Link>
+              ) : (
+                <Link href={`/receipt?id=${bet.id}`} className="h-[32px] px-[18px] bg-surface border border-border text-text-primary font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:bg-border transition-colors">
+                  Receipt
+                </Link>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       {/* Start Tipping Section */}

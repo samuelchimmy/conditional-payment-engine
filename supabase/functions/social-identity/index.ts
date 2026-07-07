@@ -146,7 +146,7 @@ serve(async (req) => {
         .from("wallet_profiles")
         .select("id, wallet_address")
         .eq("x_user_id", x_user_id)
-        .neq("id", profileId)
+        .neq("id", ownershipResult.profile.id)
         .maybeSingle();
 
       if (existingProfile) {
@@ -156,7 +156,7 @@ serve(async (req) => {
       const { error: updateErr } = await supabase
         .from("wallet_profiles")
         .update({ x_user_id, x_username, x_verified: true })
-        .eq("id", profileId);
+        .eq("id", ownershipResult.profile.id);
 
       if (updateErr) return jsonResponse({ error: "Failed to link X account" }, 500);
       return jsonResponse({ success: true, x_username, x_user_id });
@@ -184,29 +184,30 @@ serve(async (req) => {
           return jsonResponse({ error: "Telegram auth expired" }, 401);
         }
 
-        telegramId = String(rest.id);
+        telegram_user_id = String(rest.id);
+        telegram_username = rest.username;
       }
 
-      if (!telegramId || !isValidTelegramId(telegramId)) return jsonResponse({ error: "Invalid Telegram ID" }, 400);
+      if (!telegram_user_id || !isValidTelegramId(telegram_user_id)) return jsonResponse({ error: "Invalid Telegram ID" }, 400);
 
-      const { data: existing } = await supabase
+      const { data: existingProfile } = await supabase
         .from("wallet_profiles")
         .select("id, wallet_address")
-        .eq("telegram_id", telegramId)
-        .neq("id", profileId)
+        .eq("telegram_id", telegram_user_id)
+        .neq("id", ownershipResult.profile.id)
         .maybeSingle();
 
-      if (existing) {
-        return jsonResponse({ error: `This Telegram account is already linked to wallet ${existing.wallet_address.substring(0,6)}...` }, 409);
+      if (existingProfile) {
+        return jsonResponse({ error: `This Telegram account is already linked to wallet ${existingProfile.wallet_address.substring(0,6)}...` }, 409);
       }
 
-      const { error } = await supabase
+      const { error: updateErr } = await supabase
         .from("wallet_profiles")
-        .update({ telegram_id: telegramId })
-        .eq("id", profileId);
+        .update({ telegram_id: telegram_user_id, telegram_username: telegram_username })
+        .eq("id", ownershipResult.profile.id);
 
-      if (error) return jsonResponse({ error: "Failed to link Telegram" }, 500);
-      return jsonResponse({ success: true, telegram_id: telegramId });
+      if (updateErr) return jsonResponse({ error: "Failed to link Telegram" }, 500);
+      return jsonResponse({ success: true, telegram_id: telegram_user_id });
     }
 
     if (action === "link-google") {

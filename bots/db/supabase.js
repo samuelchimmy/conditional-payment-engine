@@ -17,6 +17,29 @@ export function getSupabase() {
   return supabase;
 }
 
+export async function getWalletProfile(platform, userId) {
+  const db = getSupabase();
+  
+  // The column name depends on the platform
+  let column = '';
+  if (platform === 'discord') column = 'discord_id';
+  else if (platform === 'x' || platform === 'twitter') column = 'x_user_id';
+  else if (platform === 'telegram') column = 'telegram_id';
+  else throw new Error(`Unsupported platform for wallet lookup: ${platform}`);
+
+  const { data, error } = await db
+    .from('wallet_profiles')
+    .select('wallet_address')
+    .eq(column, String(userId))
+    .single();
+
+  if (error || !data) {
+    return null; // Not connected
+  }
+
+  return data.wallet_address;
+}
+
 export async function insertConditionalPayment(data) {
   const db = getSupabase();
   const { error } = await db.from('conditional_payments').insert(data);

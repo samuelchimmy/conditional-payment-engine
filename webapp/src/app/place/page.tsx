@@ -6,6 +6,7 @@ import { useReadContract, useWriteContract } from "wagmi";
 import { useWallet } from "@/components/WalletProvider";
 import { parseUnits, formatUnits, keccak256, toHex } from "viem";
 import { ERC20ABI, IOURegistryV3ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function PlaceBet() {
   const { address } = useWallet();
@@ -55,6 +56,21 @@ export default function PlaceBet() {
         functionName: "createCondition",
         args: [conditionId, query, USDTAddressCelo, amountParsed, counterparty],
       });
+
+      // 3. Save to Supabase
+      if (supabase) {
+        await supabase.from("conditional_payments").insert({
+          iou_id: conditionId,
+          platform: "webapp",
+          sender_id: address,
+          recipient_handle: counterparty,
+          amount: amount,
+          currency: "USDT",
+          condition_str: query,
+          status: "pending",
+          tx_hash: "webapp_tx", // Simplified for hackathon
+        });
+      }
 
       setSuccess(true);
     } catch (e) {

@@ -2,7 +2,7 @@ import { keccak256, encodePacked, encodeFunctionData, parseUnits, decodeEventLog
 import { buildCeloClients, sendCeloTransaction, sendTransactionWithNonce } from './celoClient.js';
 
 export const IOU_REGISTRY_V3_ABI = [
-  { type: 'function', name: 'createConditionalIOU', stateMutability: 'nonpayable', inputs: [{ name: 'amount', type: 'uint256' }, { name: 'recipientId', type: 'bytes32' }, { name: 'conditionHash', type: 'bytes32' }], outputs: [{ name: 'iouId', type: 'uint256' }] },
+  { type: 'function', name: 'createConditionalIOU', stateMutability: 'nonpayable', inputs: [{ name: 'sender', type: 'address' }, { name: 'amount', type: 'uint256' }, { name: 'recipientId', type: 'bytes32' }, { name: 'conditionHash', type: 'bytes32' }], outputs: [{ name: 'iouId', type: 'uint256' }] },
   { type: 'function', name: 'resolveConditional', stateMutability: 'nonpayable', inputs: [{ name: 'iouId', type: 'uint256' }, { name: 'resolvedInFavor', type: 'uint8' }], outputs: [] },
   { type: 'function', name: 'claimConditional', stateMutability: 'nonpayable', inputs: [{ name: 'iouId', type: 'uint256' }, { name: 'recipientAddress', type: 'address' }, { name: 'recipientId', type: 'bytes32' }], outputs: [] },
   { type: 'event', name: 'ConditionalIOUCreated', inputs: [
@@ -37,7 +37,7 @@ export async function createConditionalIOU({ senderAddress, amount, recipientId,
   });
 
   if (allowance < amountUnits) {
-    throw new Error(`Insufficient allowance. Please approve the contract at ${process.env.WEBAPP_URL}/connect`);
+    throw new Error(`ERROR_INSUFFICIENT_ALLOWANCE`);
   }
 
   const balance = await publicClient.readContract({
@@ -48,13 +48,13 @@ export async function createConditionalIOU({ senderAddress, amount, recipientId,
   });
 
   if (balance < amountUnits) {
-    throw new Error(`Insufficient USDT balance on Celo.`);
+    throw new Error(`ERROR_INSUFFICIENT_BALANCE`);
   }
 
   const data = encodeFunctionData({
     abi: IOU_REGISTRY_V3_ABI,
     functionName: 'createConditionalIOU',
-    args: [amountUnits, recipientId, conditionHash],
+    args: [senderAddress, amountUnits, recipientId, conditionHash],
   });
 
   let gas;

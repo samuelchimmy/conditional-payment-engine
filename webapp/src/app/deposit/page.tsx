@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { useWallet } from "@/components/WalletProvider";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function Deposit() {
   const { address } = useWallet();
@@ -36,9 +37,7 @@ export default function Deposit() {
           {/* QR Code Expansion Panel */}
           <div className="w-full bg-[#050505] border-x border-b border-border-emphasis p-6 flex flex-col items-center rounded-b-[10px]">
             <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 relative flex items-center justify-center">
-              {/* This represents a QR code for the Celo address */}
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${address || 'CeloDeposit'}`} alt="QR Code" className="w-full h-full" />
-              
+              <QRCodeSVG value={address || "CeloDeposit"} size={124} fgColor="#000" bgColor="#fff" />
               {/* Logo superimposed in the center */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center shadow-[0_0_0_4px_white]">
