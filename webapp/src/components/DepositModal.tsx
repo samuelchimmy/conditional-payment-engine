@@ -2,8 +2,9 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { useAccount, useWatchContractEvent } from "wagmi";
+import { useWatchContractEvent } from "wagmi";
 import confetti from "canvas-confetti";
+import { useWallet } from "@/components/WalletProvider";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { formatUnits } from "viem";
 import { QRCodeSVG } from "qrcode.react";
@@ -14,7 +15,7 @@ interface DepositModalProps {
 }
 
 export function DepositModal({ isOpen, onClose }: DepositModalProps) {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [copied, setCopied] = useState(false);
   const [depositSuccess, setDepositSuccess] = useState(false);
   const [receivedAmount, setReceivedAmount] = useState<string | null>(null);
