@@ -261,7 +261,7 @@ UNRESOLVED             → refund available after expiry (postponed match / disp
                   ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Web App (Next.js) — WDK self-custodial wallet + escrow UI   │
-│  /connect · /place · /dashboard · claim                      │
+│  /connect · /dashboard · claim · deposit                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 

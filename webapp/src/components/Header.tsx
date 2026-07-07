@@ -10,7 +10,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
-  const isOnboarding = ['/place', '/link-socials', '/deposit'].includes(pathname);
+  const isOnboarding = ['/link-socials', '/deposit'].includes(pathname);
 
   useEffect(() => {
     setMounted(true);

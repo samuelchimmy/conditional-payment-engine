@@ -12,14 +12,12 @@ const publicPaths = [
   '/terms', 
   '/privacy', 
   '/support', 
-  '/x-callback', 
-  '/discord-callback', 
-  '/discord-callback', 
+  '/x-callback',
+  '/discord-callback',
   '/telegram-callback'
 ];
 
 const onboardingPaths = [
-  '/place',
   '/link-socials',
   '/deposit'
 ];
