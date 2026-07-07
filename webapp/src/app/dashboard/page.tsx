@@ -29,7 +29,7 @@ export default function Dashboard() {
       const { data: profile } = await supabase
         .from('wallet_profiles')
         .select('x_username, telegram_username, discord_id')
-        .ilike('wallet_address', address)
+        .ilike('wallet_address', address as string)
         .maybeSingle();
 
       let orQueries = [`sender_id.eq.${address}`, `recipient_handle.eq.${address}`];
