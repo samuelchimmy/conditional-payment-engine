@@ -293,6 +293,37 @@ serve(async (req) => {
       return jsonResponse({ success: true, google_email: googleEmail });
     }
 
+    if (action === "unlink-social") {
+      const { platform } = body;
+      if (!["twitter", "discord", "telegram", "google"].includes(platform)) {
+        return jsonResponse({ error: "Invalid platform" }, 400);
+      }
+
+      const updates: any = {};
+      if (platform === "twitter") {
+        updates.x_user_id = null;
+        updates.x_username = null;
+        updates.x_verified = false;
+      } else if (platform === "discord") {
+        updates.discord_id = null;
+        updates.discord_username = null;
+      } else if (platform === "telegram") {
+        updates.telegram_id = null;
+        updates.telegram_username = null;
+      } else if (platform === "google") {
+        updates.google_email = null;
+        updates.google_picture = null;
+      }
+
+      const { error } = await supabase
+        .from("wallet_profiles")
+        .update(updates)
+        .eq("id", ownershipResult.profile.id);
+
+      if (error) return jsonResponse({ error: `Failed to unlink ${platform}` }, 500);
+      return jsonResponse({ success: true });
+    }
+
     return jsonResponse({ error: "Unknown action" }, 400);
   } catch (error: any) {
     return jsonResponse({ error: error.message }, 500);

@@ -91,3 +91,16 @@ html { scroll-behavior: smooth; }
 
 html { scroll-snap-type: y proximity; }
 
+/* ── Telegram Login Widget – native dark override ─────────────────────────── */
+.telegram-link-btn iframe {
+  border-radius: 6px !important;
+}
+/* Hide default Telegram branding inside the iframe – the widget renders its
+   own button; we let it display as-is but constrain sizing */
+.telegram-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+

@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { XVerifiedCard } from "@/components/XVerifiedCard";
 
 const steps = [
   {
@@ -351,7 +352,8 @@ export function HowItWorksSection({ id, onClose }: HowItWorksProps) {
           Get started
         </Link>
 
-        {/* Start Tipping Section */}
+        {/* X Developer Exhibit Verified Card */}
+        <XVerifiedCard />
         <div className="w-full flex flex-col text-left mt-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

@@ -127,15 +127,8 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
             <Cloud className="w-5 h-5 text-[#F2F1EF]" />
           )}
         </div>
-        <div className="flex-1">
-          <p className="font-bold text-[#F2F1EF]">Google Drive Backup</p>
-          <p className="text-[13px] text-[#797977]">
-            {lastBackup 
-              ? `Last backup: ${formatDate(lastBackup)}`
-              : 'Securely backup your wallet to cloud'
-            }
-          </p>
-        </div>
+        <div className="flex-1"/>
+
         {!showPinInput && status !== 'success' && (
           <button
             onClick={handleStartBackup}
@@ -290,10 +283,7 @@ export function GoogleDriveBackup(props: GoogleDriveBackupProps) {
           <div className="w-12 h-12 rounded-[10px] bg-[#181818] flex items-center justify-center">
             <Cloud className="w-5 h-5 text-[#797977]" />
           </div>
-          <div className="flex-1">
-            <p className="font-bold text-[#F2F1EF]">Google Drive Backup</p>
-            <p className="text-[13px] text-[#797977]">Not configured</p>
-          </div>
+          <div className="flex-1"/>
         </div>
       </div>
     );

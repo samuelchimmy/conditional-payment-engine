@@ -152,30 +152,33 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   const handleDisconnect = async (platform: 'x' | 'discord' | 'telegram') => {
-    if (!profile) return;
-    const updates: any = {};
-    if (platform === 'x') {
-      updates.x_username = null;
-      updates.x_user_id = null;
-      updates.x_verified = false;
-    } else if (platform === 'discord') {
-      updates.discord_id = null;
-    } else if (platform === 'telegram') {
-      updates.telegram_id = null;
-    }
+    if (!profile || !address) return;
 
-    const { error } = await supabase
-      .from("wallet_profiles")
-      .update(updates)
-      .eq("id", profile.id);
+    // Map SettingsModal's 'x' platform key to edge function's 'twitter'
+    const edgePlatform = platform === 'x' ? 'twitter' : platform;
 
-    if (error) {
+    const response = await supabase.functions.invoke("social-identity", {
+      body: {
+        action: "unlink-social",
+        walletAddress: address,
+        profileId: profile.id,
+        platform: edgePlatform,
+      }
+    });
+
+    if (response.error || response.data?.error) {
       toast.error(`Failed to disconnect ${platform}`);
     } else {
+      // Optimistically clear the local profile state
+      const updates: any = {};
+      if (platform === 'x') { updates.x_username = null; updates.x_user_id = null; updates.x_verified = false; }
+      else if (platform === 'discord') { updates.discord_id = null; updates.discord_username = null; }
+      else if (platform === 'telegram') { updates.telegram_id = null; updates.telegram_username = null; }
       setProfile({ ...profile, ...updates });
-      toast.success(`Disconnected ${platform}`);
+      toast.success(`Disconnected ${platform === 'x' ? 'X (Twitter)' : platform}`);
     }
   };
+
 
   // Wagmi Hooks for Approval
   const { data: hash, isPending, writeContract, error } = useWriteContract();
