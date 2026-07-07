@@ -11,7 +11,7 @@ export async function initOneSignal() {
       allowLocalhostAsSecureOrigin: true,
       notifyButton: {
         enable: false,
-      },
+      } as any,
     });
     initialized = true;
     console.log("OneSignal initialized");
