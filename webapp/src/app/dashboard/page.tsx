@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [bets, setBets] = useState<any[]>([]);
   const [selectedClaimBet, setSelectedClaimBet] = useState<any | null>(null);
   const [selectedReceiptBet, setSelectedReceiptBet] = useState<any | null>(null);
+  const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
 
   const { address, isConnected } = useWallet();
 
@@ -126,12 +128,25 @@ export default function Dashboard() {
       </div>
 
       {/* Balance Card & Buttons (Mobile Layout on all devices) */}
-      <div className="flex flex-col items-start w-full mb-16">
-        <div className="bg-surface border border-border rounded-[10px] px-6 py-4 flex flex-col mb-3 w-full">
-          <span className="text-text-secondary text-[11px] uppercase tracking-wider mb-1">Balance</span>
-          <span className="text-text-primary text-[20px] font-[800] tracking-tight">{formattedBalance} <span className="text-text-secondary text-[13px] font-normal">USDT</span></span>
+      <div className="flex flex-col items-start w-full mb-12">
+        <div className="flex items-center gap-3 w-full mb-3">
+          <div className="bg-surface border border-border rounded-[10px] px-6 py-4 flex flex-col w-full">
+            <span className="text-text-secondary text-[11px] uppercase tracking-wider mb-1">Balance</span>
+            <span className="text-text-primary text-[20px] font-[800] tracking-tight">{formattedBalance} <span className="text-text-secondary text-[13px] font-normal">USDT</span></span>
+          </div>
+          <button 
+            onClick={() => setIsHistorySheetOpen(true)}
+            className="w-[84px] h-[84px] shrink-0 bg-surface border border-border rounded-[10px] flex flex-col items-center justify-center hover:bg-border transition-colors text-text-secondary hover:text-text-primary"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 3v5h5"></path>
+              <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+              <path d="M12 7v5l4 2"></path>
+            </svg>
+            <span className="text-[11px] mt-1.5 font-bold">History</span>
+          </button>
         </div>
-        <div className="flex items-center gap-3 w-full">
+        <div className="flex items-center gap-3 w-full mb-6">
           <button 
             onClick={() => setIsWithdrawModalOpen(true)}
             className="flex-1 h-[40px] px-6 bg-transparent border border-border text-text-primary rounded-[8px] font-bold text-[13px] hover:bg-surface transition-colors"
@@ -145,58 +160,86 @@ export default function Dashboard() {
             Deposit
           </button>
         </div>
+        {/* Approve Allowance Card */}
+        <ApproveCard />
       </div>
 
-      <div className="mb-6 flex items-end justify-between">
-        <div>
-          <h1 className="text-text-primary text-[22px] font-[800]">
-            My Bets
-          </h1>
-          <p className="text-text-secondary text-[13px] mt-1">
-            {bets.filter(b => b.status === 'pending').length} Active · {bets.filter(b => b.status !== 'pending').length} Completed
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col mb-16">
-        {bets.length === 0 ? (
-          <div className="py-8 text-center text-text-muted text-[13px]">
-            No bets found. Place a bet to get started!
-          </div>
-        ) : (
-          bets.map((bet) => (
-            <div key={bet.id} className="h-[72px] flex items-center justify-between border-t border-divider">
-              <div className="flex flex-col">
-                <span className="text-text-primary text-[14px] font-bold">
-                  {bet.condition_str || "Custom Condition"}
-                </span>
-                <span className="text-text-muted text-[12px]">
-                  {bet.amount} {bet.currency || "USDT"} · {new Date(bet.created_at).toLocaleDateString()}
-                </span>
+      <AnimatePresence>
+        {isHistorySheetOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-[60]"
+              onClick={() => setIsHistorySheetOpen(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 h-[85vh] bg-[#050505] border-t border-border z-[70] rounded-t-[24px] flex flex-col"
+            >
+              <div className="p-6 flex flex-col h-full">
+                <div className="w-12 h-1 bg-border rounded-full mx-auto mb-6 shrink-0" />
+                <div className="mb-6 flex items-end justify-between shrink-0">
+                  <div>
+                    <h1 className="text-text-primary text-[22px] font-[800]">
+                      My Bets
+                    </h1>
+                    <p className="text-text-secondary text-[13px] mt-1">
+                      {bets.filter(b => b.status === 'pending').length} Active · {bets.filter(b => b.status !== 'pending').length} Completed
+                    </p>
+                  </div>
+                  <button onClick={() => setIsHistorySheetOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-surface border border-border text-text-primary hover:bg-border transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M1 1L13 13M1 13L13 1" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="flex flex-col flex-1 overflow-y-auto pb-8">
+                  {bets.length === 0 ? (
+                    <div className="py-8 text-center text-text-muted text-[13px]">
+                      No bets found. Place a bet to get started!
+                    </div>
+                  ) : (
+                    bets.map((bet) => (
+                      <div key={bet.id} className="min-h-[72px] shrink-0 flex items-center justify-between border-t border-divider py-3">
+                        <div className="flex flex-col pr-4">
+                          <span className="text-text-primary text-[14px] font-bold line-clamp-2">
+                            {bet.condition_str || "Custom Condition"}
+                          </span>
+                          <span className="text-text-muted text-[12px] mt-1">
+                            {bet.amount} {bet.currency || "USDT"} · {new Date(bet.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        
+                        {bet.status === 'pending' && bet.isRecipient ? (
+                          <button 
+                            onClick={() => setSelectedClaimBet(bet)}
+                            className="h-[32px] px-[18px] shrink-0 bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"
+                          >
+                            Claim
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => setSelectedReceiptBet(bet)}
+                            className="h-[32px] px-[18px] shrink-0 bg-surface border border-border text-text-primary font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:bg-border transition-colors"
+                          >
+                            Receipt
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-              
-              {bet.status === 'pending' && bet.isRecipient ? (
-                <button 
-                  onClick={() => setSelectedClaimBet(bet)}
-                  className="h-[32px] px-[18px] bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"
-                >
-                  Claim
-                </button>
-              ) : (
-                <button 
-                  onClick={() => setSelectedReceiptBet(bet)}
-                  className="h-[32px] px-[18px] bg-surface border border-border text-text-primary font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:bg-border transition-colors"
-                >
-                  Receipt
-                </button>
-              )}
-            </div>
-          ))
+            </motion.div>
+          </>
         )}
-      </div>
-
-      {/* Approve Allowance Card */}
-      <ApproveCard />
+      </AnimatePresence>
 
       {/* Start Tipping Section */}
       <div className="w-full mb-16 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-6 border-t border-divider">
