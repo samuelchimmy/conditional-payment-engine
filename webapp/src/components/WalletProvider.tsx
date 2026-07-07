@@ -32,6 +32,7 @@ export interface WalletState {
   authMethod: "metamask" | "walletconnect" | "google" | "wdk" | null;
   seedPhrase: string | null;
   wdkAccount: any | null;
+  isInitialized: boolean;
 }
 
 interface WalletContextType extends WalletState {
@@ -46,7 +47,6 @@ interface WalletContextType extends WalletState {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 function WalletProviderInner({ children }: { children: React.ReactNode }) {
-  const { address, isConnected, connector } = useAccount();
   const { connectAsync, connectors } = useConnect();
   const { disconnectAsync } = useDisconnect();
 
@@ -56,7 +56,51 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     authMethod: null,
     seedPhrase: null,
     wdkAccount: null,
+    isInitialized: false,
   });
+
+  const { address, isConnected, isReconnecting, connector } = useAccount();
+  
+  const [isWdkGoogleInitialized, setIsWdkGoogleInitialized] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const stored = localStorage.getItem('tarena_auth');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.authMethod === 'wdk' && parsed.seedPhrase) {
+            await restoreWallet(parsed.seedPhrase);
+          } else if (parsed.authMethod === 'google') {
+            await connectGoogle();
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore auth", e);
+      } finally {
+        setIsWdkGoogleInitialized(true);
+      }
+    };
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (state.authMethod === 'wdk' && state.seedPhrase) {
+      localStorage.setItem('tarena_auth', JSON.stringify({ authMethod: 'wdk', seedPhrase: state.seedPhrase }));
+    } else if (state.authMethod === 'google') {
+      localStorage.setItem('tarena_auth', JSON.stringify({ authMethod: 'google' }));
+    } else if (!state.authMethod || state.authMethod === 'metamask') {
+      localStorage.removeItem('tarena_auth');
+    }
+  }, [state.authMethod, state.seedPhrase]);
+
+  useEffect(() => {
+    setState(prev => ({
+      ...prev,
+      isInitialized: isWdkGoogleInitialized && !isReconnecting
+    }));
+  }, [isWdkGoogleInitialized, isReconnecting]);
 
   const [isRegistered, setIsRegistered] = useState(false);
 

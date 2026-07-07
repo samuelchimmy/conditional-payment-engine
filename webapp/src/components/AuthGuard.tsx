@@ -25,11 +25,13 @@ const onboardingPaths = [
 ];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isConnected } = useWallet();
+  const { isConnected, isInitialized } = useWallet();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     if (!isConnected && !publicPaths.includes(pathname)) {
       router.push('/');
       return;
@@ -47,7 +49,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [isConnected, pathname, router]);
+  }, [isConnected, isInitialized, pathname, router]);
+
+  if (!isInitialized) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-bg-center">
+        <div className="w-8 h-8 border-2 border-text-muted border-t-text-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!isConnected && !publicPaths.includes(pathname)) {
     return null; // Don't render protected content while redirecting

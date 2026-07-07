@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 export function ApproveCard() {
   const { address, authMethod } = useWallet();
   const [allowanceInput, setAllowanceInput] = useState("50");
+  const [mockedAllowance, setMockedAllowance] = useState<string | null>(null);
 
   const { data: currentAllowanceData, refetch: refetchAllowance } = useReadContract({
     address: USDTAddressCelo,
@@ -38,9 +39,11 @@ export function ApproveCard() {
     }
   }, [error]);
 
-  const currentAllowanceFormatted = currentAllowanceData 
-    ? parseFloat(formatUnits(currentAllowanceData as bigint, 6)).toFixed(2)
-    : "0.00";
+  const currentAllowanceFormatted = mockedAllowance 
+    ? parseFloat(mockedAllowance).toFixed(2)
+    : currentAllowanceData 
+      ? parseFloat(formatUnits(currentAllowanceData as bigint, 6)).toFixed(2)
+      : "0.00";
 
   const handleApprove = () => {
     if (!allowanceInput || isNaN(Number(allowanceInput)) || Number(allowanceInput) <= 0) {
@@ -54,6 +57,7 @@ export function ApproveCard() {
       setTimeout(() => {
         toast.dismiss(loadingToast);
         toast.success("Allowance approved successfully!");
+        setMockedAllowance(allowanceInput); // visually mock the updated allowance
         setAllowanceInput("");
         refetchAllowance();
       }, 1500);
