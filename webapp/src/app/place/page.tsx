@@ -7,6 +7,7 @@ import { useWallet } from "@/components/WalletProvider";
 import { parseUnits, formatUnits, keccak256, toHex } from "viem";
 import { ERC20ABI, IOURegistryV3ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { supabase } from "@/lib/supabaseClient";
+import { insertPayment } from "@/lib/dbProxy";
 
 export default function PlaceBet() {
   const { address } = useWallet();
@@ -24,7 +25,7 @@ export default function PlaceBet() {
     address: USDTAddressCelo,
     abi: ERC20ABI,
     functionName: "balanceOf",
-    args: address ? [address] : undefined,
+    args: address ? [address as `0x${string}`] : undefined,
   });
 
   const { writeContractAsync, isPending } = useWriteContract();
@@ -46,7 +47,7 @@ export default function PlaceBet() {
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [IOURegistryV3Address, amountParsed],
+        args: [IOURegistryV3Address as `0x${string}`, amountParsed],
       });
 
       // 2. Create Condition
@@ -54,22 +55,21 @@ export default function PlaceBet() {
         address: IOURegistryV3Address,
         abi: IOURegistryV3ABI,
         functionName: "createCondition",
-        args: [conditionId, query, USDTAddressCelo, amountParsed, counterparty],
+        args: [conditionId, query, USDTAddressCelo, amountParsed, counterparty as `0x${string}`],
       });
 
-      // 3. Save to Supabase
-      if (supabase) {
-        await supabase.from("conditional_payments").insert({
+      // 3. Save via secure Edge Function (never direct DB access from frontend)
+      if (address) {
+        const { error: dbError } = await insertPayment(address, {
           iou_id: conditionId,
           platform: "webapp",
-          sender_id: address,
           recipient_handle: counterparty,
           amount: amount,
           currency: "USDT",
           condition_str: query,
-          status: "pending",
-          tx_hash: "webapp_tx", // Simplified for hackathon
+          tx_hash: "webapp_tx",
         });
+        if (dbError) console.error("[PlaceBet] Failed to record payment:", dbError);
       }
 
       setSuccess(true);

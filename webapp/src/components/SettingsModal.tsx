@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from "react-hot-toast";
 import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
 import { GoogleDriveBackup } from "@/components/GoogleDriveBackup";
+import { getProfile } from "@/lib/dbProxy";
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -50,17 +51,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   useEffect(() => {
     if (isOpen && address) {
       setLoadingProfile(true);
-      supabase
-        .from("wallet_profiles")
-        .select("*")
-        .eq("wallet_address", address.toLowerCase())
-        .single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setProfile(data);
-          }
-          setLoadingProfile(false);
-        });
+      getProfile(address).then(({ data, error }) => {
+        if (!error && data) setProfile(data);
+        setLoadingProfile(false);
+      });
     }
   }, [isOpen, address]);
 
@@ -71,8 +65,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   useEffect(() => {
     if (linkingPlatform === 'twitter' && address) {
       const interval = setInterval(async () => {
-        const { data } = await supabase.from('wallet_profiles').select('x_username').eq('wallet_address', address.toLowerCase()).single();
-        if (data && data.x_username) {
+        const { data } = await getProfile(address);
+        if (data?.x_username) {
           setLinkingPlatform(null);
           setProfile((prev: any) => ({ ...prev, x_username: data.x_username }));
           toast.success("Account linked successfully!");
@@ -90,7 +84,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         setLinkingPlatform(null);
         // Refresh profile to show connected state
         if (address) {
-          const { data } = await supabase.from("wallet_profiles").select("*").eq("wallet_address", address.toLowerCase()).single();
+          const { data } = await getProfile(address);
           if (data) setProfile(data);
         }
         toast.success("Account linked successfully!");
@@ -145,7 +139,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         toast.error(response.data?.error || response.error?.message || "Failed to link Telegram");
       } else {
         if (address) {
-          const { data } = await supabase.from("wallet_profiles").select("*").eq("wallet_address", address.toLowerCase()).single();
+          const { data } = await getProfile(address);
           if (data) setProfile(data);
         }
         toast.success("Telegram linked!");
@@ -209,7 +203,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [IOURegistryV3Address, amountParsed],
+        args: [IOURegistryV3Address as `0x${string}`, amountParsed],
       });
     } catch (e) {
       console.error("Invalid amount", e);
@@ -309,8 +303,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         payTag={address || "unknown"} 
                         onSuccess={() => {
                            if (address) {
-                             supabase.from("wallet_profiles").select("*").eq("wallet_address", address.toLowerCase()).single().then(({data}) => {
-                               if(data) setProfile(data);
+                             getProfile(address).then(({ data }) => {
+                               if (data) setProfile(data);
                              });
                            }
                         }}

@@ -6,6 +6,7 @@ import { useWallet } from "@/components/WalletProvider";
 import { toast } from "react-hot-toast";
 import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
 import { playSuccessSound, playErrorSound } from "@/lib/sounds";
+import { getProfile } from "@/lib/dbProxy";
 
 export function SocialLinkingCard() {
   const { address } = useWallet();
@@ -20,13 +21,8 @@ export function SocialLinkingCard() {
   useEffect(() => {
     if (!address) return;
     const fetchStatus = async () => {
-      const { data } = await supabase
-        .from('wallet_profiles')
-        .select('x_username, discord_id, telegram_id')
-        .eq('wallet_address', address.toLowerCase())
-        .single();
-        
-      if (data) {
+      const { data, error } = await getProfile(address);
+      if (!error && data) {
         setLinkedStatus({
           twitter: !!data.x_username,
           discord: !!data.discord_id,
@@ -40,8 +36,8 @@ export function SocialLinkingCard() {
   useEffect(() => {
     if (loading === 'twitter' && address) {
       const interval = setInterval(async () => {
-        const { data } = await supabase.from('wallet_profiles').select('x_username').eq('wallet_address', address.toLowerCase()).single();
-        if (data && data.x_username) {
+        const { data } = await getProfile(address);
+        if (data?.x_username) {
           setLinkedStatus(prev => ({ ...prev, twitter: true }));
           setLoading(null);
           toast.success("X (Twitter) linked successfully!");

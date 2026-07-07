@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabaseClient";
 import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { DepositModal } from "@/components/DepositModal";
@@ -18,6 +17,7 @@ import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { formatUnits } from "viem";
 import { playSuccessSound } from "@/lib/sounds";
 import { toast } from "react-hot-toast";
+import { getBets } from "@/lib/dbProxy";
 
 export default function Dashboard() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
@@ -31,57 +31,18 @@ export default function Dashboard() {
   const { address, isConnected } = useWallet();
 
   const fetchBets = async () => {
-      // Fetch user profile to get all linked handles
-      const { data: profile } = await supabase
-        .from('wallet_profiles')
-        .select('x_username, telegram_username, discord_id')
-        .ilike('wallet_address', address as string)
-        .maybeSingle();
-
-      let orQueries = [`sender_id.eq.${address}`, `recipient_handle.eq.${address}`];
-      
-      let userHandles: string[] = [address as string];
-      
-      if (profile) {
-        if (profile.x_username) {
-          orQueries.push(`sender_id.eq.${profile.x_username}`);
-          orQueries.push(`recipient_handle.eq.${profile.x_username}`);
-          orQueries.push(`sender_id.eq.@${profile.x_username}`);
-          orQueries.push(`recipient_handle.eq.@${profile.x_username}`);
-          userHandles.push(profile.x_username, `@${profile.x_username}`);
-        }
-        if (profile.telegram_username) {
-          orQueries.push(`sender_id.eq.${profile.telegram_username}`);
-          orQueries.push(`recipient_handle.eq.${profile.telegram_username}`);
-          orQueries.push(`sender_id.eq.@${profile.telegram_username}`);
-          orQueries.push(`recipient_handle.eq.@${profile.telegram_username}`);
-          userHandles.push(profile.telegram_username, `@${profile.telegram_username}`);
-        }
-        if (profile.discord_id) {
-          orQueries.push(`sender_id.eq.${profile.discord_id}`);
-          orQueries.push(`recipient_handle.eq.${profile.discord_id}`);
-          userHandles.push(profile.discord_id);
-        }
-      }
-
-      const { data } = await supabase
-        .from('conditional_payments')
-        .select('*')
-        .or(orQueries.join(','))
-        .order('created_at', { ascending: false });
-      
-      if (data) {
-        // Mark bets where user is recipient so we know when to show Claim vs Receipt
-        const decoratedBets = data.map(b => {
-          const isRecipient = userHandles.includes(b.recipient_handle);
-          return { ...b, isRecipient };
-        });
-        setBets(decoratedBets);
-      }
+    if (!address) return;
+    const { data, error } = await getBets(address);
+    if (error) {
+      console.error("[Dashboard] Failed to fetch bets:", error);
+      return;
+    }
+    // db-proxy already decorates with isRecipient
+    setBets(Array.isArray(data) ? data : []);
   };
 
   useEffect(() => {
-    if (!address || !supabase) return;
+    if (!address) return;
     fetchBets();
   }, [address]);
 
@@ -89,7 +50,7 @@ export default function Dashboard() {
     address: USDTAddressCelo,
     abi: ERC20ABI,
     functionName: "balanceOf",
-    args: address ? [address] : undefined,
+    args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!address,
     }

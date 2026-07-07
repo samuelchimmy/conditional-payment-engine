@@ -33,7 +33,7 @@ function ApproveContent() {
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [IOURegistryV3Address, amountParsed],
+        args: [IOURegistryV3Address as `0x${string}`, amountParsed],
       });
 
       setSuccess(true);

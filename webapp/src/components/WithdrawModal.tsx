@@ -20,7 +20,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     address: USDTAddressCelo,
     abi: ERC20ABI,
     functionName: "balanceOf",
-    args: address ? [address] : undefined,
+    args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: isOpen && !!address,
     }
@@ -54,7 +54,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       address: USDTAddressCelo,
       abi: ERC20ABI,
       functionName: "transfer",
-      args: [destination, parseUnits(amount, 6)],
+      args: [destination as `0x${string}`, parseUnits(amount, 6)],
     });
   };
 

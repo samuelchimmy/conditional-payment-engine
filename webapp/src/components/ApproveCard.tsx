@@ -18,7 +18,7 @@ export function ApproveCard() {
     address: USDTAddressCelo,
     abi: ERC20ABI,
     functionName: "allowance",
-    args: address ? [address, IOURegistryV3Address] : undefined,
+    args: address ? [address as `0x${string}`, IOURegistryV3Address as `0x${string}`] : undefined,
     query: {
       enabled: !!address,
     }
@@ -79,7 +79,7 @@ export function ApproveCard() {
         address: USDTAddressCelo,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [IOURegistryV3Address, amountParsed],
+        args: [IOURegistryV3Address as `0x${string}`, amountParsed],
       }, {
         onError: (err) => {
           if (err.message.includes("connector not connected") || err.message.includes("Connector not found")) {

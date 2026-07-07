@@ -6,6 +6,7 @@ import { useWallet } from "@/components/WalletProvider";
 import { toast } from "react-hot-toast";
 import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
 import { supabase } from "@/lib/supabaseClient";
+import { getProfile } from "@/lib/dbProxy";
 
 export default function LinkSocials() {
   const router = useRouter();
@@ -26,12 +27,7 @@ export default function LinkSocials() {
   useEffect(() => {
     if (!address) return;
     const fetchStatus = async () => {
-      const { data } = await supabase
-        .from('wallet_profiles')
-        .select('x_username, discord_id, telegram_id')
-        .eq('wallet_address', address.toLowerCase())
-        .single();
-        
+      const { data } = await getProfile(address);
       if (data) {
         setLinkedStatus({
           twitter: !!data.x_username,
@@ -53,8 +49,8 @@ export default function LinkSocials() {
   useEffect(() => {
     if (loading === 'twitter' && address) {
       const interval = setInterval(async () => {
-        const { data } = await supabase.from('wallet_profiles').select('x_username').eq('wallet_address', address.toLowerCase()).single();
-        if (data && data.x_username) {
+        const { data } = await getProfile(address);
+        if (data?.x_username) {
           setLinkedStatus(prev => ({ ...prev, twitter: true }));
           setLoading(null);
           toast.success("Account linked successfully!");

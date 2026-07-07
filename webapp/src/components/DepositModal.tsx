@@ -27,7 +27,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     address: USDTAddressCelo,
     abi: ERC20ABI,
     functionName: "balanceOf",
-    args: address ? [address] : undefined,
+    args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: isOpen && !!address,
       refetchInterval: 3000,
