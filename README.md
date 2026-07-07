@@ -29,9 +29,9 @@ AI-powered conditional USDT payments for football fans, settled on-chain.
 
 ## 📹 Demo
 
-> **▶️ Watch the 60-second demo:** [YouTube link — add before submission]
+> **▶️ Watch the 60-second demo:** [YouTube link —soon]
 
-*(Embed the demo GIF/video here — judges watch before they read.)*
+*(gif)*
 
 ---
 
