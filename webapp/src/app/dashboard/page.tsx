@@ -7,6 +7,8 @@ import { Accordion } from "@/components/Accordion";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { DepositModal } from "@/components/DepositModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { ClaimModal } from "@/components/ClaimModal";
+import { ReceiptModal } from "@/components/ReceiptModal";
 import { useReadContract } from "wagmi";
 import { useWallet } from "@/components/WalletProvider";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
@@ -17,13 +19,12 @@ export default function Dashboard() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [bets, setBets] = useState<any[]>([]);
+  const [selectedClaimBet, setSelectedClaimBet] = useState<any | null>(null);
+  const [selectedReceiptBet, setSelectedReceiptBet] = useState<any | null>(null);
 
   const { address, isConnected } = useWallet();
 
-  useEffect(() => {
-    if (!address || !supabase) return;
-
-    const fetchBets = async () => {
+  const fetchBets = async () => {
       // Fetch user profile to get all linked handles
       const { data: profile } = await supabase
         .from('wallet_profiles')
@@ -71,8 +72,10 @@ export default function Dashboard() {
         });
         setBets(decoratedBets);
       }
-    };
+  };
 
+  useEffect(() => {
+    if (!address || !supabase) return;
     fetchBets();
   }, [address]);
 
@@ -176,13 +179,19 @@ export default function Dashboard() {
               </div>
               
               {bet.status === 'pending' && bet.isRecipient ? (
-                <Link href={`/claim?id=${bet.id}`} className="h-[32px] px-[18px] bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity">
+                <button 
+                  onClick={() => setSelectedClaimBet(bet)}
+                  className="h-[32px] px-[18px] bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"
+                >
                   Claim
-                </Link>
+                </button>
               ) : (
-                <Link href={`/receipt?id=${bet.id}`} className="h-[32px] px-[18px] bg-surface border border-border text-text-primary font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:bg-border transition-colors">
+                <button 
+                  onClick={() => setSelectedReceiptBet(bet)}
+                  className="h-[32px] px-[18px] bg-surface border border-border text-text-primary font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:bg-border transition-colors"
+                >
                   Receipt
-                </Link>
+                </button>
               )}
             </div>
           ))
@@ -193,6 +202,22 @@ export default function Dashboard() {
       <div className="w-full mb-16 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-6 border-t border-divider">
         <div className="flex flex-col text-left sm:max-w-[320px]">
           <h2 className="text-text-primary text-[16px] font-bold mb-2">Start Tipping</h2>
+
+      <ClaimModal 
+        isOpen={!!selectedClaimBet} 
+        onClose={() => setSelectedClaimBet(null)} 
+        bet={selectedClaimBet}
+        onClaimed={() => {
+          setSelectedClaimBet(null);
+          fetchBets();
+        }}
+      />
+      
+      <ReceiptModal 
+        isOpen={!!selectedReceiptBet} 
+        onClose={() => setSelectedReceiptBet(null)} 
+        bet={selectedReceiptBet}
+      />
           <p className="text-text-muted text-[13px] leading-relaxed">
             Ready to put your money where your mouth is? Tweet at @tether.arena, add the bot to your Discord server, or join the Telegram group.
           </p>

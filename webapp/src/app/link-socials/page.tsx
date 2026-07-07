@@ -116,7 +116,7 @@ export default function LinkSocials() {
 
   const handleContinue = () => {
     if (pendingClaimInfo) {
-      router.push("/claim");
+      router.push("/dashboard");
     } else if (hasLinkedAny) {
       router.push("/deposit");
     }

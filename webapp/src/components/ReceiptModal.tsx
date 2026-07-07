@@ -1,71 +1,29 @@
-"use client";
+import { useState } from "react";
 
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useWallet } from "@/components/WalletProvider";
-import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-
-export default function Receipt() {
-  const { address } = useWallet();
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id");
-  
-  const [bet, setBet] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchBet = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("conditional_payments")
-          .select("*")
-          .eq("id", id)
-          .single();
-          
-        if (error) throw error;
-        setBet(data);
-      } catch (err) {
-        console.error("Failed to fetch bet:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchBet();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="w-full flex justify-center pt-8">
-        <div className="animate-spin h-6 w-6 border-2 border-text-secondary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!bet) {
-    return (
-      <div className="w-full flex justify-center pt-8">
-        <div className="text-center text-text-muted">
-          <p>Transaction not found.</p>
-          <Link href="/dashboard" className="text-accent underline mt-4 block">Return to Dashboard</Link>
-        </div>
-      </div>
-    );
-  }
+export function ReceiptModal({ isOpen, onClose, bet }: { isOpen: boolean; onClose: () => void; bet: any }) {
+  if (!isOpen || !bet) return null;
 
   const amount = parseFloat(bet.amount || 0);
   const fee = amount * 0.006; 
   const net = amount - fee;
 
   return (
-    <div className="w-full flex justify-center pt-4 pb-12">
-      <div className="w-full max-w-[420px] bg-[#F2F1EF] rounded-[16px] p-8 text-[#050505] shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-200">
+      <div 
+        className="absolute inset-0" 
+        onClick={onClose}
+      />
+      
+      <div className="w-full max-w-[420px] bg-[#F2F1EF] rounded-[16px] p-8 text-[#050505] shadow-lg relative animate-in zoom-in-95 duration-200">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+
         <div className="flex justify-center mb-8">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-baseline gap-0.5">
@@ -120,12 +78,6 @@ export default function Receipt() {
             <span className="font-normal">Net:</span>
             <span>{net.toFixed(2)} USDT</span>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <Link href="/dashboard" className="w-full h-[52px] bg-transparent text-[#050505] text-[15px] font-bold rounded-[10px] flex items-center justify-center border border-[#050505] hover:bg-[#E2E1DF] transition-colors">
-            Return to Dashboard
-          </Link>
         </div>
       </div>
     </div>
