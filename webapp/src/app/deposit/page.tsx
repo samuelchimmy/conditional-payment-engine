@@ -40,8 +40,8 @@ export default function Deposit() {
               <QRCodeSVG value={address || "CeloDeposit"} size={124} fgColor="#000" bgColor="#fff" />
               {/* Logo superimposed in the center */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center shadow-[0_0_0_4px_white]">
-                  <img src="/tether-logo.svg" alt="Tether" className="h-4 w-4" />
+                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-[0_0_0_4px_white] overflow-hidden">
+                  <img src="/tether-qr-logo.png" alt="Tether" className="h-8 w-8 object-contain" />
                 </div>
               </div>
             </div>
