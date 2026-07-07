@@ -115,7 +115,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
       const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
       const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier: "challenge" }));
-      oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
+      oauthUrl = `https://x.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
     }
 
     const width = 500;

@@ -54,7 +54,7 @@ export async function resolveRecipientToId(platform, handle) {
   if ((platform === 'x' || platform === 'twitter') && process.env.X_BEARER_TOKEN) {
     try {
       const res = await fetch(
-        `https://api.twitter.com/2/users/by/username/${encodeURIComponent(cleanHandle)}?user.fields=id,username`,
+        `https://api.x.com/2/users/by/username/${encodeURIComponent(cleanHandle)}?user.fields=id,username`,
         { headers: { Authorization: `Bearer ${process.env.X_BEARER_TOKEN}` } }
       );
 

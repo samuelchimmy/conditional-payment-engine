@@ -18,7 +18,7 @@ export default function Support() {
             For general questions, troubleshooting, and protocol updates, please engage with the community:
           </p>
           <ul className="text-text-muted text-[14px] list-disc pl-5 mb-4 flex flex-col gap-2">
-            <li><strong>X (Twitter):</strong> <a href="https://twitter.com/tether_arena" target="_blank" rel="noopener noreferrer" className="text-text-primary hover:underline">@tether_arena</a></li>
+            <li><strong>X (Twitter):</strong> <a href="https://x.com/tether_arena" target="_blank" rel="noopener noreferrer" className="text-text-primary hover:underline">@tether_arena</a></li>
             <li><strong>Discord:</strong> Join the official server for developer support and bug reporting.</li>
             <li><strong>Telegram:</strong> Engage with other users and moderators in the public group.</li>
           </ul>

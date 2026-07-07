@@ -106,7 +106,7 @@ async function exchangeXOAuthCode(code: string, codeVerifier: string, redirectUr
 
   const credentials = btoa(`${X_CLIENT_ID}:${X_CLIENT_SECRET}`);
 
-  const tokenRes = await fetch("https://api.twitter.com/2/oauth2/token", {
+  const tokenRes = await fetch("https://api.x.com/2/oauth2/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -123,7 +123,7 @@ async function exchangeXOAuthCode(code: string, codeVerifier: string, redirectUr
   const accessToken = tokenData.access_token;
   if (!accessToken) throw new Error("No access token returned from X");
 
-  const userRes = await fetch("https://api.twitter.com/2/users/me?user.fields=username", {
+  const userRes = await fetch("https://api.x.com/2/users/me?user.fields=username", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 

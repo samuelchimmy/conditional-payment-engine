@@ -92,7 +92,7 @@ export default function LinkSocials() {
       const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
       const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier: "challenge" }));
       // Uses PKCE challenge (hardcoded "challenge" to match edge function simplified version)
-      oauthUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
+      oauthUrl = `https://x.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
     }
 
     if (platform !== "telegram") {
