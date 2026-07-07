@@ -152,9 +152,16 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
                 {/* QR Code Expansion Panel */}
                 <div className="w-full bg-[#050505] border-x border-b border-border-emphasis p-6 flex flex-col items-center rounded-b-[10px]">
-                  <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 flex items-center justify-center">
+                  <div className="w-[140px] h-[140px] bg-white p-2 rounded-[10px] mb-4 relative flex items-center justify-center">
                     {address ? (
-                      <QRCodeSVG value={address} size={124} />
+                      <>
+                        <QRCodeSVG value={address} size={124} fgColor="#000" bgColor="#fff" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center shadow-[0_0_0_4px_white]">
+                            <img src="/tether-logo.svg" alt="Tether" className="h-4 w-4" />
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <div className="w-full h-full border-4 border-black border-dashed flex items-center justify-center text-black font-bold text-[11px]">QR CODE</div>
                     )}

@@ -42,6 +42,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
     if (isOpen && address) {
@@ -281,14 +282,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="bg-bg-center border border-border rounded-[10px] p-4 flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-text-primary font-bold text-[13px]">
-                      {profile?.google_email ? "Connected via Google" : "No Cloud Backup"}
+                      {(profile?.google_email || authMethod === 'google') ? "Connected via Google" : "No Cloud Backup"}
                     </span>
-                    {profile?.google_email && (
-                      <span className="text-text-muted text-[12px] mt-0.5">{profile.google_email}</span>
+                    {(profile?.google_email || authMethod === 'google') && (
+                      <span className="text-text-muted text-[12px] mt-0.5">{profile?.google_email || "Active via Auth"}</span>
                     )}
                     <span className="text-text-muted text-[11px] mt-2 flex items-center gap-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${profile?.google_email ? "bg-[#10B981]" : "bg-text-muted"}`}></div>
-                      {profile?.google_email ? "Backed up" : "Not backed up"}
+                      <div className={`w-1.5 h-1.5 rounded-full ${(profile?.google_email || authMethod === 'google') ? "bg-[#10B981]" : "bg-text-muted"}`}></div>
+                      {(profile?.google_email || authMethod === 'google') ? "Backed up" : "Not backed up"}
                     </span>
                   </div>
                   <button className="text-text-primary border border-border hover:bg-border px-4 py-2 rounded-[8px] text-[12px] font-bold transition-colors">
@@ -408,7 +409,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">
                     <span className="text-text-primary text-[14px] font-medium">Sound Effects</span>
-                    <ToggleSwitch checked={false} onChange={() => {}} />
+                    <ToggleSwitch checked={soundEnabled} onChange={(c) => setSoundEnabled(c)} />
                   </div>
 
                   <div className="flex items-center justify-between px-4 py-4 border-b border-border">

@@ -8,7 +8,7 @@ import { useWallet } from "@/components/WalletProvider";
 import { toast } from "react-hot-toast";
 
 export function ApproveCard() {
-  const { address } = useWallet();
+  const { address, authMethod } = useWallet();
   const [allowanceInput, setAllowanceInput] = useState("50");
 
   const { data: currentAllowanceData, refetch: refetchAllowance } = useReadContract({
@@ -45,6 +45,18 @@ export function ApproveCard() {
   const handleApprove = () => {
     if (!allowanceInput || isNaN(Number(allowanceInput)) || Number(allowanceInput) <= 0) {
       toast.error("Please enter a valid amount");
+      return;
+    }
+    
+    // For prototype purposes: If using WDK or Google Mock, simulate the approval
+    if (authMethod === 'wdk' || authMethod === 'google') {
+      const loadingToast = toast.loading("Approving allowance...");
+      setTimeout(() => {
+        toast.dismiss(loadingToast);
+        toast.success("Allowance approved successfully!");
+        setAllowanceInput("");
+        refetchAllowance();
+      }, 1500);
       return;
     }
     

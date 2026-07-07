@@ -123,11 +123,11 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-col items-center py-6"
       >
-        <div className="w-16 h-16 rounded-[10px] bg-[#181818] flex items-center justify-center mb-4">
-          <Check className="w-8 h-8 text-[#F2F1EF]" />
+        <div className="w-16 h-16 rounded-[10px] bg-surface flex items-center justify-center mb-4">
+          <Check className="w-8 h-8 text-text-primary" />
         </div>
         <p className="text-[15px] font-bold text-text-primary mb-1">Wallet Restored!</p>
-        <p className="text-[13px] text-[#797977]">Logging you in...</p>
+        <p className="text-[13px] text-text-muted">Logging you in...</p>
       </motion.div>
     );
   }
@@ -137,11 +137,11 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
       {!showPinInput ? (
         <>
           <div className="text-center mb-4">
-            <div className="w-16 h-16 mx-auto rounded-[10px] bg-[#181818] flex items-center justify-center mb-3">
-              <Cloud className="w-8 h-8 text-[#F2F1EF]" />
+            <div className="w-16 h-16 mx-auto rounded-[10px] bg-surface flex items-center justify-center mb-3">
+              <Cloud className="w-8 h-8 text-text-primary" />
             </div>
-            <h3 className="text-[15px] font-bold text-[#F2F1EF] mb-1">Restore from Google Drive</h3>
-            <p className="text-[13px] text-[#797977]">
+            <h3 className="text-[15px] font-bold text-text-primary mb-1">Restore from Google Drive</h3>
+            <p className="text-[13px] text-text-muted">
               Sign in to retrieve your wallet backup
             </p>
           </div>
@@ -170,8 +170,8 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
               animate={{ opacity: 1, y: 0 }}
               className="bg-[#050505] border border-[#2A2A2A] rounded-[10px] p-3 flex items-center gap-3"
             >
-              <AlertTriangle className="w-5 h-5 text-[#D53131] flex-shrink-0" />
-              <p className="text-[13px] text-[#F2F1EF]">
+              <AlertTriangle className="w-5 h-5 text-accent flex-shrink-0" />
+              <p className="text-[13px] text-text-primary">
                 No backup found. Make sure you're using the same Google account.
               </p>
             </motion.div>
@@ -191,14 +191,14 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
       ) : (
         <>
           <div className="text-center mb-4">
-            <div className="w-16 h-16 mx-auto rounded-[10px] bg-[#181818] flex items-center justify-center mb-3">
-              <Check className="w-8 h-8 text-[#F2F1EF]" />
+            <div className="w-16 h-16 mx-auto rounded-[10px] bg-surface flex items-center justify-center mb-3">
+              <Check className="w-8 h-8 text-text-primary" />
             </div>
-            <h3 className="text-[15px] font-bold text-[#F2F1EF] mb-1">Backup Found!</h3>
+            <h3 className="text-[15px] font-bold text-text-primary mb-1">Backup Found!</h3>
             {backupData?.payTag && (
-              <p className="text-[13px] text-[#F2F1EF] font-bold">@{backupData.payTag}</p>
+              <p className="text-[13px] text-text-primary font-bold">@{backupData.payTag}</p>
             )}
-            <p className="text-[13px] text-[#797977] mt-1">
+            <p className="text-[13px] text-text-muted mt-1">
               Enter your PIN to decrypt your wallet
             </p>
           </div>
@@ -216,7 +216,7 @@ function RestoreContent({ onRestore }: GoogleDriveRestoreProps) {
                 setError(null);
               }}
               placeholder="••••"
-              className="w-full h-[46px] text-2xl text-center tracking-[0.5em] font-bold rounded-[10px] bg-[#050505] border-[#2A2A2A] text-[#F2F1EF] focus-visible:ring-0 focus-visible:border-[#3A3A3A] px-3"
+              className="w-full h-[46px] text-2xl text-center tracking-[0.5em] font-bold rounded-[10px] bg-bg-center border-border text-text-primary focus-visible:ring-0 focus-visible:border-border-emphasis px-3"
               maxLength={4}
               disabled={status === 'decrypting' || status === 'restoring'}
               autoFocus
