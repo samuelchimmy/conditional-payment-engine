@@ -169,13 +169,14 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
       const account = await wallet.getAccount(0);
       const generatedAddress = await account.getAddress();
       
-      setState({
+      setState(prev => ({
+        ...prev,
         isConnected: true,
         address: generatedAddress,
         authMethod: "wdk",
         seedPhrase: mnemonic,
         wdkAccount: account,
-      });
+      }));
       setIsRegistered(false); // WDK always new in this flow
     } catch (error) {
       console.error("WDK setup failed:", error);
@@ -192,13 +193,14 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
       const account = await wallet.getAccount(0);
       const generatedAddress = await account.getAddress();
 
-      setState({
+      setState(prev => ({
+        ...prev,
         isConnected: true,
         address: generatedAddress,
         authMethod: "wdk",
         seedPhrase: mnemonic,
         wdkAccount: account,
-      });
+      }));
       setIsRegistered(true);
       return { address: generatedAddress };
     } catch (e: any) {
@@ -222,13 +224,14 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     if (state.authMethod === "metamask" || isConnected) {
       await disconnectAsync();
     }
-    setState({
+    setState(prev => ({
+      ...prev,
       isConnected: false,
       address: null,
       authMethod: null,
       seedPhrase: null,
       wdkAccount: null,
-    });
+    }));
     setIsRegistered(false);
   };
 

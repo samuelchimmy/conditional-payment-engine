@@ -31,7 +31,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { theme, setTheme } = useTheme();
-  const { address, disconnectWallet } = useWallet();
+  const { address, disconnectWallet, authMethod } = useWallet();
   const [mounted, setMounted] = useState(false);
   const [allowanceAmount, setAllowanceAmount] = useState("50.00");
   const [isAllowanceModalOpen, setIsAllowanceModalOpen] = useState(false);
