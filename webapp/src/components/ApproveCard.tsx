@@ -6,6 +6,7 @@ import { parseUnits, formatUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
 import { useSendTx } from "@/lib/sendTx";
+import { friendlyTxError } from "@/lib/txError";
 import { toast } from "react-hot-toast";
 import { playSuccessSound, playErrorSound } from "@/lib/sounds";
 
@@ -83,7 +84,7 @@ export function ApproveCard() {
     } catch (e: any) {
       console.error("approve error", e);
       playErrorSound();
-      toast.error(e?.shortMessage || e?.message || "Failed to approve allowance.");
+      toast.error(friendlyTxError(e));
     } finally {
       setIsPending(false);
     }

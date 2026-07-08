@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { parseUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { useSendTx } from "@/lib/sendTx";
+import { friendlyTxError } from "@/lib/txError";
 
 function ApproveContent() {
   const searchParams = useSearchParams();
@@ -14,6 +15,7 @@ function ApproveContent() {
   const [amount, setAmount] = useState(amountParam || "");
   const [isProcessing, setIsProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const { sendTx } = useSendTx();
 
@@ -26,9 +28,10 @@ function ApproveContent() {
   const handleApprove = async () => {
     if (!amount) return;
     try {
+      setErrorMsg(null);
       setIsProcessing(true);
       const amountParsed = parseUnits(amount, 6);
-      
+
       await sendTx({
         address: USDTAddressCelo,
         abi: ERC20ABI,
@@ -39,6 +42,7 @@ function ApproveContent() {
       setSuccess(true);
     } catch (e) {
       console.error(e);
+      setErrorMsg(friendlyTxError(e));
     } finally {
       setIsProcessing(false);
     }
@@ -92,6 +96,10 @@ function ApproveContent() {
       >
         {isProcessing ? "Processing..." : "Approve"}
       </button>
+
+      {errorMsg && (
+        <p className="text-[13px] text-red-400 text-center mt-3 break-words">{errorMsg}</p>
+      )}
       
       <Link 
         href="/dashboard"

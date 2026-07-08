@@ -192,6 +192,14 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 </div>
               </div>
 
+              {/* Gas hint — WDK wallets pay network fees in CELO */}
+              <div className="w-full bg-surface border border-border rounded-[10px] px-4 py-3 flex items-start gap-2">
+                <span className="text-[13px] leading-none mt-0.5">⛽</span>
+                <span className="text-text-muted text-[11px] leading-snug">
+                  Also add a little <span className="text-text-primary font-semibold">CELO</span> to cover network fees — you need it to send, approve, or claim. A small amount is enough.
+                </span>
+              </div>
+
               {/* Bridge Row */}
               <button className="w-full bg-surface border border-border rounded-[10px] px-5 py-4 flex items-center justify-between hover:border-border-emphasis transition-colors">
                 <div className="flex flex-col items-start text-left">

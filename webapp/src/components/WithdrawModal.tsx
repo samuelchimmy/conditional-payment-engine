@@ -7,6 +7,7 @@ import { parseUnits, formatUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
 import { useSendTx } from "@/lib/sendTx";
+import { friendlyTxError } from "@/lib/txError";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { address } = useWallet(); // was useAccount() — empty for WDK/Google wallets
   const [amount, setAmount] = useState("");
   const [destination, setDestination] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const { data: balanceData } = useReadContract({
     address: USDTAddressCelo,
@@ -44,6 +46,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       // Reset form when opened
       setAmount("");
       setDestination("");
+      setErrorMsg(null);
     } else {
       document.body.style.overflow = "unset";
     }
@@ -54,8 +57,12 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
   const handleWithdraw = async () => {
     if (!amount || !destination) return;
-    if (!/^0x[a-fA-F0-9]{40}$/.test(destination.trim())) return;
+    if (!/^0x[a-fA-F0-9]{40}$/.test(destination.trim())) {
+      setErrorMsg("Enter a valid destination address (0x…).");
+      return;
+    }
     try {
+      setErrorMsg(null);
       setIsPending(true);
       const h = await sendTx({
         address: USDTAddressCelo,
@@ -66,6 +73,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       setTxHash(h);
     } catch (e) {
       console.error(e);
+      setErrorMsg(friendlyTxError(e));
     } finally {
       setIsPending(false);
     }
@@ -192,6 +200,9 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               >
                 {isPending || isConfirming ? "Processing..." : isSuccess ? "Success!" : "Confirm Withdrawal"}
               </button>
+              {errorMsg && (
+                <p className="text-[12px] text-red-400 text-center mt-3 break-words">{errorMsg}</p>
+              )}
             </div>
           </motion.div>
         </div>
