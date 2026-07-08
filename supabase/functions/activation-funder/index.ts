@@ -23,6 +23,7 @@ import {
   createPublicClient,
   createWalletClient,
   http,
+  fallback,
   parseEther,
   formatEther,
   isAddress,
@@ -45,7 +46,21 @@ const FUNDING_AMOUNT = parseEther("0.05"); // drip 0.05 CELO
 // below this floor after a drip.
 const FUNDER_MIN_FLOOR = parseEther("0.05");
 
-const CELO_RPC = Deno.env.get("CELO_RPC_URL") || "https://forno.celo.org";
+// RPC failover — env-first, then public fallbacks (a single RPC hiccup
+// shouldn't block wallet activation).
+const CELO_RPCS = [
+  Deno.env.get("CELO_RPC_URL"),
+  "https://forno.celo.org",
+  "https://rpc.ankr.com/celo",
+  "https://1rpc.io/celo",
+].filter(Boolean) as string[];
+
+function celoTransport() {
+  // viem fallback: tries each RPC in order on failure.
+  return CELO_RPCS.length > 1
+    ? fallback(CELO_RPCS.map((u) => http(u)))
+    : http(CELO_RPCS[0]);
+}
 
 function jsonResp(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -77,11 +92,21 @@ serve(async (req) => {
     }
     const wallet = walletAddress as `0x${string}`;
 
-    const publicClient = createPublicClient({ chain: celo, transport: http(CELO_RPC) });
+    const publicClient = createPublicClient({ chain: celo, transport: celoTransport() });
 
     // ── checkStatus: read current on-chain gas + DB row ────────────────
     const onchain = await publicClient.getBalance({ address: wallet });
     const hasEnough = onchain >= MIN_REQUIRED;
+
+    // ── checkGasBalance: lightweight on-chain gas probe (no DB write) ───
+    if (action === "checkGasBalance" || action === "checkEthBalance") {
+      return jsonResp({
+        walletAddress: wallet,
+        balanceWei: onchain.toString(),
+        balanceCelo: formatEther(onchain),
+        hasEnoughForActivation: hasEnough,
+      });
+    }
 
     if (action === "checkStatus") {
       const { data: row } = await db
@@ -153,7 +178,7 @@ serve(async (req) => {
     const walletClient = createWalletClient({
       account: funderAccount,
       chain: celo,
-      transport: http(CELO_RPC),
+      transport: celoTransport(),
     });
 
     const funderBalance = await publicClient.getBalance({ address: funderAccount.address });

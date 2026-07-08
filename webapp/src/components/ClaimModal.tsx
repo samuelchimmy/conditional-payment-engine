@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useSignMessage } from "wagmi";
 import { useWallet } from "@/components/WalletProvider";
 import { supabase } from "@/lib/supabaseClient";
+import { ensureGasForWallet } from "@/lib/gasGuard";
 
 export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolean; onClose: () => void; bet: any; onClaimed: () => void }) {
-  const { address } = useWallet();
+  const { address, authMethod, wdkAccount } = useWallet();
   const { signMessageAsync } = useSignMessage();
-  
+
   const [claiming, setClaiming] = useState(false);
   const [result, setResult] = useState<{ success?: boolean; message?: string } | null>(null);
 
@@ -21,9 +22,19 @@ export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolea
     setClaiming(true);
     setResult(null);
 
+    // MagicPay recipients often claim from a brand-new WDK wallet. Provision gas
+    // in the background so they can move/withdraw the funds afterwards.
+    if (authMethod === "wdk") {
+      ensureGasForWallet(address).catch(() => {});
+    }
+
     try {
       const message = `Claim IOUs for ${address} at ${new Date().toISOString()}`;
-      const signature = await signMessageAsync({ message });
+      // WDK wallets have no wagmi connector — sign through the WDK account itself.
+      const signature =
+        authMethod === "wdk" && wdkAccount
+          ? await wdkAccount.sign(message)
+          : await signMessageAsync({ message });
 
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl) throw new Error("Supabase URL not configured");
