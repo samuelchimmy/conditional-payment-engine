@@ -116,26 +116,26 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
   };
 
   return (
-    <div className="bg-[#0D0D0D] border border-[#2A2A2A] rounded-[10px] overflow-hidden">
+    <div className="bg-surface border border-border rounded-[10px] overflow-hidden">
       <div className="px-5 py-5 flex items-center gap-4">
         <div className={`w-12 h-12 rounded-[10px] flex items-center justify-center ${
-          status === 'success' || lastBackup ? 'bg-[#F2F1EF]/10' : 'bg-[#181818]'
+          status === 'success' || lastBackup ? 'bg-success/10' : 'bg-bg-edge'
         }`}>
           {status === 'success' || lastBackup ? (
-            <Check className="w-5 h-5 text-[#F2F1EF]" />
+            <Check className="w-5 h-5 text-success" />
           ) : (
-            <Cloud className="w-5 h-5 text-[#F2F1EF]" />
+            <Cloud className="w-5 h-5 text-text-primary" />
           )}
         </div>
         <div className="flex-1 flex flex-col">
-          <span className="text-[#F2F1EF] font-bold text-[13px]">
+          <span className="text-text-primary font-bold text-[13px]">
             {lastBackup ? "Connected via Google" : "No Cloud Backup"}
           </span>
           {lastBackup && existingBackupDate && (
-            <span className="text-[#797977] text-[12px] mt-0.5">Last: {formatDate(existingBackupDate)}</span>
+            <span className="text-text-muted text-[12px] mt-0.5">Last: {formatDate(existingBackupDate)}</span>
           )}
-          <span className="text-[#797977] text-[11px] mt-2 flex items-center gap-1.5">
-            <div className={`w-1.5 h-1.5 rounded-full ${lastBackup ? "bg-[#10B981]" : "bg-[#797977]"}`}></div>
+          <span className="text-text-muted text-[11px] mt-2 flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${lastBackup ? "bg-success" : "bg-text-muted"}`}></div>
             {lastBackup ? "Backed up" : "Not backed up"}
           </span>
         </div>
@@ -144,7 +144,7 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
           <button
             onClick={handleStartBackup}
             disabled={status === 'authenticating'}
-            className={`px-4 py-2 rounded-md ${lastBackup ? 'bg-transparent border border-[#2A2A2A] text-[#F2F1EF]' : 'bg-[#D53131] text-[#000000] font-bold'}`}
+            className={`px-4 py-2 rounded-md ${lastBackup ? 'bg-transparent border border-border text-text-primary' : 'bg-accent text-accent-text font-bold'}`}
           >
             {status === 'authenticating' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -165,11 +165,11 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 pt-2 border-t border-[#1A1A1A]">
-              <p className="text-[13px] text-[#797977] mb-3">
+            <div className="px-5 pb-5 pt-2 border-t border-divider">
+              <p className="text-[13px] text-text-muted mb-3">
                 Enter a 4-digit PIN to encrypt your wallet
               </p>
-              
+
               <div className="flex gap-3">
                 <input
                   type="password"
@@ -177,14 +177,14 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
                   value={pin}
                   onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   placeholder="••••"
-                  className="h-[52px] text-xl text-center tracking-[0.5em] font-bold rounded-[10px] flex-1 bg-[#050505] border-[#2A2A2A] text-[#F2F1EF] focus-visible:ring-0 focus-visible:border-[#3A3A3A] px-3"
+                  className="h-[52px] text-xl text-center tracking-[0.5em] font-bold rounded-[10px] flex-1 bg-bg-center border border-border text-text-primary focus-visible:ring-0 focus-visible:border-border-emphasis px-3"
                   maxLength={4}
                   disabled={status === 'verifying' || status === 'backing_up'}
                 />
                 <button
                   onClick={() => handleBackup()}
                   disabled={pin.length !== 4 || status === 'verifying' || status === 'backing_up'}
-                  className="w-[64px] h-[52px] flex-shrink-0 bg-[#D53131] hover:bg-[#D53131]/90 text-[#000000] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-[64px] h-[52px] flex-shrink-0 bg-accent hover:opacity-90 text-accent-text rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {status === 'verifying' || status === 'backing_up' ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -198,7 +198,7 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2 mt-3 text-[#D53131]"
+                  className="flex items-center gap-2 mt-3 text-accent"
                 >
                   <AlertTriangle className="w-4 h-4" />
                   <span className="text-[13px]">{error}</span>
@@ -214,10 +214,10 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
             animate={{ height: 'auto', opacity: 1 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 pt-2 border-t border-[#1A1A1A]">
-              <div className="bg-[#181818] rounded-[10px] p-3 flex items-center gap-3">
-                <Check className="w-5 h-5 text-[#F2F1EF]" />
-                <p className="text-[13px] text-[#F2F1EF] font-bold">
+            <div className="px-5 pb-5 pt-2 border-t border-divider">
+              <div className="bg-success/10 rounded-[10px] p-3 flex items-center gap-3">
+                <Check className="w-5 h-5 text-success" />
+                <p className="text-[13px] text-text-primary font-bold">
                   Wallet backed up successfully!
                 </p>
               </div>
@@ -232,35 +232,35 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#050505]/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#0D0D0D] border border-[#2A2A2A] rounded-[10px] p-8 w-full max-w-md"
+              className="bg-surface border border-border rounded-[10px] p-8 w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-[10px] bg-[#181818] flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-[#F2F1EF]" />
+                <div className="w-12 h-12 rounded-[10px] bg-bg-edge flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#F2F1EF]">Existing Backup Found</h3>
-                  <p className="text-[13px] text-[#797977]">
+                  <h3 className="text-[15px] font-bold text-text-primary">Existing Backup Found</h3>
+                  <p className="text-[13px] text-text-muted">
                     From {existingBackupDate ? formatDate(existingBackupDate) : 'an earlier date'}
                   </p>
                 </div>
               </div>
 
-              <p className="text-[13px] text-[#A5A5A3] mb-8">
+              <p className="text-[13px] text-text-secondary mb-8">
                 We found a wallet backup in your Google Drive. Overwriting will replace the old backup permanently.
               </p>
 
               <div className="space-y-3">
                 <button
                   onClick={handleOverwrite}
-                  className="w-full h-[52px] bg-[#D53131] text-[#000000] font-bold rounded-[10px]"
+                  className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px]"
                 >
                   Overwrite with Current Wallet
                 </button>
@@ -269,13 +269,13 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
                     setShowConflictDialog(false);
                     setStatus('idle');
                   }}
-                  className="w-full h-[52px] bg-transparent border border-[#2A2A2A] text-[#F2F1EF] rounded-[10px]"
+                  className="w-full h-[52px] bg-transparent border border-border text-text-primary rounded-[10px]"
                 >
                   Cancel
                 </button>
               </div>
 
-              <p className="text-[11px] text-[#797977] mt-6 text-center uppercase tracking-wider">
+              <p className="text-[11px] text-text-muted mt-6 text-center uppercase tracking-wider">
                 This action cannot be undone
               </p>
             </motion.div>
@@ -289,10 +289,10 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
 export function GoogleDriveBackup(props: GoogleDriveBackupProps) {
   if (!GOOGLE_CLIENT_ID) {
     return (
-      <div className="bg-[#0D0D0D] border border-[#2A2A2A] rounded-[10px] overflow-hidden opacity-50">
+      <div className="bg-surface border border-border rounded-[10px] overflow-hidden opacity-50">
         <div className="px-5 py-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-[10px] bg-[#181818] flex items-center justify-center">
-            <Cloud className="w-5 h-5 text-[#797977]" />
+          <div className="w-12 h-12 rounded-[10px] bg-bg-edge flex items-center justify-center">
+            <Cloud className="w-5 h-5 text-text-muted" />
           </div>
           <div className="flex-1"/>
         </div>

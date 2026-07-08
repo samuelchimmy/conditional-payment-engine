@@ -159,20 +159,54 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
             <div className={`p-6 flex flex-col items-center ${depositSuccess ? 'py-12' : 'pb-4 gap-4'}`}>
               
               {depositSuccess ? (
-                <motion.div 
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="flex flex-col items-center justify-center text-center gap-4 w-full"
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center justify-center text-center gap-5 w-full"
                 >
-                  <div className="w-20 h-20 rounded-full bg-accent text-accent-text flex items-center justify-center mb-2">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
+                  {/* Animated green success ring + drawn checkmark */}
+                  <div className="relative w-24 h-24 flex items-center justify-center">
+                    <motion.span
+                      className="absolute inset-0 rounded-full bg-success/15"
+                      initial={{ scale: 0.4, opacity: 0.8 }}
+                      animate={{ scale: 1.35, opacity: 0 }}
+                      transition={{ duration: 1.1, ease: "easeOut", repeat: 1 }}
+                    />
+                    <motion.div
+                      className="w-20 h-20 rounded-full bg-success flex items-center justify-center shadow-[0_8px_30px_-6px_rgba(0,147,147,0.6)]"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                    >
+                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#F2F1EF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <motion.polyline
+                          points="20 6 9 17 4 12"
+                          initial={{ pathLength: 0 }}
+                          animate={{ pathLength: 1 }}
+                          transition={{ delay: 0.18, duration: 0.4, ease: "easeInOut" }}
+                        />
+                      </svg>
+                    </motion.div>
                   </div>
-                  <h2 className="text-text-primary text-[20px] font-[800]">Deposit Detected!</h2>
-                  <p className="text-text-secondary text-[13px]">
-                    {receivedAmount ? `Successfully received ${parseFloat(receivedAmount).toFixed(2)} USDT` : "Your funds have arrived."}
-                  </p>
+
+                  <div className="flex flex-col items-center gap-1">
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-success text-[30px] font-[800] leading-none tracking-tight"
+                    >
+                      +{receivedAmount ? parseFloat(receivedAmount).toFixed(2) : "0.00"} <span className="text-[18px] font-bold">USDT</span>
+                    </motion.div>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.42 }}
+                      className="text-text-secondary text-[13px] mt-1"
+                    >
+                      Deposit received
+                    </motion.p>
+                  </div>
                 </motion.div>
               ) : (
                 <>
