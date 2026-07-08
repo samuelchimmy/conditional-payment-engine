@@ -3,6 +3,7 @@
 import { useWriteContract } from "wagmi";
 import { encodeFunctionData, type Abi } from "viem";
 import { useWallet } from "@/components/WalletProvider";
+import { ensureGasForWallet } from "@/lib/gasGuard";
 
 export interface SendTxArgs {
   address: `0x${string}`;
@@ -26,11 +27,11 @@ export interface SendTxArgs {
  * 'google' is a mock mode with no signer — callers keep their own simulated path.
  */
 export function useSendTx() {
-  const { authMethod, wdkAccount } = useWallet();
+  const { authMethod, wdkAccount, address } = useWallet();
   const { writeContractAsync } = useWriteContract();
 
   const sendTx = async ({
-    address,
+    address: to,
     abi,
     functionName,
     args,
@@ -38,18 +39,25 @@ export function useSendTx() {
   }: SendTxArgs): Promise<`0x${string}`> => {
     if (authMethod === "wdk") {
       if (!wdkAccount) throw new Error("WDK wallet not initialized");
+
+      // Gas abstraction: make sure this self-custodial wallet has CELO to pay
+      // gas before it signs. Self-heals if activation is still pending.
+      if (address) {
+        await ensureGasForWallet(address, { waitMs: 8000 });
+      }
+
       const data = encodeFunctionData({
         abi: abi as Abi,
         functionName,
         args: args as unknown[],
       });
-      const { hash } = await wdkAccount.sendTransaction({ to: address, data, value });
+      const { hash } = await wdkAccount.sendTransaction({ to, data, value });
       return hash as `0x${string}`;
     }
 
     // injected / walletConnect
     return (await writeContractAsync({
-      address,
+      address: to,
       abi: abi as Abi,
       functionName,
       args,

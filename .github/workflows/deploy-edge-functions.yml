@@ -40,3 +40,6 @@ jobs:
 
       - name: Deploy notifications
         run: supabase functions deploy notifications --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+
+      - name: Deploy activation-funder
+        run: supabase functions deploy activation-funder --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt

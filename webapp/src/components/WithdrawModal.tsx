@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
+import confetti from "canvas-confetti";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
 import { useSendTx } from "@/lib/sendTx";
 import { friendlyTxError } from "@/lib/txError";
+import { playSuccessSound, playConfettiSound } from "@/lib/sounds";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -33,7 +35,27 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { sendTx } = useSendTx();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const [isPending, setIsPending] = useState(false);
+  const [sentAmount, setSentAmount] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
+
+  // Fire the success animation once the withdrawal transaction confirms on-chain.
+  useEffect(() => {
+    if (isSuccess && txHash) {
+      playSuccessSound();
+      playConfettiSound();
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#009393", "#F2F1EF", "#050505", "#181818"],
+      });
+      const t = setTimeout(() => {
+        onClose();
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [isSuccess, txHash, onClose]);
 
   const formattedBalance = balanceData 
     ? parseFloat(formatUnits(balanceData as bigint, 6)).toFixed(2) 
@@ -47,6 +69,9 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       setAmount("");
       setDestination("");
       setErrorMsg(null);
+      setTxHash(undefined);
+      setSentAmount(null);
+      setSentTo(null);
     } else {
       document.body.style.overflow = "unset";
     }
@@ -70,6 +95,8 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         functionName: "transfer",
         args: [destination as `0x${string}`, parseUnits(amount, 6)],
       });
+      setSentAmount(amount);
+      setSentTo(destination);
       setTxHash(h);
     } catch (e) {
       console.error(e);
@@ -100,10 +127,32 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
             transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
             className="relative w-full max-w-[420px] bg-surface border border-border rounded-[16px] overflow-hidden flex flex-col shadow-2xl"
           >
+            {isSuccess ? (
+              /* Success state — checkmark + amount + recipient in tether green */
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex flex-col items-center justify-center text-center gap-4 w-full py-12 px-6"
+              >
+                <div className="w-20 h-20 rounded-full bg-success text-[#F2F1EF] flex items-center justify-center mb-2">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <h2 className="text-success text-[20px] font-[800]">Sent!</h2>
+                <p className="text-text-secondary text-[13px]">
+                  {sentAmount ? `${parseFloat(sentAmount).toFixed(2)} USDT` : "Your USDT"} sent to{" "}
+                  <span className="text-text-primary font-semibold font-mono">
+                    {sentTo ? `${sentTo.slice(0, 6)}...${sentTo.slice(-4)}` : "recipient"}
+                  </span>
+                </p>
+              </motion.div>
+            ) : (
+            <>
             {/* Header */}
             <div className="h-[64px] border-b border-divider flex items-center justify-between px-6">
               <h2 className="text-text-primary text-[16px] font-bold">Withdraw USDT</h2>
-              <button 
+              <button
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-border transition-colors text-text-secondary hover:text-text-primary"
               >
@@ -115,7 +164,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
             {/* Content */}
             <div className="p-6 flex flex-col gap-6">
-              
+
               {/* Destination Address */}
               <div className="flex flex-col gap-2">
                 <label className="text-text-secondary text-[12px]">Destination Address</label>
@@ -193,17 +242,19 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
             </div>
 
             <div className="p-6 pt-2 border-t border-divider">
-              <button 
+              <button
                 onClick={handleWithdraw}
                 disabled={isPending || isConfirming || !amount || !destination}
                 className="w-full h-[52px] bg-accent text-accent-text font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {isPending || isConfirming ? "Processing..." : isSuccess ? "Success!" : "Confirm Withdrawal"}
+                {isPending || isConfirming ? "Processing..." : "Confirm Withdrawal"}
               </button>
               {errorMsg && (
                 <p className="text-[12px] text-red-400 text-center mt-3 break-words">{errorMsg}</p>
               )}
             </div>
+            </>
+            )}
           </motion.div>
         </div>
       )}

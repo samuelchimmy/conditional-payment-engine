@@ -6,14 +6,15 @@ export function friendlyTxError(e: any): string {
   const raw =
     (e?.shortMessage || e?.details || e?.message || String(e || "")).toLowerCase();
 
-  // No native CELO to pay gas (WDK wallets pay gas in CELO, not USDT)
+  // No native CELO to pay gas. The app auto-funds new wallets, so this usually
+  // means activation is still landing (or the funder needs a top-up).
   if (
     raw.includes("intrinsic transaction cost") ||
     raw.includes("insufficient funds for gas") ||
     (raw.includes("insufficient funds") && raw.includes("gas")) ||
     raw.includes("insufficient funds for intrinsic")
   ) {
-    return "You need a small amount of CELO to cover the network fee. Add a little CELO to your wallet and try again.";
+    return "We're still setting up your wallet's network fees. Please wait a few seconds and try again.";
   }
 
   // Generic insufficient funds (token side)

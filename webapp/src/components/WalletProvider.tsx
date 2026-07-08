@@ -10,6 +10,7 @@ import WalletManagerEvm from '@tetherto/wdk-wallet-evm';
 import { SeedSignerEvm } from '@tetherto/wdk-wallet-evm/signers';
 import { supabase } from '@/lib/supabaseClient';
 import { getProfile } from '@/lib/dbProxy';
+import { ensureGasForWallet } from '@/lib/gasGuard';
 
 
 // Wagmi config
@@ -215,7 +216,7 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
       // 4. Retrieve the first account
       const account = await wallet.getAccount(0);
       const generatedAddress = await account.getAddress();
-      
+
       setState(prev => ({
         ...prev,
         isConnected: true,
@@ -225,6 +226,11 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
         wdkAccount: account,
       }));
       setIsRegistered(false); // WDK always new in this flow
+
+      // Gas abstraction: drip a little CELO to this brand-new wallet so it can
+      // sign its first transaction. Fire-and-forget — the funder is idempotent
+      // and the dashboard also guards gas before approve.
+      ensureGasForWallet(generatedAddress, { waitMs: 0 }).catch(() => {});
     } catch (error) {
       console.error("WDK setup failed:", error);
       throw error;

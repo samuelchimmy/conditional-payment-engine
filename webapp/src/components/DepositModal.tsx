@@ -1,11 +1,11 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
-import { useReadContract } from "wagmi";
+import { useEffect, useState, useCallback } from "react";
+import { useReadContract, useWatchContractEvent } from "wagmi";
 import confetti from "canvas-confetti";
 import { useWallet } from "@/components/WalletProvider";
-import { playConfettiSound } from "@/lib/sounds";
+import { playConfettiSound, playSuccessSound } from "@/lib/sounds";
 import { ERC20ABI, USDTAddressCelo } from "@/lib/contracts";
 import { formatUnits } from "viem";
 import { QRCodeSVG } from "qrcode.react";
@@ -23,7 +23,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
   const [initialBalance, setInitialBalance] = useState<bigint | null>(null);
 
-  const { data: currentBalance } = useReadContract({
+  const { data: currentBalance, refetch: refetchBalance } = useReadContract({
     address: USDTAddressCelo,
     abi: ERC20ABI,
     functionName: "balanceOf",
@@ -40,32 +40,58 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
     }
   }, [isOpen, currentBalance, initialBalance]);
 
+  // Shared success trigger — fires from either the live Transfer event OR the balance poll.
+  const triggerSuccess = useCallback((amountFormatted: string) => {
+    setDepositSuccess((already) => {
+      if (already) return already; // avoid double-firing
+      setReceivedAmount(amountFormatted);
+      playSuccessSound();
+      playConfettiSound();
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#009393", "#F2F1EF", "#050505", "#181818"],
+      });
+      setTimeout(() => {
+        onClose();
+        setDepositSuccess(false);
+        setReceivedAmount(null);
+        setInitialBalance(null);
+      }, 4000);
+      return true;
+    });
+  }, [onClose]);
+
+  // INSTANT detection: watch USDT Transfer events where `to` is our address.
+  useWatchContractEvent({
+    address: USDTAddressCelo,
+    abi: ERC20ABI,
+    eventName: "Transfer",
+    args: address ? { to: address as `0x${string}` } : undefined,
+    enabled: isOpen && !!address && !depositSuccess,
+    onLogs: (logs) => {
+      let total = BigInt(0);
+      for (const log of logs) {
+        const value = (log as any)?.args?.value as bigint | undefined;
+        if (value) total += value;
+      }
+      if (total > BigInt(0)) {
+        refetchBalance();
+        triggerSuccess(formatUnits(total, 6));
+      }
+    },
+  });
+
+  // Fallback detection: balance poll (in case the live event is missed).
   useEffect(() => {
-    if (isOpen && initialBalance !== null && currentBalance !== undefined) {
+    if (isOpen && initialBalance !== null && currentBalance !== undefined && !depositSuccess) {
       const curr = currentBalance as bigint;
       if (curr > initialBalance) {
-        const diff = curr - initialBalance;
-        const amountFormatted = formatUnits(diff, 6);
-        setReceivedAmount(amountFormatted);
-        setDepositSuccess(true);
-        playConfettiSound();
-      
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#D53131', '#F2F1EF', '#050505', '#181818']
-        });
-
-        setTimeout(() => {
-          onClose();
-          setDepositSuccess(false);
-          setReceivedAmount(null);
-          setInitialBalance(null);
-        }, 4000);
+        triggerSuccess(formatUnits(curr - initialBalance, 6));
       }
     }
-  }, [currentBalance, initialBalance, isOpen, onClose]);
+  }, [currentBalance, initialBalance, isOpen, depositSuccess, triggerSuccess]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -190,14 +216,6 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   
                   <span className="text-text-muted text-[11px]">Min 1 USDT · Celo network</span>
                 </div>
-              </div>
-
-              {/* Gas hint — WDK wallets pay network fees in CELO */}
-              <div className="w-full bg-surface border border-border rounded-[10px] px-4 py-3 flex items-start gap-2">
-                <span className="text-[13px] leading-none mt-0.5">⛽</span>
-                <span className="text-text-muted text-[11px] leading-snug">
-                  Also add a little <span className="text-text-primary font-semibold">CELO</span> to cover network fees — you need it to send, approve, or claim. A small amount is enough.
-                </span>
               </div>
 
               {/* Bridge Row */}
