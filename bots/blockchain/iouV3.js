@@ -132,6 +132,8 @@ export async function createConditionalIOU({ senderAddress, amount, recipientId,
 export async function resolveConditional(iouId, resolvedInFavor) {
   const { publicClient, walletClient } = buildCeloClients('VAULT_PRIVATE_KEY');
   const registry = process.env.IOU_REGISTRY_V3;
+  if (!registry) throw new Error('IOU_REGISTRY_V3 address missing');
+  if (!walletClient) throw new Error('VAULT_PRIVATE_KEY missing');
 
   const data = encodeFunctionData({
     abi: IOU_REGISTRY_V3_ABI,
@@ -147,13 +149,16 @@ export async function resolveConditional(iouId, resolvedInFavor) {
     gas: gas + (gas / 5n),
   });
 
-  await publicClient.waitForTransactionReceipt({ hash });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status === 'reverted') throw new Error(`resolveConditional reverted (${hash})`);
   return hash;
 }
 
 export async function claimConditional(iouId, recipientAddress, recipientId) {
   const { publicClient, walletClient } = buildCeloClients('VAULT_PRIVATE_KEY');
   const registry = process.env.IOU_REGISTRY_V3;
+  if (!registry) throw new Error('IOU_REGISTRY_V3 address missing');
+  if (!walletClient) throw new Error('VAULT_PRIVATE_KEY missing');
 
   const data = encodeFunctionData({
     abi: IOU_REGISTRY_V3_ABI,
@@ -169,6 +174,7 @@ export async function claimConditional(iouId, recipientAddress, recipientId) {
     gas: gas + (gas / 5n),
   });
 
-  await publicClient.waitForTransactionReceipt({ hash });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status === 'reverted') throw new Error(`claimConditional reverted (${hash})`);
   return hash;
 }

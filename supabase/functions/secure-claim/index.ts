@@ -8,22 +8,13 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
-// In-memory nonce store (single-use claim prevention)
-const usedNonces = new Map<string, number>(); // nonce → timestamp used
+// RECIPIENT_WIN flag from IOURegistryV3 — only recipient-win escrows are claimable.
+const RECIPIENT_WIN = 2;
 
-function cleanExpiredNonces() {
-  const cutoff = Date.now() - 86_400_000;
-  for (const [nonce, ts] of usedNonces.entries()) {
-    if (ts < cutoff) usedNonces.delete(nonce);
-  }
-}
-
-// Extract and validate timestamp from the signed message
-// Expected format: "Claim IOUs for 0xADDRESS at TIMESTAMP"
+// Expected message format: "Claim IOUs for 0xADDRESS at TIMESTAMP"
 function extractMessageTimestamp(message: string): number | null {
   const match = message.match(/at (\d{10,13})$/) || message.match(/at (.+)$/);
   if (!match) return null;
-  // Handle both numeric timestamps and ISO strings
   const raw = match[1];
   const numeric = parseInt(raw, 10);
   if (!isNaN(numeric)) return numeric;
@@ -38,6 +29,11 @@ function jsonResp(data: unknown, status = 200) {
   })
 }
 
+// Normalize a candidate identifier for comparison (lowercase, strip leading @).
+function norm(v: unknown): string {
+  return String(v ?? "").trim().toLowerCase().replace(/^@/, "");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -46,116 +42,100 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing environment variables")
-    }
+    if (!supabaseUrl || !supabaseServiceKey) throw new Error("Missing environment variables")
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
     const { action, walletAddress, signature, message, betId } = await req.json()
 
-    // Accept both "claim-all" (dashboard) and "claim-single" (individual bet)
     if (!["claim-all", "claim-single"].includes(action) || !walletAddress || !signature || !message) {
       return jsonResp({ error: "Invalid request. walletAddress, signature, and message are required." }, 400)
     }
+    if (!/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      return jsonResp({ error: "Invalid wallet address." }, 400)
+    }
 
-    // 1. Verify EVM Signature
-    const isValidSignature = await verifyMessage({
-      address: walletAddress,
-      message,
-      signature
-    });
-
+    // ── 1. Prove wallet ownership: the caller signed the claim message ──
+    const isValidSignature = await verifyMessage({ address: walletAddress, message, signature });
     if (!isValidSignature) {
       return jsonResp({ error: "Invalid signature. Cannot verify wallet ownership." }, 401)
     }
 
-    // 2. Validate message format
+    // ── 2. Bind the signature to this wallet + a fresh timestamp ──
     if (!message.includes("Claim IOUs for") || !message.toLowerCase().includes(walletAddress.toLowerCase())) {
       return jsonResp({ error: "Invalid message format." }, 400)
     }
-
-    // Timestamp validation — message must include a recent timestamp
     const msgTimestamp = extractMessageTimestamp(message);
-    if (!msgTimestamp) {
-      return jsonResp({ error: "Message must include a timestamp." }, 400)
-    }
+    if (!msgTimestamp) return jsonResp({ error: "Message must include a timestamp." }, 400)
     const ageMs = Date.now() - (msgTimestamp > 1e12 ? msgTimestamp : msgTimestamp * 1000);
-    if (ageMs < 0 || ageMs > 300_000) { // 5-minute window
+    if (ageMs < 0 || ageMs > 300_000) {
       return jsonResp({ error: "Claim message has expired. Please re-sign with a fresh timestamp." }, 400)
     }
 
-    // Nonce check — prevent replay of the same signed message
+    // ── 3. Durable single-use nonce (replay protection survives cold starts) ──
     const sigBytes = new TextEncoder().encode(signature);
     const nonceBuffer = await crypto.subtle.digest("SHA-256", sigBytes);
     const nonce = Array.from(new Uint8Array(nonceBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
-
-    if (usedNonces.has(nonce)) {
+    const { error: nonceErr } = await supabaseAdmin.from("claim_nonces").insert({ nonce });
+    if (nonceErr) {
+      // Unique-violation → this exact signature was already used.
       return jsonResp({ error: "This signed message has already been used. Please sign a new claim request." }, 400)
     }
 
-    // Mark nonce as used immediately to prevent race conditions
-    usedNonces.set(nonce, Date.now());
-    cleanExpiredNonces();
-
-    // 3. Fetch the caller's wallet profile to get linked social identities
+    // ── 4. Load the caller's OAuth/HMAC-verified identities ──
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("wallet_profiles")
-      .select("id, wallet_address, discord_id, x_user_id, telegram_id")
+      .select("id, wallet_address, discord_id, discord_username, x_user_id, x_username, telegram_id, telegram_username")
       .ilike("wallet_address", walletAddress.toLowerCase())
       .maybeSingle()
 
     if (profileError || !profile) {
-      return jsonResp({ error: "Wallet profile not found. Please link social accounts first." }, 404)
+      return jsonResp({ error: "Wallet profile not found. Please link a social account first." }, 404)
+    }
+
+    // Per-platform verified identifiers: numeric ID (immutable) + current username
+    // (OAuth/HMAC-verified). Both are safe to match; the numeric ID is hijack-proof,
+    // the username lets pre-registration MagicPay (keyed by handle) be claimed.
+    const identitiesByPlatform: Record<string, string[]> = {
+      x: [profile.x_user_id, profile.x_username].map(norm).filter(Boolean),
+      twitter: [profile.x_user_id, profile.x_username].map(norm).filter(Boolean),
+      discord: [profile.discord_id, profile.discord_username].map(norm).filter(Boolean),
+      telegram: [profile.telegram_id, profile.telegram_username].map(norm).filter(Boolean),
+    };
+    const allIdentities = new Set(Object.values(identitiesByPlatform).flat());
+
+    // Does this caller own the identity a given payment is addressed to?
+    function isRecipientOf(payment: any): boolean {
+      const plat = norm(payment.platform);
+      const ids = identitiesByPlatform[plat] || Array.from(allIdentities);
+      const targetNumeric = norm(payment.recipient_numeric_id);
+      const targetHandle = norm(payment.recipient_handle);
+      const matchesIdentity =
+        (targetNumeric && ids.includes(targetNumeric)) ||
+        (targetHandle && ids.includes(targetHandle));
+      const matchesWallet =
+        payment.recipient_wallet && norm(payment.recipient_wallet) === norm(walletAddress);
+      return Boolean(matchesIdentity || matchesWallet);
+    }
+
+    // Only a resolved, recipient-won escrow can be claimed.
+    function isClaimable(payment: any): boolean {
+      return payment.status === "resolved" && Number(payment.resolved_in_favor) === RECIPIENT_WIN;
     }
 
     let claimedCount = 0;
     let totalClaimedAmount = 0;
 
-    // Build query depending on action
-    if (action === "claim-single" && betId) {
-      // Claim a specific conditional payment by ID
-      const { data: payment, error: paymentErr } = await supabaseAdmin
+    async function settleClaim(payment: any) {
+      // Atomic: only flip if still 'resolved' (prevents double-claim races).
+      const { data: updated } = await supabaseAdmin
         .from("conditional_payments")
-        .select("*")
-        .eq("id", betId)
-        .eq("status", "pending")
-        .maybeSingle();
+        .update({ status: "claimed", recipient_wallet: walletAddress, claimed_at: new Date().toISOString() })
+        .eq("id", payment.id)
+        .eq("status", "resolved")
+        .select();
+      if (!updated || updated.length === 0) return false;
 
-      if (paymentErr || !payment) {
-        return jsonResp({ error: "Payment not found or already claimed." }, 404)
-      }
-
-      // Verify the claimer is the recipient by checking linked identities
-      const linkedIds = [
-        profile.discord_id,
-        profile.x_user_id,
-        profile.telegram_id,
-        walletAddress.toLowerCase(),
-        walletAddress,
-      ].filter(Boolean).map(String);
-
-      const recipientNumeric = (payment.recipient_numeric_id || "").toLowerCase();
-      const recipientHandle = (payment.recipient_handle || "").toLowerCase();
-      
-      const isRecipient =
-        linkedIds.some(id => id.toLowerCase() === recipientNumeric) ||
-        linkedIds.some(id => id.toLowerCase() === recipientHandle) ||
-        (payment.recipient_wallet && payment.recipient_wallet.toLowerCase() === walletAddress.toLowerCase());
-
-      if (!isRecipient) {
-        return jsonResp({ error: "You are not the recipient of this payment." }, 403)
-      }
-
-      // Mark as claimed
-      await supabaseAdmin.from("conditional_payments").update({
-        status: "claimed",
-        recipient_wallet: walletAddress,
-        claimed_at: new Date().toISOString(),
-      }).eq("id", payment.id);
-
-      // Log transaction
       await supabaseAdmin.from("transactions").insert({
         profile_id: profile.id,
         type: "iou_claim",
@@ -165,53 +145,43 @@ serve(async (req) => {
         status: "completed",
         metadata: { iou_id: payment.iou_id, platform: payment.platform, bet_id: payment.id },
       });
+      claimedCount++;
+      totalClaimedAmount += Number(payment.amount);
+      return true;
+    }
 
-      claimedCount = 1;
-      totalClaimedAmount = Number(payment.amount);
+    if (action === "claim-single" && betId) {
+      const { data: payment, error: paymentErr } = await supabaseAdmin
+        .from("conditional_payments")
+        .select("*")
+        .eq("id", betId)
+        .maybeSingle();
+
+      if (paymentErr || !payment) return jsonResp({ error: "Payment not found." }, 404)
+      if (!isClaimable(payment)) {
+        return jsonResp({ error: "This payment is not ready to claim yet (it must be resolved in your favor)." }, 409)
+      }
+      if (!isRecipientOf(payment)) {
+        return jsonResp({ error: "You are not the recipient of this payment." }, 403)
+      }
+      const ok = await settleClaim(payment);
+      if (!ok) return jsonResp({ error: "Payment already claimed." }, 409)
 
     } else {
-      // claim-all: claim all pending conditional_payments across all linked identities
-      const linkedIdentities: { platform: string; id: string }[] = [];
-      if (profile.discord_id) linkedIdentities.push({ platform: "discord", id: profile.discord_id });
-      if (profile.x_user_id) linkedIdentities.push({ platform: "x", id: profile.x_user_id });
-      if (profile.telegram_id) linkedIdentities.push({ platform: "telegram", id: profile.telegram_id });
-
-      if (linkedIdentities.length === 0) {
+      // claim-all: every resolved, recipient-won payment addressed to one of the
+      // caller's verified identities.
+      if (allIdentities.size === 0) {
         return jsonResp({ error: "No social identities linked to this wallet." }, 403)
       }
+      const { data: candidates } = await supabaseAdmin
+        .from("conditional_payments")
+        .select("*")
+        .eq("status", "resolved")
 
-      for (const identity of linkedIdentities) {
-        // Query conditional_payments where recipient_numeric_id OR recipient_handle matches the linked social ID
-        // Supabase `or` syntax requires a string like `recipient_numeric_id.eq.123,recipient_handle.eq.123`
-        const { data: pendingPayments } = await supabaseAdmin
-          .from("conditional_payments")
-          .select("*")
-          .eq("platform", identity.platform)
-          .or(`recipient_numeric_id.eq.${identity.id},recipient_handle.eq.${identity.id}`)
-          .eq("status", "pending")
-
-        if (pendingPayments && pendingPayments.length > 0) {
-          for (const payment of pendingPayments) {
-            await supabaseAdmin.from("conditional_payments").update({
-              status: "claimed",
-              recipient_wallet: walletAddress,
-              claimed_at: new Date().toISOString(),
-            }).eq("id", payment.id);
-
-            await supabaseAdmin.from("transactions").insert({
-              profile_id: profile.id,
-              type: "iou_claim",
-              amount: payment.amount,
-              counterparty: payment.sender_id,
-              source: "conditional_payment",
-              status: "completed",
-              metadata: { iou_id: payment.iou_id, platform: payment.platform, bet_id: payment.id },
-            });
-
-            claimedCount++;
-            totalClaimedAmount += Number(payment.amount);
-          }
-        }
+      for (const payment of candidates || []) {
+        if (!isClaimable(payment)) continue;
+        if (!isRecipientOf(payment)) continue;
+        await settleClaim(payment);
       }
     }
 
@@ -220,8 +190,8 @@ serve(async (req) => {
       claimedCount,
       totalClaimedAmount,
       message: claimedCount > 0
-        ? `Successfully claimed ${claimedCount} payment(s) totaling ${totalClaimedAmount} USDT`
-        : `No pending payments found for your linked accounts.`
+        ? `Successfully claimed ${claimedCount} payment(s) totaling ${totalClaimedAmount} USDT. Settlement to your wallet is processing.`
+        : `No claimable payments found for your linked accounts.`
     })
 
   } catch (error) {

@@ -1,25 +1,29 @@
 import { getSupabase } from '../db/supabase.js';
 import { getPlugin } from '../plugins/registry.js';
-import { resolveConditional } from '../blockchain/iouV3.js';
+import { resolveConditional, claimConditional, getRecipientId } from '../blockchain/iouV3.js';
+import { resolveAlias } from '../plugins/football.plugin.js';
+
+// Contract winner flags (must match IOURegistryV3): 1 = sender wins, 2 = recipient wins.
+const SENDER_WIN = 1;
+const RECIPIENT_WIN = 2;
 
 export async function evaluateJobs() {
   console.log('[Resolver] Evaluating pending conditional jobs...');
   try {
     const supabase = getSupabase();
-    
-    // 1. Fetch pending conditional_payments from Supabase
+
+    // 1. Fetch pending conditional_payments
     const { data: pendingJobs, error } = await supabase
       .from('conditional_payments')
       .select('*')
       .eq('status', 'pending');
-      
+
     if (error) throw error;
     if (!pendingJobs || pendingJobs.length === 0) return;
 
     console.log(`[Resolver] Found ${pendingJobs.length} pending jobs.`);
 
     // 2. Fetch all recently finished matches
-    // In a real app we might only fetch the ones we need, but for simplicity fetch all finished
     const { data: matches, error: matchError } = await supabase
       .from('sports_match_results')
       .select('*')
@@ -27,54 +31,75 @@ export async function evaluateJobs() {
 
     if (matchError) throw matchError;
 
-    // 3. Evaluate each job
     const plugin = getPlugin('football_wc2026'); // Assuming all are football for now
-    
+
     for (const job of pendingJobs) {
       if (!job.condition_meta) continue;
 
-      const { teamA, teamB } = job.condition_meta;
+      // H-1: normalize BOTH sides through the same alias map so oracle-stored
+      // API names (e.g. "korea republic") match bet aliases (e.g. "south korea").
+      const teamA = resolveAlias(job.condition_meta.teamA);
+      const teamB = resolveAlias(job.condition_meta.teamB);
 
-      // Find the match in the finished matches
-      // A match must contain both teamA and teamB (or if teamB is omitted, just teamA)
-      const match = matches.find(m => 
-        (m.home_team === teamA || m.away_team === teamA) &&
-        (teamB ? (m.home_team === teamB || m.away_team === teamB) : true)
-      );
+      const match = matches.find((m) => {
+        const home = resolveAlias(m.home_team);
+        const away = resolveAlias(m.away_team);
+        return (
+          (home === teamA || away === teamA) &&
+          (teamB ? home === teamB || away === teamB : true)
+        );
+      });
 
       if (!match) continue; // Match not found or not finished
 
-      // 4. Evaluate condition
-      // evaluateCondition returns true, false, or null (if not finished)
-      // We map this to matchData shape expected by evaluateCondition
       const matchData = {
         homeTeam: match.home_team,
         awayTeam: match.away_team,
         homeScore: match.home_score,
         awayScore: match.away_score,
-        status: match.status === 'finished' ? 'FINISHED' : match.status
+        status: match.status === 'finished' ? 'FINISHED' : match.status,
       };
 
       const result = plugin.evaluateCondition(job.condition_meta, matchData);
-      
-      if (result === null) continue; // Still pending?
+      if (result === null) continue; // Not decidable yet
 
-      const resolvedInFavor = result ? 1 : 0; // 1 = recipient wins, 0 = sender wins (refund)
-      console.log(`[Resolver] Job ${job.iou_id} resolved in favor of: ${resolvedInFavor}`);
+      // CR-1: contract expects 2 = recipient wins, 1 = sender wins (refund). NOT 1/0.
+      const resolvedInFavor = result ? RECIPIENT_WIN : SENDER_WIN;
+      console.log(`[Resolver] Job ${job.iou_id} resolves in favor of ${resolvedInFavor === RECIPIENT_WIN ? 'recipient' : 'sender'}`);
 
-      // 5. Call resolveConditional(iouId, resolvedInFavor) on chain
+      // H-2: claim the job (pending -> resolving) so a mid-flight crash can't
+      // double-resolve on the next cycle.
+      const { data: claimed } = await supabase
+        .from('conditional_payments')
+        .update({ status: 'resolving' })
+        .eq('iou_id', job.iou_id)
+        .eq('status', 'pending')
+        .select();
+      if (!claimed || claimed.length === 0) continue; // another cycle grabbed it
+
       try {
         const txHash = await resolveConditional(job.iou_id, resolvedInFavor);
-        console.log(`[Resolver] Blockchain resolution successful for IOU ${job.iou_id}: ${txHash}`);
-        
-        // 6. Update row status to resolved
+        console.log(`[Resolver] Resolved IOU ${job.iou_id} on-chain: ${txHash}`);
         await supabase
           .from('conditional_payments')
           .update({ status: 'resolved', resolved_in_favor: resolvedInFavor, resolution_tx: txHash })
           .eq('iou_id', job.iou_id);
-          
       } catch (blockchainError) {
-         console.error(`[Resolver] Blockchain resolution failed for IOU ${job.iou_id}:`, blockchainError);
+        const msg = blockchainError?.message || String(blockchainError);
+        if (/already\s*resolved|alreadyresolved/i.test(msg)) {
+          // Idempotent: it was already resolved on-chain — sync DB and move on.
+          await supabase
+            .from('conditional_payments')
+            .update({ status: 'resolved', resolved_in_favor: resolvedInFavor })
+            .eq('iou_id', job.iou_id);
+        } else {
+          console.error(`[Resolver] Resolution failed for IOU ${job.iou_id}, will retry:`, msg);
+          // Put it back to pending so the next cycle retries.
+          await supabase
+            .from('conditional_payments')
+            .update({ status: 'pending' })
+            .eq('iou_id', job.iou_id);
+        }
       }
     }
   } catch (err) {
@@ -82,8 +107,74 @@ export async function evaluateJobs() {
   }
 }
 
+/**
+ * CR-2: settle claims on-chain. The webapp's secure-claim edge function verifies
+ * the recipient's signature and sets status='claimed' + recipient_wallet. This
+ * worker (vault authority) then actually moves the USDT out of escrow via
+ * claimConditional — previously nothing ever called it, so claims never paid.
+ */
+export async function processClaims() {
+  try {
+    const supabase = getSupabase();
+
+    const { data: jobs, error } = await supabase
+      .from('conditional_payments')
+      .select('*')
+      .eq('status', 'claimed')
+      .not('recipient_wallet', 'is', null);
+
+    if (error) throw error;
+    if (!jobs || jobs.length === 0) return;
+
+    console.log(`[Resolver] Settling ${jobs.length} claimed job(s) on-chain...`);
+
+    for (const job of jobs) {
+      // Only recipient-win escrows are claimable.
+      if (job.resolved_in_favor !== RECIPIENT_WIN) continue;
+
+      const recipientId = getRecipientId(
+        job.platform,
+        String(job.recipient_numeric_id || job.recipient_handle || '')
+      );
+
+      // Idempotency: claim the row (claimed -> settling) before sending.
+      const { data: claimed } = await supabase
+        .from('conditional_payments')
+        .update({ status: 'settling' })
+        .eq('iou_id', job.iou_id)
+        .eq('status', 'claimed')
+        .select();
+      if (!claimed || claimed.length === 0) continue;
+
+      try {
+        const txHash = await claimConditional(job.iou_id, job.recipient_wallet, recipientId);
+        console.log(`[Resolver] Claim settled for IOU ${job.iou_id}: ${txHash}`);
+        await supabase
+          .from('conditional_payments')
+          .update({ status: 'settled', claim_tx: txHash })
+          .eq('iou_id', job.iou_id);
+      } catch (e) {
+        const msg = e?.message || String(e);
+        if (/already\s*claimed|alreadyclaimed/i.test(msg)) {
+          await supabase
+            .from('conditional_payments')
+            .update({ status: 'settled' })
+            .eq('iou_id', job.iou_id);
+        } else {
+          console.error(`[Resolver] Claim settlement failed for IOU ${job.iou_id}, will retry:`, msg);
+          await supabase
+            .from('conditional_payments')
+            .update({ status: 'claimed' })
+            .eq('iou_id', job.iou_id);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[Resolver] Error settling claims:', err);
+  }
+}
+
 export async function processNotifications() {
-  console.log('[Resolver] Processing MagicPay claim notifications...');
-  // Logic to notify users of pending claims via DM
-  // This would typically involve querying users who have claims but haven't connected a wallet
+  // Placeholder — MagicPay claim reminders are surfaced in the webapp (History
+  // badge + toast). Kept as a no-op so the worker slot stays wired.
 }

@@ -6,7 +6,8 @@ import { corsHeaders } from "../_shared/security.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const jwtSecret = Deno.env.get("JWT_SECRET") || "fallback_secret_for_dev";
+// CR-4: never fall back to a committed secret — that would let anyone forge tokens.
+const jwtSecret = Deno.env.get("JWT_SECRET");
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -14,6 +15,11 @@ serve(async (req: Request) => {
   }
 
   try {
+    if (!jwtSecret) {
+      return new Response(JSON.stringify({ error: "Server auth not configured" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const url = new URL(req.url);
     const action = url.searchParams.get("action");

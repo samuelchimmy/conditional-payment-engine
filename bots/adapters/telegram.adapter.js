@@ -24,7 +24,7 @@ export async function startTelegramAdapter() {
 
     bot.onText(/\/start/, (msg) => {
       const chatId = msg.chat.id;
-      bot.sendMessage(chatId, `Welcome to Tether Arena! 🏟️\n\nLink your wallet at ${process.env.WEBAPP_URL || 'https://arena.tether.io'}\nThen use /bet to place a conditional payment.`);
+      bot.sendMessage(chatId, `Welcome to Tether Arena! 🏟️\n\nLink your wallet at ${process.env.WEBAPP_URL || 'https://tarena.xyz'}\nThen use /bet to place a conditional payment.`);
     });
 
     bot.onText(/\/bet (.+)/, async (msg, match) => {

@@ -63,8 +63,11 @@ export default function Dashboard() {
     return () => window.removeEventListener("focus", onFocus);
   }, [address]);
 
-  // Pending MagicPay = bets where I'm the recipient and it's claimable (pending).
-  const claimableBets = bets.filter((b) => b.isRecipient && b.status === "pending");
+  // Pending MagicPay = bets where I'm the recipient and it's resolved in my
+  // favor (matches secure-claim: only resolved + recipient-win is claimable).
+  const isClaimable = (b: any) =>
+    b.isRecipient && b.status === "resolved" && Number(b.resolved_in_favor) === 2;
+  const claimableBets = bets.filter(isClaimable);
   const claimableCount = claimableBets.length;
 
   // Toast the user once when we detect pending MagicPay for their linked account,
@@ -126,8 +129,9 @@ export default function Dashboard() {
             {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not Connected"}
           </span>
           
-          <button 
+          <button
             onClick={() => setIsSettingsModalOpen(true)}
+            aria-label="Settings"
             className="w-[36px] h-[36px] flex items-center justify-center rounded-[8px] border border-border hover:bg-surface transition-colors text-text-primary"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -147,6 +151,7 @@ export default function Dashboard() {
           </div>
           <button
             onClick={() => setIsHistorySheetOpen(true)}
+            aria-label="History"
             className="relative flex flex-col items-center justify-center text-text-secondary hover:text-text-primary transition-colors shrink-0"
           >
             {claimableCount > 0 && (
@@ -280,7 +285,7 @@ export default function Dashboard() {
                             <span className={`text-[13px] font-mono font-bold ${meta.green ? "text-success" : "text-text-primary"}`}>
                               {meta.amount}<span className="text-[11px] font-normal text-text-muted"> USDT</span>
                             </span>
-                            {item.status === 'pending' && isRecipientBet ? (
+                            {isRecipientBet && item.status === 'resolved' && Number(item.resolved_in_favor) === 2 ? (
                               <button
                                 onClick={() => setSelectedClaimBet(item)}
                                 className="h-[32px] px-[16px] bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"

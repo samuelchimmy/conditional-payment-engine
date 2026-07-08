@@ -30,6 +30,7 @@ import {
 } from "npm:viem@2.21.0";
 import { privateKeyToAccount } from "npm:viem@2.21.0/accounts";
 import { celo } from "npm:viem@2.21.0/chains";
+import { jwtVerify } from "https://deno.land/x/jose@v4.14.4/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,6 +92,31 @@ serve(async (req) => {
       return jsonResp({ error: "Valid walletAddress required" }, 400);
     }
     const wallet = walletAddress as `0x${string}`;
+
+    // ── AUTH: only the wallet's owner may request a drip to it (CR-3). ──
+    // Requires the SIWE JWT (same token db-proxy issues), and the token's
+    // wallet_address must equal the wallet being funded. This stops an attacker
+    // from draining the funder to unlimited addresses they don't control.
+    // Read actions (balance/status) are harmless and left open.
+    if (action === "fund") {
+      const jwtSecret = Deno.env.get("JWT_SECRET");
+      // CR-4: never fall back to a shipped default secret.
+      if (!jwtSecret) return jsonResp({ error: "Server auth not configured" }, 500);
+
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return jsonResp({ error: "Authentication required" }, 401);
+      }
+      try {
+        const token = authHeader.split(" ")[1];
+        const { payload } = await jwtVerify(token, new TextEncoder().encode(jwtSecret));
+        if (String(payload.wallet_address).toLowerCase() !== wallet.toLowerCase()) {
+          return jsonResp({ error: "Token does not match wallet" }, 403);
+        }
+      } catch {
+        return jsonResp({ error: "Invalid or expired token" }, 401);
+      }
+    }
 
     const publicClient = createPublicClient({ chain: celo, transport: celoTransport() });
 

@@ -5,7 +5,7 @@ import { corsHeaders } from "../_shared/security.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const jwtSecret = Deno.env.get("JWT_SECRET") || "fallback_secret_for_dev";
+const jwtSecret = Deno.env.get("JWT_SECRET"); // CR-4: no committed fallback secret
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -22,6 +22,7 @@ serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    if (!jwtSecret) return json({ error: "Server auth not configured" }, 500);
     const body = await req.json();
     const { action, walletAddress } = body;
 

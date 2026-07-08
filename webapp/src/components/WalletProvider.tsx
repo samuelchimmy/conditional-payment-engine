@@ -233,14 +233,11 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
       }));
       setIsRegistered(false); // WDK always new in this flow
 
-      // Authenticate (SIWE) so db-proxy calls are authorized — sign with the WDK
-      // account since there's no wagmi connector. Then provision gas.
-      authenticateWallet(generatedAddress, (m) => account.sign(m)).catch(() => {});
-
-      // Gas abstraction: drip a little CELO to this brand-new wallet so it can
-      // sign its first transaction. Fire-and-forget — the funder is idempotent
-      // and the dashboard also guards gas before approve.
-      ensureGasForWallet(generatedAddress, { waitMs: 0 }).catch(() => {});
+      // Authenticate (SIWE) first so the JWT exists, THEN request the gas drip
+      // (the funder now requires that token). Sign with the WDK account.
+      authenticateWallet(generatedAddress, (m) => account.sign(m))
+        .then(() => ensureGasForWallet(generatedAddress, { waitMs: 0 }))
+        .catch(() => {});
     } catch (error) {
       console.error("WDK setup failed:", error);
       throw error;
@@ -277,9 +274,13 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
         } catch { /* invalid */ }
       }
       if (!valid) {
-        authenticateWallet(generatedAddress, (m) => account.sign(m)).catch(() => {});
+        // Re-auth, then request gas (funder requires the token).
+        authenticateWallet(generatedAddress, (m) => account.sign(m))
+          .then(() => ensureGasForWallet(generatedAddress, { waitMs: 0 }))
+          .catch(() => {});
+      } else {
+        ensureGasForWallet(generatedAddress, { waitMs: 0 }).catch(() => {});
       }
-      ensureGasForWallet(generatedAddress, { waitMs: 0 }).catch(() => {});
 
       return { address: generatedAddress };
     } catch (e: any) {

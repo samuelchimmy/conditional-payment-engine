@@ -21,8 +21,12 @@ export async function ensureGasForWallet(
   if (!walletAddress) return { ok: false, funded: false, error: "no wallet" };
 
   try {
+    // The funder now requires the SIWE JWT (proves this wallet's ownership) so
+    // it can't be abused to drain the funder to arbitrary addresses.
+    const token = typeof window !== "undefined" ? localStorage.getItem("tarena_jwt") : null;
     const { data, error } = await supabase.functions.invoke("activation-funder", {
       body: { action: "fund", walletAddress, deviceId: opts?.deviceId ?? null },
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
 
     if (error) {

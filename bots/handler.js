@@ -132,6 +132,12 @@ async function handleConditionalPayment(intent, { userId, platform, messageId, r
     const resolvedId = numericId || recipientHandle;
     const recipientId = getRecipientId(platform, resolvedId);
 
+    // M-2: deterministic self-send guard (don't rely on the LLM alone).
+    const senderRecipientId = getRecipientId(platform, String(userId));
+    if (recipientId === senderRecipientId) {
+      return replyFn("❌ You can't send a conditional payment to yourself.");
+    }
+
     console.log(`[Handler] Recipient: @${recipientHandle} → numericId: ${resolvedId} → recipientId: ${recipientId}`);
 
     // Execute on-chain
@@ -143,9 +149,13 @@ async function handleConditionalPayment(intent, { userId, platform, messageId, r
       jobId: messageId
     });
 
+    // M-3: the tx succeeded on-chain; use txHash as the DB reference even if the
+    // iouId couldn't be decoded from the event (never let a null iouId throw).
+    const iouRef = iouId != null ? String(iouId) : null;
+
     // Save to database
     await insertConditionalPayment({
-      iou_id: iouId,
+      iou_id: iouRef,
       platform,
       sender_id: userId,
       recipient_handle: recipientHandle,
@@ -169,7 +179,7 @@ async function handleConditionalPayment(intent, { userId, platform, messageId, r
         intent_type: 'conditional_payment',
         amount: intent.amount,
         recipient: recipientHandle,
-        tx_hash: iouId.toString(),
+        tx_hash: iouRef || txHash,
       });
       return; // Handled by social queue
     } else {

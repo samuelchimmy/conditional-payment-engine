@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "celopedia-skill": {
+      "source": "celo-org/celopedia-skills",
+      "sourceType": "github",
+      "skillPath": "skills/celopedia-skill/SKILL.md",
+      "computedHash": "0a361c804c9a20a3257ed1259455cf6a0c85a37c244f68d95ba82ea7dee8f8eb"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

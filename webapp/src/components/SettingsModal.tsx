@@ -289,6 +289,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <h2 className="text-text-primary text-[16px] font-bold leading-tight">Settings</h2>
               <button 
                 onClick={onClose}
+                aria-label="Close"
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-border transition-colors text-text-muted"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -404,21 +405,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <button onClick={() => handleDisconnect('telegram')} className="text-text-secondary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors relative z-20">
                         Disconnect
                       </button>
+                    ) : linkingPlatform === 'telegram' ? (
+                      <button disabled className="text-text-primary border border-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold opacity-50">
+                        Connecting...
+                      </button>
                     ) : (
-                      <div className="relative">
-                        <button disabled={linkingPlatform === 'telegram'} className="text-text-primary border border-border hover:bg-border px-3 py-1.5 rounded-[6px] text-[11px] font-bold transition-colors disabled:opacity-50">
-                          {linkingPlatform === 'telegram' ? "Connecting..." : "Connect"}
-                        </button>
-                        {!linkingPlatform && (
-                          <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 cursor-pointer">
-                            <div className="w-full h-full flex items-center justify-center scale-[3] origin-center cursor-pointer">
-                              <TelegramLoginWidget
-                                botName="TarenaAi_bot"
-                                onAuth={handleTelegramAuth}
-                              />
-                            </div>
-                          </div>
-                        )}
+                      // Render the real Telegram widget button directly (visible),
+                      // like onboarding. The previous invisible-overlay hack misaligned
+                      // the iframe hit-area so clicks never reached it.
+                      <div className="relative z-20">
+                        <TelegramLoginWidget
+                          botName="TarenaAi_bot"
+                          onAuth={handleTelegramAuth}
+                          buttonSize="medium"
+                        />
                       </div>
                     )}
                   </div>

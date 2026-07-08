@@ -146,6 +146,7 @@ export function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 </div>
                 <button 
                   onClick={onClose}
+                  aria-label="Close"
                   className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-border transition-colors text-text-secondary hover:text-text-primary"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">

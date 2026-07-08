@@ -82,8 +82,9 @@ export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolea
       />
       
       <div className="w-full max-w-[420px] bg-[#F2F1EF] rounded-[16px] p-8 text-[#050505] shadow-lg relative animate-in zoom-in-95 duration-200">
-        <button 
+        <button
           onClick={onClose}
+          aria-label="Close"
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -159,7 +160,7 @@ export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolea
           </div>
         )}
 
-        {bet.status === "pending" && !result?.success ? (
+        {bet.status === "resolved" && Number(bet.resolved_in_favor) === 2 && !result?.success ? (
           <>
             <div className="flex flex-col mb-4">
               <label className="text-[#797977] text-[13px] mb-2">Send to</label>
@@ -177,7 +178,7 @@ export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolea
             </p>
 
             <div className="flex flex-col gap-3">
-              <button 
+              <button
                 onClick={handleClaim}
                 disabled={claiming || !address}
                 className="w-full h-[52px] bg-[#D53131] text-[#000000] text-[15px] font-bold rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
@@ -187,10 +188,6 @@ export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolea
                 ) : (
                   `Claim ${net.toFixed(2)} USDT`
                 )}
-              </button>
-              
-              <button className="w-full h-[52px] bg-transparent text-[#050505] text-[15px] font-bold rounded-[10px] flex items-center justify-center border border-[#050505] hover:bg-[#E2E1DF] transition-colors">
-                Request refund instead
               </button>
             </div>
           </>

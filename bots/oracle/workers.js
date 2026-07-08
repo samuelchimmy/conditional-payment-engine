@@ -1,5 +1,5 @@
 import { syncMatchResults } from './sportsOracle.js';
-import { evaluateJobs, processNotifications } from './resolver.js';
+import { evaluateJobs, processClaims, processNotifications } from './resolver.js';
 import { processSocialQueue } from '../socialQueue.js';
 
 // Guarded runner: wraps a worker fn so a failure logs and continues,

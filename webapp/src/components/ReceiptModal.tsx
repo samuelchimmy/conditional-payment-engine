@@ -75,12 +75,12 @@ function TransferReceipt({ entry }: { entry: any }) {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-6 text-center">
         <span className="text-[#797977] text-[10px] font-normal uppercase tracking-[0.1em]">RECEIPT</span>
-        <h1 className="text-[36px] font-[800] leading-none mt-2 mb-2 tracking-tight">
+        <h1 className="text-[22px] font-[800] leading-tight mt-1 mb-2 tracking-tight">
           {isDeposit ? "Deposit" : "Withdrawal"}
         </h1>
-        <p className="text-[15px] font-bold" style={{ color: isDeposit ? "#009393" : "#050505" }}>
+        <p className="text-[18px] font-bold" style={{ color: isDeposit ? "#009393" : "#050505" }}>
           {isDeposit ? "+" : "−"}{amount.toFixed(2)} USDT
         </p>
       </div>

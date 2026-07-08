@@ -72,6 +72,13 @@ const TEAM_ALIASES = {
   'nigeria': 'nigeria', 'nga': 'nigeria', 'super eagles': 'nigeria', '🇳🇬': 'nigeria', 'eagles': 'nigeria',
   'denmark': 'denmark', 'den': 'denmark', 'danish dynamite': 'denmark', '🇩🇰': 'denmark',
   'poland': 'poland', 'pol': 'poland', 'bialo-czerwoni': 'poland', '🇵🇱': 'poland',
+
+  // API-official / FIFA names → canonical (so oracle-stored names match bet aliases)
+  'korea republic': 'south korea', 'republic of korea': 'south korea', 'rep of korea': 'south korea',
+  'ir iran': 'iran', 'iran (islamic republic of)': 'iran',
+  'united states of america': 'united states', 'usmnt': 'united states',
+  'china pr': 'china', 'côte d’ivoire': 'ivory coast', "cote d'ivoire": 'ivory coast',
+  'türkiye': 'turkey', 'turkiye': 'turkey',
 };
 
 export function resolveAlias(name) {
@@ -116,16 +123,28 @@ export const footballPlugin = {
     const targetTeam = resolveAlias(meta.teamA);
     const homeTeam = resolveAlias(matchData.homeTeam);
     const awayTeam = resolveAlias(matchData.awayTeam);
-    
+
     const isHome = targetTeam === homeTeam;
     const isAway = targetTeam === awayTeam;
-    
+
     if (!isHome && !isAway) return null; // Match doesn't involve our team
 
-    let targetWins = false;
-    if (isHome && matchData.homeScore > matchData.awayScore) targetWins = true;
-    if (isAway && matchData.awayScore > matchData.homeScore) targetWins = true;
+    const { homeScore, awayScore } = matchData;
+    const isDraw = homeScore === awayScore;
+    const targetWon = (isHome && homeScore > awayScore) || (isAway && awayScore > homeScore);
 
-    return targetWins;
+    // CR-5: honor the actual predicted outcome (win / lose / draw), not just "win".
+    const outcome = (meta.outcome || 'win').toLowerCase();
+    switch (outcome) {
+      case 'lose':
+      case 'loss':
+        return !isDraw && !targetWon; // target lost
+      case 'draw':
+      case 'tie':
+        return isDraw;
+      case 'win':
+      default:
+        return targetWon;
+    }
   }
 };

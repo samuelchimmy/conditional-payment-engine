@@ -30,28 +30,30 @@ function _getMutex(chainKey) {
 }
 
 export async function sendTransactionWithNonce(walletClient, publicClient, txParams) {
-  const chainKey = 'celo';
+  const address = walletClient.account.address;
+  // H-4: key by account, not just chain. The executor and vault are different
+  // wallets on Celo; a shared 'celo' key made them collide on nonces.
+  const chainKey = `celo:${address.toLowerCase()}`;
   return _getMutex(chainKey).run(async () => {
-    const address = walletClient.account.address;
     if (_chainNonces[chainKey] == null) {
-      console.log(`[NonceManager] Fetching pending nonce for ${address} on ${chainKey}`);
+      console.log(`[NonceManager] Fetching pending nonce for ${address}`);
       _chainNonces[chainKey] = await publicClient.getTransactionCount({
         address,
         blockTag: 'pending',
       });
     }
     const nonce = _chainNonces[chainKey];
-    console.log(`[NonceManager] Sending tx on ${chainKey} with nonce ${nonce}`);
+    console.log(`[NonceManager] Sending tx for ${address} with nonce ${nonce}`);
     try {
-      const hash = await walletClient.sendTransaction({ 
-        ...txParams, 
+      const hash = await walletClient.sendTransaction({
+        ...txParams,
         nonce,
         feeCurrency: USDT_FEE_CURRENCY
       });
       _chainNonces[chainKey]++;
       return hash;
     } catch (err) {
-      console.warn(`[NonceManager] Tx failed on ${chainKey}, clearing cached nonce. Error: ${err.message?.split('\n')[0]}`);
+      console.warn(`[NonceManager] Tx failed for ${address}, clearing cached nonce. Error: ${err.message?.split('\n')[0]}`);
       _chainNonces[chainKey] = null;
       throw err;
     }
