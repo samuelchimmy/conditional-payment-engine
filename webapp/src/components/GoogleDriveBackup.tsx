@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 import { Cloud, Check, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -20,6 +20,27 @@ interface GoogleDriveBackupProps {
   onSuccess?: () => void;
 }
 
+// Persist lightweight backup metadata locally so the card can show the
+// "already backed up" state (date + email) on load without forcing a re-login.
+interface BackupMeta { timestamp: number; email?: string }
+function backupMetaKey(payTag: string) { return `tarena_backup_${payTag.toLowerCase()}`; }
+function loadBackupMeta(payTag: string): BackupMeta | null {
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem(backupMetaKey(payTag)) : null;
+    return raw ? JSON.parse(raw) as BackupMeta : null;
+  } catch { return null; }
+}
+function saveBackupMeta(payTag: string, meta: BackupMeta) {
+  try { localStorage.setItem(backupMetaKey(payTag), JSON.stringify(meta)); } catch { /* ignore */ }
+}
+function shortenEmail(email?: string | null): string {
+  if (!email) return "";
+  const [name, domain] = email.split("@");
+  if (!domain) return email;
+  const shownName = name.length > 3 ? `${name.slice(0, 3)}…` : name;
+  return `${shownName}@${domain}`;
+}
+
 function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackupProps) {
   const [status, setStatus] = useState<'idle' | 'authenticating' | 'checking' | 'verifying' | 'backing_up' | 'success' | 'error' | 'conflict'>('idle');
   const [pin, setPin] = useState('');
@@ -29,12 +50,31 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
   const [lastBackup, setLastBackup] = useState<number | null>(null);
   const [existingBackupDate, setExistingBackupDate] = useState<number | null>(null);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
+  // On mount, hydrate the "already backed up" state from local metadata.
+  useEffect(() => {
+    const meta = loadBackupMeta(payTag);
+    if (meta?.timestamp) {
+      setLastBackup(meta.timestamp);
+      setExistingBackupDate(meta.timestamp);
+      if (meta.email) setEmail(meta.email);
+    }
+  }, [payTag]);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (response) => {
       setAccessToken(response.access_token);
       setStatus('checking');
-      
+
+      // Capture the account email (best-effort) for display.
+      try {
+        const info = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${response.access_token}` },
+        }).then((r) => r.ok ? r.json() : null);
+        if (info?.email) setEmail(info.email);
+      } catch { /* ignore */ }
+
       try {
         const result = await checkBackupExists(response.access_token);
         if (result.exists && result.timestamp) {
@@ -44,7 +84,7 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
       } catch (e) {
         console.error('Failed to check backup:', e);
       }
-      
+
       setStatus('idle');
       setShowPinInput(true);
     },
@@ -52,7 +92,7 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
       setStatus('error');
       setError('Google sign-in failed');
     },
-    scope: 'https://www.googleapis.com/auth/drive.appdata',
+    scope: 'openid email https://www.googleapis.com/auth/drive.appdata',
   });
 
   const handleStartBackup = () => {
@@ -83,8 +123,11 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
       const result = await uploadBackup(accessToken, encryptedData, iv, salt, payTag);
 
       if (result.success) {
+        const ts = result.timestamp || Date.now();
         setStatus('success');
-        setLastBackup(result.timestamp || Date.now());
+        setLastBackup(ts);
+        setExistingBackupDate(ts);
+        saveBackupMeta(payTag, { timestamp: ts, email: email || undefined });
         setShowConflictDialog(false);
         if (onSuccess) {
           setTimeout(onSuccess, 1500);
@@ -129,10 +172,10 @@ function BackupContent({ payloadToBackup, payTag, onSuccess }: GoogleDriveBackup
         </div>
         <div className="flex-1 flex flex-col">
           <span className="text-text-primary font-bold text-[13px]">
-            {lastBackup ? "Connected via Google" : "No Cloud Backup"}
+            {lastBackup ? (email ? shortenEmail(email) : "Connected via Google") : "No Cloud Backup"}
           </span>
           {lastBackup && existingBackupDate && (
-            <span className="text-text-muted text-[12px] mt-0.5">Last: {formatDate(existingBackupDate)}</span>
+            <span className="text-text-muted text-[12px] mt-0.5">Last backup: {formatDate(existingBackupDate)}</span>
           )}
           <span className="text-text-muted text-[11px] mt-2 flex items-center gap-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${lastBackup ? "bg-success" : "bg-text-muted"}`}></div>

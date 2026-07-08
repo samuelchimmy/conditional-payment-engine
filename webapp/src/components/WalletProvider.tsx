@@ -165,23 +165,29 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     return () => { mounted = false; };
   }, [isConnected, address]);
 
-  // SIWE Authentication helper
-  const authenticateWallet = async (addr: string) => {
+  // SIWE Authentication helper. Accepts an optional signer so WDK wallets
+  // (which have no wagmi connector) can authenticate by signing with their own
+  // account. Without a JWT, every db-proxy call 401s — so this must run for
+  // WDK wallets too, not just injected/WalletConnect.
+  const authenticateWallet = async (
+    addr: string,
+    signFn?: (message: string) => Promise<string>,
+  ) => {
     try {
       const resNonce = await supabase.functions.invoke('auth-session', {
         body: { action: 'nonce', wallet_address: addr }
       });
       if (resNonce.error) throw resNonce.error;
       const { nonce } = resNonce.data;
-  
+
       const message = `Sign this message to authenticate with tether.arena.\nNonce: ${nonce}`;
-      const signature = await signMessageAsync({ message });
-  
+      const signature = signFn ? await signFn(message) : await signMessageAsync({ message });
+
       const resVerify = await supabase.functions.invoke('auth-session', {
         body: { action: 'verify', message, signature, wallet_address: addr }
       });
       if (resVerify.error) throw resVerify.error;
-      
+
       const { token } = resVerify.data;
       localStorage.setItem(`tarena_jwt`, token);
       return token;
@@ -227,6 +233,10 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
       }));
       setIsRegistered(false); // WDK always new in this flow
 
+      // Authenticate (SIWE) so db-proxy calls are authorized — sign with the WDK
+      // account since there's no wagmi connector. Then provision gas.
+      authenticateWallet(generatedAddress, (m) => account.sign(m)).catch(() => {});
+
       // Gas abstraction: drip a little CELO to this brand-new wallet so it can
       // sign its first transaction. Fire-and-forget — the funder is idempotent
       // and the dashboard also guards gas before approve.
@@ -255,6 +265,22 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
         wdkAccount: account,
       }));
       setIsRegistered(true);
+
+      // Ensure a valid JWT for db-proxy on restored WDK sessions (re-auth if the
+      // cached token is missing/expired). Sign with the WDK account.
+      const existing = typeof window !== 'undefined' ? localStorage.getItem('tarena_jwt') : null;
+      let valid = false;
+      if (existing) {
+        try {
+          const payload = JSON.parse(atob(existing.split('.')[1]));
+          valid = payload.wallet_address === generatedAddress.toLowerCase() && payload.exp * 1000 > Date.now();
+        } catch { /* invalid */ }
+      }
+      if (!valid) {
+        authenticateWallet(generatedAddress, (m) => account.sign(m)).catch(() => {});
+      }
+      ensureGasForWallet(generatedAddress, { waitMs: 0 }).catch(() => {});
+
       return { address: generatedAddress };
     } catch (e: any) {
       throw new Error(`Restore failed: ${e.message}`);

@@ -3,8 +3,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { useWaitForTransactionReceipt } from "wagmi";
-import { parseUnits } from "viem";
+import { useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { parseUnits, formatUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
 import { useSendTx } from "@/lib/sendTx";
@@ -188,11 +188,29 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isPending, setIsPending] = useState(false);
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
+  // Read the REAL on-chain allowance so Settings reflects what was already
+  // approved (in the dashboard or here) instead of a hardcoded placeholder.
+  const { data: allowanceData, refetch: refetchAllowance } = useReadContract({
+    address: USDTAddressCelo,
+    abi: ERC20ABI,
+    functionName: "allowance",
+    args: address ? [address as `0x${string}`, IOURegistryV3Address as `0x${string}`] : undefined,
+    query: { enabled: isOpen && !!address },
+  });
+
+  const onchainAllowance = allowanceData
+    ? parseFloat(formatUnits(allowanceData as bigint, 6))
+    : 0;
+  const hasApproved = onchainAllowance > 0;
+  // Display: prefer the freshly-approved amount, else the on-chain value.
+  const displayedAllowance = hasApproved ? onchainAllowance.toFixed(2) : allowanceAmount;
+
   useEffect(() => {
     if (isConfirmed) {
       setAllowanceAmount(tempAllowance || "0.00");
       setIsAllowanceModalOpen(false);
       toast.success("Allowance approved successfully!");
+      refetchAllowance();
     }
   }, [isConfirmed]);
 
@@ -442,16 +460,22 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-text-primary text-[14px] font-medium">Approve tipping</span>
-                        <span className="text-text-muted text-[12px] mt-0.5">Approved amount: {allowanceAmount} USDT</span>
+                        <span className="text-text-muted text-[12px] mt-0.5">
+                          {hasApproved ? `Approved: ${displayedAllowance} USDT` : "Not approved yet"}
+                        </span>
                       </div>
-                      <button 
+                      <button
                         onClick={() => {
-                          setTempAllowance(allowanceAmount);
+                          setTempAllowance(hasApproved ? displayedAllowance : allowanceAmount);
                           setIsAllowanceModalOpen(true);
                         }}
-                        className="px-5 py-2 bg-accent text-accent-text font-bold rounded-[8px] text-[12px] hover:opacity-90 transition-opacity"
+                        className={`px-5 py-2 font-bold rounded-[8px] text-[12px] transition-opacity hover:opacity-90 ${
+                          hasApproved
+                            ? "bg-surface border border-border text-text-primary"
+                            : "bg-accent text-accent-text"
+                        }`}
                       >
-                        Approve
+                        {hasApproved ? "Update" : "Approve"}
                       </button>
                     </div>
                   </div>
