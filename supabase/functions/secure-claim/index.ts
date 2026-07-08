@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1"
-import { verifyMessage } from "npm:viem@2.21.0"
+import { verifyMessage, createPublicClient, http, keccak256, toBytes } from "npm:viem@2.21.0"
+import { celo } from "npm:viem@2.21.0/chains"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,35 @@ const corsHeaders = {
 
 // RECIPIENT_WIN flag from IOURegistryV3 — only recipient-win escrows are claimable.
 const RECIPIENT_WIN = 2;
+
+const CELO_RPC = Deno.env.get("CELO_RPC_URL") || "https://forno.celo.org";
+const IOU_REGISTRY = Deno.env.get("IOU_REGISTRY_V3") as `0x${string}` | undefined;
+
+// Minimal ABI to read a single IOU's on-chain truth (recipientId, resolution, claimed).
+const GET_IOU_ABI = [{
+  type: "function", name: "getIOU", stateMutability: "view",
+  inputs: [{ name: "iouId", type: "uint256" }],
+  outputs: [{
+    name: "", type: "tuple", components: [
+      { name: "sender", type: "address" },
+      { name: "token", type: "address" },
+      { name: "netAmount", type: "uint256" },
+      { name: "recipientId", type: "bytes32" },
+      { name: "expiry", type: "uint64" },
+      { name: "claimed", type: "bool" },
+      { name: "refunded", type: "bool" },
+      { name: "isConditional", type: "bool" },
+      { name: "conditionHash", type: "bytes32" },
+      { name: "resolvedAt", type: "uint64" },
+      { name: "resolvedInFavor", type: "uint8" },
+    ]
+  }],
+}] as const;
+
+// Same identity hash the contract was locked under: keccak256("platform:userId").
+function getRecipientId(platform: string, userId: string): string {
+  return keccak256(toBytes(`${platform.toLowerCase()}:${userId}`)).toLowerCase();
+}
 
 // Expected message format: "Claim IOUs for 0xADDRESS at TIMESTAMP"
 function extractMessageTimestamp(message: string): number | null {
@@ -85,7 +115,7 @@ serve(async (req) => {
     // ── 4. Load the caller's OAuth/HMAC-verified identities ──
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("wallet_profiles")
-      .select("id, wallet_address, discord_id, discord_username, x_user_id, x_username, telegram_id, telegram_username")
+      .select("id, wallet_address, discord_id, discord_username, x_user_id, x_username, x_verified, telegram_id, telegram_username")
       .ilike("wallet_address", walletAddress.toLowerCase())
       .maybeSingle()
 
@@ -94,15 +124,21 @@ serve(async (req) => {
     }
 
     // Per-platform verified identifiers: numeric ID (immutable) + current username
-    // (OAuth/HMAC-verified). Both are safe to match; the numeric ID is hijack-proof,
-    // the username lets pre-registration MagicPay (keyed by handle) be claimed.
+    // (OAuth/HMAC-verified). X is only trusted when x_verified === true (matches
+    // PayTag: an unverified X link can never claim).
+    const xVerified = profile.x_verified === true;
     const identitiesByPlatform: Record<string, string[]> = {
-      x: [profile.x_user_id, profile.x_username].map(norm).filter(Boolean),
-      twitter: [profile.x_user_id, profile.x_username].map(norm).filter(Boolean),
+      x: xVerified ? [profile.x_user_id, profile.x_username].map(norm).filter(Boolean) : [],
+      twitter: xVerified ? [profile.x_user_id, profile.x_username].map(norm).filter(Boolean) : [],
       discord: [profile.discord_id, profile.discord_username].map(norm).filter(Boolean),
       telegram: [profile.telegram_id, profile.telegram_username].map(norm).filter(Boolean),
     };
     const allIdentities = new Set(Object.values(identitiesByPlatform).flat());
+
+    // On-chain client (contract is the final source of truth for who can claim).
+    const publicClient = IOU_REGISTRY
+      ? createPublicClient({ chain: celo, transport: http(CELO_RPC) })
+      : null;
 
     // Does this caller own the identity a given payment is addressed to?
     function isRecipientOf(payment: any): boolean {
@@ -118,7 +154,39 @@ serve(async (req) => {
       return Boolean(matchesIdentity || matchesWallet);
     }
 
-    // Only a resolved, recipient-won escrow can be claimed.
+    // CONTRACT-AUTHORITATIVE check: read the IOU on-chain and confirm its
+    // recipientId hash matches one of the caller's verified identities, that it
+    // resolved in the recipient's favor, and that it isn't already claimed.
+    // This makes a forged DB row insufficient to claim — the chain is the truth.
+    async function verifiedOnChain(payment: any): Promise<boolean> {
+      if (!publicClient || !payment.iou_id) return false;
+      let iou: any;
+      try {
+        iou = await publicClient.readContract({
+          address: IOU_REGISTRY!, abi: GET_IOU_ABI, functionName: "getIOU",
+          args: [BigInt(payment.iou_id)],
+        });
+      } catch {
+        return false; // can't read chain → deny (fail closed)
+      }
+      if (!iou?.isConditional || iou.claimed || iou.refunded) return false;
+      if (Number(iou.resolvedInFavor) !== RECIPIENT_WIN) return false;
+
+      // Recompute recipientId from each of the caller's verified identities and
+      // require an exact match to the on-chain recipientId.
+      const onchainId = String(iou.recipientId).toLowerCase();
+      const plat = norm(payment.platform);
+      const platformKey = plat === "twitter" ? "x" : plat;
+      const candidates = identitiesByPlatform[platformKey] || Array.from(allIdentities);
+      for (const id of candidates) {
+        if (getRecipientId(platformKey, id) === onchainId) return true;
+        // also try the raw platform label in case the IOU was keyed as "twitter:"
+        if (getRecipientId(plat, id) === onchainId) return true;
+      }
+      return false;
+    }
+
+    // Only a resolved, recipient-won escrow can be claimed (DB-side pre-filter).
     function isClaimable(payment: any): boolean {
       return payment.status === "resolved" && Number(payment.resolved_in_favor) === RECIPIENT_WIN;
     }
@@ -164,6 +232,11 @@ serve(async (req) => {
       if (!isRecipientOf(payment)) {
         return jsonResp({ error: "You are not the recipient of this payment." }, 403)
       }
+      // Contract-authoritative gate: the on-chain IOU must be locked under this
+      // caller's verified identity, resolved for the recipient, and unclaimed.
+      if (publicClient && !(await verifiedOnChain(payment))) {
+        return jsonResp({ error: "On-chain verification failed for this claim." }, 403)
+      }
       const ok = await settleClaim(payment);
       if (!ok) return jsonResp({ error: "Payment already claimed." }, 409)
 
@@ -181,6 +254,7 @@ serve(async (req) => {
       for (const payment of candidates || []) {
         if (!isClaimable(payment)) continue;
         if (!isRecipientOf(payment)) continue;
+        if (publicClient && !(await verifiedOnChain(payment))) continue;
         await settleClaim(payment);
       }
     }
