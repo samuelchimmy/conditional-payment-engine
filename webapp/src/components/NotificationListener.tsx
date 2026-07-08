@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getProfile } from "@/lib/dbProxy";
 import { useWallet } from "@/components/WalletProvider";
 import { toast } from "react-hot-toast";
 
@@ -25,15 +26,10 @@ export function NotificationListener() {
 
   useEffect(() => {
     if (!address) return;
-
-    supabase
-      .from("wallet_profiles")
-      .select("*")
-      .eq("wallet_address", address.toLowerCase())
-      .single()
-      .then(({ data }) => {
-        if (data) setProfile(data);
-      });
+    // Route through db-proxy (never call supabase.from() directly — RLS blocks it).
+    getProfile(address).then(({ data }) => {
+      if (data) setProfile(data);
+    });
   }, [address]);
 
   useEffect(() => {

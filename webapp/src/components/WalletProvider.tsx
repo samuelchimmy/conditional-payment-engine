@@ -75,8 +75,6 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
           const parsed = JSON.parse(stored);
           if (parsed.authMethod === 'wdk' && parsed.seedPhrase) {
             await restoreWallet(parsed.seedPhrase);
-          } else if (parsed.authMethod === 'google') {
-            await connectGoogle();
           }
         }
       } catch (e) {
@@ -92,8 +90,6 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (state.authMethod === 'wdk' && state.seedPhrase) {
       localStorage.setItem('tarena_auth', JSON.stringify({ authMethod: 'wdk', seedPhrase: state.seedPhrase }));
-    } else if (state.authMethod === 'google') {
-      localStorage.setItem('tarena_auth', JSON.stringify({ authMethod: 'google' }));
     } else if (!state.authMethod || state.authMethod === 'metamask') {
       localStorage.removeItem('tarena_auth');
     }
@@ -198,12 +194,10 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
   };
 
   const connectWagmi = async (connectorId?: string) => {
-    try {
-      const targetConnector = connectors.find(c => c.id === connectorId) || connectors[0];
-      await connectAsync({ connector: targetConnector });
-    } catch (error) {
-      console.error("Wagmi connection failed", error);
-    }
+    const targetConnector = connectors.find(c => c.id === connectorId) || connectors[0];
+    // Let errors propagate so the caller (connect page) can clear its loading
+    // state — swallowing them left the connect button spinning on user-reject.
+    await connectAsync({ connector: targetConnector });
   };
 
   const connectWdk = async () => {
@@ -288,17 +282,10 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const connectGoogle = async () => {
-    // Mock Google connection
-    const mockAddress = "0x" + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-    setState((prev) => ({
-      ...prev,
-      isConnected: true,
-      address: mockAddress,
-      authMethod: "google",
-    }));
-    setIsRegistered(true); // Google always registered in this test
-  };
+  // Mock Google login removed (it minted a random address — a money-app landmine).
+  // The connect page routes "Continue with Google" to /restore (encrypted Drive
+  // backup restore). Kept as a no-op for interface compatibility.
+  const connectGoogle = async () => {};
 
   const disconnectWallet = async () => {
     if (state.authMethod === "metamask" || isConnected) {
