@@ -208,8 +208,10 @@ Only after the identity is verified does the vault release funds to the claimant
 ## <a name="contract"></a>Contract: IOURegistryV3
 
 **Chain**: Celo Mainnet
-**Address**: `0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C` — [view on CeloScan](https://celoscan.io/address/0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C)
+**Proxy**: [`0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C`](https://celoscan.io/address/0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C)
+**Implementation**: [`0x048d27b27Ec4484b6a2b69De5Db1Fa6F32871489`](https://celoscan.io/address/0x048d27b27Ec4484b6a2b69De5Db1Fa6F32871489#code) — ✅ source verified
 **Pattern**: UUPS Upgradeable Proxy + 48h upgrade timelock
+**Verification**: both proxy and implementation verified on [Sourcify](https://repo.sourcify.dev/42220/0x048d27b27Ec4484b6a2b69De5Db1Fa6F32871489/) (Celo · chain 42220) and CeloScan.
 
 | Function | Caller | Purpose |
 |---|---|---|
