@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePublicClient } from "wagmi";
-import { celo } from "wagmi/chains";
-import { parseAbiItem, formatUnits } from "viem";
 import { USDTAddressCelo } from "@/lib/contracts";
-
-const TRANSFER_EVENT = parseAbiItem(
-  "event Transfer(address indexed from, address indexed to, uint256 value)"
-);
 
 export interface TransferItem {
   id: string;
@@ -20,18 +13,24 @@ export interface TransferItem {
   blockNumber: string;
 }
 
+// Celoscan is served through the Etherscan V2 multichain API (chainid 42220).
+// Set NEXT_PUBLIC_CELOSCAN_API_KEY to a free Etherscan/Celoscan key.
+const ETHERSCAN_V2 = "https://api.etherscan.io/v2/api";
+const CELO_CHAIN_ID = 42220;
+
 /**
- * Reads the user's on-chain USDT deposits (Transfer.to == me) and withdrawals
- * (Transfer.from == me) over a bounded recent window. Client-side and
- * self-contained; degrades to [] on RPC limits so bets still render.
+ * Reads the wallet's USDT deposits (to == me) and withdrawals (from == me) from
+ * the Celoscan token-transfer API. Public Celo RPCs reject eth_getLogs, so an
+ * indexer API is the reliable source. Degrades to [] (bets still render) if no
+ * key is configured or the request fails.
  */
 export function useOnchainHistory(address?: string | null, refreshKey = 0) {
-  const publicClient = usePublicClient({ chainId: celo.id });
   const [items, setItems] = useState<TransferItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!address || !publicClient) {
+    const apiKey = process.env.NEXT_PUBLIC_CELOSCAN_API_KEY;
+    if (!address || !apiKey) {
       setItems([]);
       return;
     }
@@ -40,51 +39,31 @@ export function useOnchainHistory(address?: string | null, refreshKey = 0) {
     (async () => {
       setLoading(true);
       try {
-        const latest = await publicClient.getBlockNumber();
-        // ~last few days of Celo (~5s blocks). Bounded to keep RPC happy.
-        const LOOKBACK = BigInt(50_000);
-        const fromBlock = latest > LOOKBACK ? latest - LOOKBACK : BigInt(0);
+        const url =
+          `${ETHERSCAN_V2}?chainid=${CELO_CHAIN_ID}&module=account&action=tokentx` +
+          `&contractaddress=${USDTAddressCelo}&address=${address}` +
+          `&page=1&offset=50&sort=desc&apikey=${apiKey}`;
 
-        const [incoming, outgoing] = await Promise.all([
-          publicClient
-            .getLogs({ address: USDTAddressCelo, event: TRANSFER_EVENT, args: { to: address as `0x${string}` }, fromBlock, toBlock: latest })
-            .catch(() => []),
-          publicClient
-            .getLogs({ address: USDTAddressCelo, event: TRANSFER_EVENT, args: { from: address as `0x${string}` }, fromBlock, toBlock: latest })
-            .catch(() => []),
-        ]);
+        const res = await fetch(url);
+        const json = await res.json();
 
-        const raw = [
-          ...incoming.map((l: any) => ({ l, kind: "deposit" as const })),
-          ...outgoing.map((l: any) => ({ l, kind: "withdrawal" as const })),
-        ]
-          // newest first, cap to keep timestamp lookups cheap
-          .sort((a, b) => Number(b.l.blockNumber - a.l.blockNumber))
-          .slice(0, 30);
+        // status "1" = ok with rows; "0" + "No transactions found" = empty (not an error)
+        const rows: any[] = Array.isArray(json?.result) ? json.result : [];
+        const me = address.toLowerCase();
 
-        // Batch-fetch timestamps for the unique blocks we actually show.
-        const uniqueBlocks = Array.from(new Set(raw.map((r) => r.l.blockNumber)));
-        const blockTimes = new Map<bigint, number>();
-        await Promise.all(
-          uniqueBlocks.map(async (bn) => {
-            try {
-              const b = await publicClient.getBlock({ blockNumber: bn });
-              blockTimes.set(bn, Number(b.timestamp) * 1000);
-            } catch {
-              /* leave undefined */
-            }
-          })
-        );
-
-        const mapped: TransferItem[] = raw.map(({ l, kind }) => ({
-          id: `${l.transactionHash}:${l.logIndex}`,
-          kind,
-          amount: Number(formatUnits(l.args.value as bigint, 6)),
-          counterparty: (kind === "deposit" ? l.args.from : l.args.to) as string,
-          txHash: l.transactionHash as string,
-          timestamp: blockTimes.get(l.blockNumber) ?? null,
-          blockNumber: l.blockNumber.toString(),
-        }));
+        const mapped: TransferItem[] = rows.map((r) => {
+          const isDeposit = String(r.to).toLowerCase() === me;
+          const decimals = Number(r.tokenDecimal ?? 6);
+          return {
+            id: `${r.hash}:${r.to}:${r.from}`,
+            kind: isDeposit ? "deposit" : "withdrawal",
+            amount: Number(r.value) / Math.pow(10, decimals),
+            counterparty: isDeposit ? r.from : r.to,
+            txHash: r.hash,
+            timestamp: r.timeStamp ? Number(r.timeStamp) * 1000 : null,
+            blockNumber: String(r.blockNumber ?? ""),
+          };
+        });
 
         if (!cancelled) setItems(mapped);
       } catch {
@@ -97,7 +76,7 @@ export function useOnchainHistory(address?: string | null, refreshKey = 0) {
     return () => {
       cancelled = true;
     };
-  }, [address, publicClient, refreshKey]);
+  }, [address, refreshKey]);
 
   return { transfers: items, loading };
 }

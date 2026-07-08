@@ -26,6 +26,14 @@ import { startDiscordAdapter } from './adapters/discord.adapter.js';
 import { startTelegramAdapter } from './adapters/telegram.adapter.js';
 import { startOracleWorkers } from './oracle/workers.js';
 
+// Global safety net: never let a single bad async take down the agent.
+process.on('unhandledRejection', (reason) => {
+  console.error('[Process] Unhandled promise rejection (continuing):', reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('[Process] Uncaught exception (continuing):', error);
+});
+
 async function bootstrap() {
   try {
     console.log('Bootstrapping Tether Arena Agent...');

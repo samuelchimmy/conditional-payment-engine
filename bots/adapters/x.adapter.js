@@ -91,6 +91,12 @@ export async function startXAdapter() {
 
 // Exported so socialQueue.js can use it
 export async function replyToTweet(tweetId, text) {
+  // Guard: if the write client never initialized (missing OAuth creds or
+  // startXAdapter failed), log and return instead of crashing the caller.
+  if (!twitterClient) {
+    console.error(`[Adapter: X] Cannot reply to ${tweetId}: Twitter write client not initialized (check X_API_KEY / X_API_SECRET / X_ACCESS_TOKEN / X_ACCESS_SECRET).`);
+    return;
+  }
   try {
     // Truncate to 280 chars if necessary, or split into threads
     // For now, basic truncation for safety

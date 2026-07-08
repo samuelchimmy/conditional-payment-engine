@@ -126,6 +126,16 @@ export function ClaimModal({ isOpen, onClose, bet, onClaimed }: { isOpen: boolea
             <span className="text-[#797977]">Platform:</span>
             <span className="font-bold capitalize">{bet.platform}</span>
           </div>
+          {bet.created_at && (
+            <div className="flex justify-between">
+              <span className="text-[#797977]">Date:</span>
+              <span className="font-bold">{new Date(bet.created_at).toLocaleDateString()}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-[#797977]">Status:</span>
+            <span className="font-bold capitalize">{bet.status}</span>
+          </div>
         </div>
 
         <div className="mb-6 flex flex-col gap-1 text-[15px] font-mono font-bold">

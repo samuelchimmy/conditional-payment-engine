@@ -57,7 +57,33 @@ export default function Dashboard() {
   useEffect(() => {
     if (!address) return;
     fetchBets();
+    // Re-check when the tab regains focus (e.g. after linking a social in a popup).
+    const onFocus = () => fetchBets();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [address]);
+
+  // Pending MagicPay = bets where I'm the recipient and it's claimable (pending).
+  const claimableBets = bets.filter((b) => b.isRecipient && b.status === "pending");
+  const claimableCount = claimableBets.length;
+
+  // Toast the user once when we detect pending MagicPay for their linked account,
+  // prompting them to claim via the History sheet. Reset the prompt when count clears.
+  const [magicPayPrompted, setMagicPayPrompted] = useState(false);
+  useEffect(() => {
+    if (claimableCount > 0 && !magicPayPrompted) {
+      const total = claimableBets.reduce((s, b) => s + parseFloat(b.amount || 0), 0);
+      toast.success(
+        `🎉 You have ${claimableCount} pending payment${claimableCount > 1 ? "s" : ""} (${total.toFixed(2)} USDT). Open History to claim.`,
+        { duration: 7000 }
+      );
+      playSuccessSound();
+      setMagicPayPrompted(true);
+    }
+    if (claimableCount === 0 && magicPayPrompted) {
+      setMagicPayPrompted(false);
+    }
+  }, [claimableCount]);
 
   const { data: balanceData } = useReadContract({
     address: USDTAddressCelo,
@@ -119,10 +145,15 @@ export default function Dashboard() {
             <span className="text-text-secondary text-[11px] uppercase tracking-wider mb-1">Balance</span>
             <span className="text-text-primary text-[20px] font-[800] tracking-tight">{formattedBalance} <span className="text-text-secondary text-[13px] font-normal">USDT</span></span>
           </div>
-          <button 
+          <button
             onClick={() => setIsHistorySheetOpen(true)}
-            className="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary transition-colors shrink-0"
+            className="relative flex flex-col items-center justify-center text-text-secondary hover:text-text-primary transition-colors shrink-0"
           >
+            {claimableCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-accent text-white text-[10px] font-bold leading-none ring-2 ring-surface z-10">
+                {claimableCount > 9 ? "9+" : claimableCount}
+              </span>
+            )}
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 3v5h5"></path>
               <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
@@ -166,10 +197,10 @@ export default function Dashboard() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 h-[85vh] bg-bg-center border-t border-border z-[70] rounded-t-[24px] flex flex-col"
+              className="fixed bottom-0 left-0 right-0 max-h-[72vh] bg-surface border-t border-border z-[70] rounded-t-[24px] flex flex-col shadow-[0_-8px_40px_-12px_rgba(0,0,0,0.5)]"
             >
-              <div className="p-6 flex flex-col h-full">
-                <div className="w-12 h-1 bg-border rounded-full mx-auto mb-6 shrink-0" />
+              <div className="p-6 flex flex-col min-h-0 flex-1">
+                <div className="w-12 h-1 bg-border rounded-full mx-auto mb-5 shrink-0" />
                 <div className="mb-4 flex items-end justify-between shrink-0">
                   <div>
                     <h1 className="text-text-primary text-[22px] font-[800]">
