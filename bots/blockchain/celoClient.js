@@ -2,8 +2,13 @@ import { createPublicClient, createWalletClient, http } from 'viem';
 import { celo } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 
-// Native USDT on Celo mainnet
+// Native USDT on Celo mainnet (the ERC-20 token — used for balances/transfers).
 const CELO_USDT = '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e';
+
+// CIP-64 fee-currency ADAPTER for USDT (6→18 decimal adapter). This — NOT the
+// token address — is what you pass in `feeCurrency`. Passing the token address
+// makes the transaction fail. Governed by the Celo FeeCurrencyDirectory.
+const USDT_FEE_CURRENCY = '0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72';
 
 // ============ Nonce Manager (Mutex pattern) ============
 
@@ -41,7 +46,7 @@ export async function sendTransactionWithNonce(walletClient, publicClient, txPar
       const hash = await walletClient.sendTransaction({ 
         ...txParams, 
         nonce,
-        feeCurrency: CELO_USDT 
+        feeCurrency: USDT_FEE_CURRENCY
       });
       _chainNonces[chainKey]++;
       return hash;
@@ -57,7 +62,7 @@ export async function sendTransactionWithNonce(walletClient, publicClient, txPar
 export async function sendCeloTransaction(walletClient, txParams) {
   return walletClient.sendTransaction({
     ...txParams,
-    feeCurrency: CELO_USDT,  // CIP-64: pay gas in USDT
+    feeCurrency: USDT_FEE_CURRENCY,  // CIP-64: pay gas in USDT (via 6→18 adapter)
   });
 }
 
