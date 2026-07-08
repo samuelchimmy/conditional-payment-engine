@@ -18,6 +18,7 @@ import { formatUnits } from "viem";
 import { playSuccessSound } from "@/lib/sounds";
 import { toast } from "react-hot-toast";
 import { getBets } from "@/lib/dbProxy";
+import { useOnchainHistory } from "@/lib/useOnchainHistory";
 
 export default function Dashboard() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
@@ -25,10 +26,22 @@ export default function Dashboard() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [bets, setBets] = useState<any[]>([]);
   const [selectedClaimBet, setSelectedClaimBet] = useState<any | null>(null);
-  const [selectedReceiptBet, setSelectedReceiptBet] = useState<any | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
+  const [historyTab, setHistoryTab] = useState<"all" | "bets" | "transfers">("all");
 
   const { address, isConnected } = useWallet();
+  const { transfers } = useOnchainHistory(address);
+
+  // Merge bets + on-chain deposits/withdrawals into one time-sorted feed.
+  const historyItems = [
+    ...bets.map((b) => ({
+      ...b,
+      kind: b.isRecipient ? "bet_received" : "bet_sent",
+      _ts: b.created_at ? new Date(b.created_at).getTime() : 0,
+    })),
+    ...transfers.map((t) => ({ ...t, _ts: t.timestamp ?? 0 })),
+  ].sort((a, b) => b._ts - a._ts);
 
   const fetchBets = async () => {
     if (!address) return;
@@ -157,13 +170,13 @@ export default function Dashboard() {
             >
               <div className="p-6 flex flex-col h-full">
                 <div className="w-12 h-1 bg-border rounded-full mx-auto mb-6 shrink-0" />
-                <div className="mb-6 flex items-end justify-between shrink-0">
+                <div className="mb-4 flex items-end justify-between shrink-0">
                   <div>
                     <h1 className="text-text-primary text-[22px] font-[800]">
-                      My Bets
+                      History
                     </h1>
                     <p className="text-text-secondary text-[13px] mt-1">
-                      {bets.filter(b => b.status === 'pending').length} Active · {bets.filter(b => b.status !== 'pending').length} Completed
+                      {bets.filter(b => b.status === 'pending').length} Active bets · {transfers.length} Transfers
                     </p>
                   </div>
                   <button onClick={() => setIsHistorySheetOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-surface border border-border text-text-primary hover:bg-border transition-colors">
@@ -172,42 +185,90 @@ export default function Dashboard() {
                     </svg>
                   </button>
                 </div>
-                
+
+                {/* Filter tabs */}
+                <div className="flex gap-2 mb-4 shrink-0">
+                  {([["all", "All"], ["bets", "Bets"], ["transfers", "Deposits & Withdrawals"]] as const).map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() => setHistoryTab(key)}
+                      className={`h-[30px] px-3 rounded-full text-[12px] font-bold transition-colors ${
+                        historyTab === key
+                          ? "bg-text-primary text-bg-center"
+                          : "bg-surface border border-border text-text-secondary hover:text-text-primary"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex flex-col flex-1 overflow-y-auto pb-8">
-                  {bets.length === 0 ? (
-                    <div className="py-8 text-center text-text-muted text-[13px]">
-                      No bets found. Place a bet to get started!
-                    </div>
-                  ) : (
-                    bets.map((bet) => (
-                      <div key={bet.id} className="min-h-[72px] shrink-0 flex items-center justify-between border-t border-divider py-3">
-                        <div className="flex flex-col pr-4">
-                          <span className="text-text-primary text-[14px] font-bold line-clamp-2">
-                            {bet.condition_str || "Custom Condition"}
-                          </span>
-                          <span className="text-text-muted text-[12px] mt-1">
-                            {bet.amount} {bet.currency || "USDT"} · {new Date(bet.created_at).toLocaleDateString()}
-                          </span>
+                  {(() => {
+                    const filtered = historyItems.filter((it: any) =>
+                      historyTab === "all" ? true :
+                      historyTab === "bets" ? (it.kind === "bet_sent" || it.kind === "bet_received") :
+                      (it.kind === "deposit" || it.kind === "withdrawal")
+                    );
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="py-8 text-center text-text-muted text-[13px]">
+                          Nothing here yet.
                         </div>
-                        
-                        {bet.status === 'pending' && bet.isRecipient ? (
-                          <button 
-                            onClick={() => setSelectedClaimBet(bet)}
-                            className="h-[32px] px-[18px] shrink-0 bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"
-                          >
-                            Claim
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => setSelectedReceiptBet(bet)}
-                            className="h-[32px] px-[18px] shrink-0 bg-surface border border-border text-text-primary font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:bg-border transition-colors"
-                          >
-                            Receipt
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  )}
+                      );
+                    }
+                    return filtered.map((item: any) => {
+                      const isTransfer = item.kind === "deposit" || item.kind === "withdrawal";
+                      const isRecipientBet = item.kind === "bet_received";
+                      // Icon + label + amount styling per type
+                      const meta = isTransfer
+                        ? item.kind === "deposit"
+                          ? { label: "Deposit", sub: `From ${item.counterparty?.slice(0, 6)}…${item.counterparty?.slice(-4)}`, amount: `+${item.amount.toFixed(2)}`, green: true }
+                          : { label: "Withdrawal", sub: `To ${item.counterparty?.slice(0, 6)}…${item.counterparty?.slice(-4)}`, amount: `−${item.amount.toFixed(2)}`, green: false }
+                        : { label: item.condition_str || "Conditional bet", sub: `${isRecipientBet ? "Received" : "Sent"} · ${item.platform || "webapp"}`, amount: `${item.amount} `, green: isRecipientBet };
+                      const when = item._ts ? new Date(item._ts).toLocaleDateString() : "";
+                      return (
+                        <div key={item.id} className="min-h-[68px] shrink-0 flex items-center justify-between border-t border-divider py-3 gap-3">
+                          {/* type icon */}
+                          <div className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center ${isTransfer ? (item.kind === "deposit" ? "bg-success/15 text-success" : "bg-bg-edge text-text-secondary") : "bg-surface border border-border text-text-secondary"}`}>
+                            {isTransfer ? (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={item.kind === "deposit" ? "" : "rotate-180"}>
+                                <path d="M12 19V5M5 12l7-7 7 7" />
+                              </svg>
+                            ) : (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col flex-1 min-w-0 pr-2">
+                            <span className="text-text-primary text-[14px] font-bold truncate">{meta.label}</span>
+                            <span className="text-text-muted text-[12px] mt-0.5 truncate">{meta.sub}{when ? ` · ${when}` : ""}</span>
+                          </div>
+
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className={`text-[13px] font-mono font-bold ${meta.green ? "text-success" : "text-text-primary"}`}>
+                              {meta.amount}<span className="text-[11px] font-normal text-text-muted"> USDT</span>
+                            </span>
+                            {item.status === 'pending' && isRecipientBet ? (
+                              <button
+                                onClick={() => setSelectedClaimBet(item)}
+                                className="h-[32px] px-[16px] bg-accent text-accent-text font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:opacity-90 transition-opacity"
+                              >
+                                Claim
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setSelectedReceipt(item)}
+                                className="h-[32px] px-[16px] bg-surface border border-border text-text-primary font-bold rounded-[6px] text-[13px] flex items-center justify-center hover:bg-border transition-colors"
+                              >
+                                Receipt
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </motion.div>
@@ -230,10 +291,10 @@ export default function Dashboard() {
         }}
       />
       
-      <ReceiptModal 
-        isOpen={!!selectedReceiptBet} 
-        onClose={() => setSelectedReceiptBet(null)} 
-        bet={selectedReceiptBet}
+      <ReceiptModal
+        isOpen={!!selectedReceipt}
+        onClose={() => setSelectedReceipt(null)}
+        entry={selectedReceipt}
       />
           <p className="text-text-muted text-[13px] leading-relaxed">
             Ready to put your money where your mouth is? Tweet at @tether.arena, add the bot to your Discord server, or join the Telegram group.
