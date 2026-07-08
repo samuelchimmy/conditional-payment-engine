@@ -29,9 +29,8 @@ AI-powered conditional USDT payments for football fans, settled on-chain.
 
 ## 📹 Demo
 
-> **▶️ Watch the 60-second demo:** [YouTube link —soon]
+> **▶️ Watch the 3-minute demo:** _[YouTube link]_
 
-*(gif)*
 
 ---
 
@@ -209,7 +208,7 @@ Only after the identity is verified does the vault release funds to the claimant
 ## <a name="contract"></a>Contract: IOURegistryV3
 
 **Chain**: Celo Mainnet
-**Address**: `0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C` *(verify on [CeloScan](https://celoscan.io/address/0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C) before submission)*
+**Address**: `0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C` — [view on CeloScan](https://celoscan.io/address/0x4708f9697c72bBBCa2ad82bbf03F2A8E0d62038C)
 **Pattern**: UUPS Upgradeable Proxy + 48h upgrade timelock
 
 | Function | Caller | Purpose |

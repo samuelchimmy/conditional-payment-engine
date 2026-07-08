@@ -41,5 +41,30 @@ export default {
   },
   sourcify: {
     enabled: true
+  },
+  etherscan: {
+    // Celoscan is served via the Etherscan V2 multichain API. One key works.
+    apiKey: {
+      celo: process.env.CELOSCAN_API_KEY || process.env.ETHERSCAN_API_KEY || "",
+      alfajores: process.env.CELOSCAN_API_KEY || process.env.ETHERSCAN_API_KEY || "",
+    },
+    customChains: [
+      {
+        network: "celo",
+        chainId: 42220,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainid=42220",
+          browserURL: "https://celoscan.io",
+        },
+      },
+      {
+        network: "alfajores",
+        chainId: 44787,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainid=44787",
+          browserURL: "https://alfajores.celoscan.io",
+        },
+      },
+    ],
   }
 };
