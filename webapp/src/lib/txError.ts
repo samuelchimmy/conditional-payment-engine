@@ -22,6 +22,11 @@ export function friendlyTxError(e: any): string {
     return "Not enough balance to complete this transaction.";
   }
 
+  // Wrong network (external wallets)
+  if (raw.includes("celo network") || raw.includes("chain mismatch") || raw.includes("wrong network") || (raw.includes("switch") && raw.includes("network"))) {
+    return "Please switch your wallet to the Celo network to continue.";
+  }
+
   // User rejected in an injected wallet
   if (raw.includes("user rejected") || raw.includes("user denied") || raw.includes("rejected the request")) {
     return "Transaction cancelled.";

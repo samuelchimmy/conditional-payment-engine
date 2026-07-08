@@ -1,13 +1,19 @@
 import { motion } from "framer-motion";
 
+const EXHIBIT_URL = "https://developer.x.com/exhibit/tether-arenaai";
+
 export function XVerifiedCard() {
   return (
-    <motion.div
+    <motion.a
+      href={EXHIBIT_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="View Tether Arena on the X Developer Platform exhibit"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-      className="w-full max-w-[520px] bg-[#0D0D0D] border border-[#2A2A2A] rounded-[10px] px-5 py-4 flex items-center gap-4 mx-auto"
+      className="group w-full max-w-[520px] bg-[#0D0D0D] border border-[#2A2A2A] rounded-[10px] px-5 py-4 flex items-center gap-4 mx-auto hover:border-[#3A3A3A] transition-colors cursor-pointer"
     >
       {/* X Logo */}
       <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-[#181818] rounded-[8px]">
@@ -37,6 +43,11 @@ export function XVerifiedCard() {
           Verified in the X Developer Exhibit. tether.arena is an approved platform for conditional social payments.
         </p>
       </div>
-    </motion.div>
+
+      {/* External-link chevron */}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 text-[#555] group-hover:text-[#888] transition-colors" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 17L17 7M17 7H8M17 7V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </motion.a>
   );
 }

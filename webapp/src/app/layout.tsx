@@ -16,8 +16,13 @@ const schibsted = Schibsted_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "tether.arena",
-  description: "The Conditional Payment Engine",
+  title: "Tether Arena",
+  description: "AI-powered conditional USDT payments for football fans, settled on-chain.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
@@ -28,6 +33,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${schibsted.variable} antialiased`} suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
       </head>
       <body className="flex flex-col min-h-screen text-text-primary">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useWriteContract } from "wagmi";
+import { useWriteContract, useAccount, useSwitchChain } from "wagmi";
+import { celo } from "wagmi/chains";
 import { encodeFunctionData, type Abi } from "viem";
 import { useWallet } from "@/components/WalletProvider";
 import { ensureGasForWallet } from "@/lib/gasGuard";
@@ -29,6 +30,8 @@ export interface SendTxArgs {
 export function useSendTx() {
   const { authMethod, wdkAccount, address } = useWallet();
   const { writeContractAsync } = useWriteContract();
+  const { chainId } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
 
   const sendTx = async ({
     address: to,
@@ -55,8 +58,19 @@ export function useSendTx() {
       return hash as `0x${string}`;
     }
 
-    // injected / walletConnect
+    // injected / walletConnect — these wallets pay their own gas, but they may
+    // be connected to the wrong network. Tether Arena settles on Celo, so make
+    // sure the wallet is on Celo before writing (prompts the wallet to switch).
+    if (chainId !== celo.id) {
+      try {
+        await switchChainAsync({ chainId: celo.id });
+      } catch {
+        throw new Error("Please switch your wallet to the Celo network to continue.");
+      }
+    }
+
     return (await writeContractAsync({
+      chainId: celo.id,
       address: to,
       abi: abi as Abi,
       functionName,

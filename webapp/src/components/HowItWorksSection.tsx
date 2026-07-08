@@ -64,6 +64,34 @@ const faqs = [
     answer: "tether.arena is a decentralized conditional tipping engine. It allows you to place funds in a smart contract escrow that automatically releases to a designated winner based on real-world events, like sports match outcomes."
   },
   {
+    question: "How does a conditional payment actually work?",
+    answer: "You write a payment in plain language, for example \"send 15 USDT to @jade if Nigeria beats Brazil.\" That USDT is locked in an on-chain escrow contract on Celo. When the match ends, an independent oracle checks the result across multiple sources. If your condition is met, the money is released to the recipient automatically. If it is not met, your funds are returned to you. Neither side has to trust the other, the smart contract enforces it."
+  },
+  {
+    question: "What happens if I win, or if I lose?",
+    answer: "If the condition you set is NOT met, the escrow returns your USDT to you, you can withdraw it immediately. If the condition IS met, the locked USDT is released to the recipient you named. The outcome is written permanently on-chain, so it is tamper-proof and anyone can verify it."
+  },
+  {
+    question: "Can I send money to someone who has no wallet?",
+    answer: "Yes, that is MagicPay. You can send to someone by their social handle (on X, Discord, or Telegram) even if they have never used crypto. The funds are held safely in escrow under their social identity. When they are ready, they visit tether.arena, create a wallet in about 30 seconds, verify their social account, and claim the funds, often their first-ever USDT."
+  },
+  {
+    question: "Do I need to understand crypto or blockchain to use this?",
+    answer: "No. You do not need to know what gas, a private key, or a block explorer is. You create a wallet in seconds, and the app handles the technical parts for you. You just deposit USDT and make payments in plain language. Everything settles automatically on-chain in the background."
+  },
+  {
+    question: "Do I need to buy a gas token (CELO) to use the app?",
+    answer: "No. tether.arena is designed to be gasless for you. When you create a wallet, the app automatically provisions the tiny amount of network fee needed so you can transact, and the AI agent covers gas on the transactions it settles by paying fees in USDT on Celo. You never have to buy or hold CELO yourself."
+  },
+  {
+    question: "Is this gambling or a prediction market?",
+    answer: "No. There are no odds, no house, no liquidity pools, and no betting against a platform. It is simply a conditional peer-to-peer payment, you decide to send your own money to a specific person if a specific public event happens. The contract holds the funds neutrally and releases them based on the verified outcome."
+  },
+  {
+    question: "How is the match result decided? Can it be manipulated?",
+    answer: "Results come from an independent oracle that cross-checks multiple reputable sports data sources before settling. A payment only resolves once the sources agree and the result is stable. If sources disagree or a match is postponed, the payment is not auto-settled, instead, your funds become refundable so you are never left stuck."
+  },
+  {
     question: "What is a recovery phrase, and why should I care about it?",
     answer: "A recovery phrase is a master key to your non-custodial wallet. Because tether.arena does not hold your funds, you are the sole owner. If you lose access to your device and haven't backed up your recovery phrase (either manually or via cloud backup), your funds will be permanently lost. No one, not even the developers, can recover them for you."
   },
@@ -77,7 +105,7 @@ const faqs = [
   },
   {
     question: "Are there any fees?",
-    answer: "tether.arena does not charge any platform fees for placing or claiming tips. However, you will need to pay standard blockchain network fees (gas) when interacting with the smart contracts. Because the protocol is highly optimized, these fees are typically fractions of a cent."
+    answer: "tether.arena does not charge any platform fees for placing or claiming tips. A small network fee is required to settle transactions on-chain, but the app is designed so you never have to buy a separate gas token, network fees are handled in USDT on Celo and are typically fractions of a cent."
   },
   {
     question: "What tokens and networks are supported?",
