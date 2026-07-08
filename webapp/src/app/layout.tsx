@@ -73,8 +73,8 @@ export default function RootLayout({
                 </div>
 
                 <div className="flex gap-6 text-[12px] font-medium text-text-muted">
-                  <Link href="/terms" className="hover:text-text-primary transition-colors">Terms of Service</Link>
-                  <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
+                  <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
                   <Link href="/support" className="hover:text-text-primary transition-colors">Support</Link>
                 </div>
               </footer>
