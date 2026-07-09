@@ -14,9 +14,20 @@ AI-powered conditional USDT payments for football fans, settled on-chain.
 [![Wallet: WDK](https://img.shields.io/badge/Wallet-WDK-26A17B)](https://wdk.tether.io)
 [![Built for: Tether Developers Cup](https://img.shields.io/badge/Built%20for-Tether%20Developers%20Cup-green)](https://cup.tether.io)
 
-**🌐 [tarena.xyz](https://tarena.xyz) · 📹 [Demo Video](#demo) · 🏆 Tether Developers Cup — WDK Track**
+**🌐 [tarena.xyz](https://tarena.xyz) · 📹 [Demo Video](https://youtube.com/shorts/ipJ4hNkljJE?si=yS3QRjEij_W5qvkl) · 🏆 Tether Developers Cup — WDK Track**
 
 </div>
+
+## 📹 Demo
+
+> **▶️ Watch the 3-minute demo:** _[[YouTube link](https://youtube.com/shorts/ipJ4hNkljJE?si=yS3QRjEij_W5qvkl)]_
+
+
+---
+
+## What Is Tether Arena?
+
+**Tether Arena** is an AI-powered conditional payment engine for football fans. A fan writes a bet in plain language on Telegram, Discord, or X, and the money locks in USDT escrow instantly, settles automatically when the match ends, and pays the winner — without either party needing to understand wallets, gas, or crypto.
 
 ---
 
@@ -27,24 +38,13 @@ AI-powered conditional USDT payments for football fans, settled on-chain.
 
 ---
 
-## 📹 Demo
-
-> **▶️ Watch the 3-minute demo:** _[YouTube link]_
-
-
----
-
-## What Is Tether Arena?
-
-**Tether Arena** is an AI-powered conditional payment engine for football fans. A fan writes a bet in plain language on Telegram, Discord, or X, and the money locks in USDT escrow instantly, settles automatically when the match ends, and pays the winner — without either party needing to understand wallets, gas, or crypto.
-
 Three ideas make it work:
 
 ### 1. Conditional P2P Escrow
 Lock USDT against a match outcome. A self-custodial smart contract holds the funds; an independent multi-source oracle verifies the result; funds move automatically on settlement.
 
 ### 2. MagicPay — Social Escrow
-If the recipient has no wallet, funds are locked under their **social identity hash** (`keccak256("platform:user_id")`). They claim later by verifying their account and creating a wallet in ~30 seconds — often their first-ever USDT, with no prior crypto experience.
+If the recipient has no wallet, funds are locked under their **social identity hash** (`keccak256("platform:user_id")`). They claim later by verifying their account and creating a wdk wallet in ~30 seconds, backed up to Google Cloud— often their first-ever USDT, with no prior crypto experience.
 
 ### 3. AI-Powered Intent
 Users talk naturally. The agent extracts structured intent, routes it to the correct condition plugin, and confirms or asks a clarifying question before any money moves.
@@ -87,7 +87,7 @@ Fan: "@TetherArena send 10 USDT to @sam if the super eagles beat brazil"
     │  claimConditional()           │  10 USDT → @sam's wallet
     └───────────────────────────────┘
 
-Bot reply: "🏆 Nigeria won 2-0! 10 USDT was sent to @sam."
+Ai agent reply: "🏆 Nigeria won 2-0! 10 USDT was sent to @sam."
 ```
 
 ---
@@ -166,7 +166,7 @@ keccak256(abi.encodePacked(platform, ":", userId))
 Only the 32-byte hash is recorded, preventing block explorers from mapping escrow records to real-world usernames — while still allowing deterministic verification when a user links their account.
 
 ### 4. Secure Claim — Verified Identity → Hash → Claim
-MagicPay funds are locked under a recipient's identity hash. To claim, the recipient must prove ownership of the social account through verified cryptographic proof:
+MagicPay funds are locked under a recipient's identity hash. To claim, the recipient must prove ownership of the social account through authentication and verified cryptographic proof:
 
 | Platform | Verification |
 |---|---|
