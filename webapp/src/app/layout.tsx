@@ -33,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${schibsted.variable} antialiased`} suppressHydrationWarning>
       <head>
+        <meta name="talentapp:project_verification" content="ad1f06ee88fa0173882f4a919fbd8b92b483c6e7bf4ebc763c616642b86d5af6f65afbecbed15a784c2c266195a143360c1c364f68606c25f61761e8f30a877b" />
         <link rel="icon" href="/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/favicon.png" />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
