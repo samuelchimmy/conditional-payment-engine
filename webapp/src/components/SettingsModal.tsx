@@ -8,6 +8,7 @@ import { parseUnits, formatUnits } from "viem";
 import { ERC20ABI, USDTAddressCelo, IOURegistryV3Address } from "@/lib/contracts";
 import { useWallet } from "@/components/WalletProvider";
 import { useSendTx } from "@/lib/sendTx";
+import { randomVerifier, challengeFromVerifier } from "@/lib/pkce";
 import { friendlyTxError } from "@/lib/txError";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "react-hot-toast";
@@ -112,9 +113,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
     } else if (platform === "twitter") {
       const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
+      // Real S256 PKCE (X rejects the old plain "challenge" verifier).
+      const codeVerifier = randomVerifier();
+      const codeChallenge = await challengeFromVerifier(codeVerifier);
       const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
-      const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier: "challenge" }));
-      oauthUrl = `https://x.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
+      const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier }));
+      oauthUrl = `https://x.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
     }
 
     const width = 500;

@@ -9,12 +9,15 @@ const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET")!;
 // H7: Whitelist of allowed redirect URIs for Discord OAuth code exchange
 // Prevents open-redirect attacks where attacker supplies a malicious redirectUri
 const ALLOWED_REDIRECT_URIS = [
+  "https://tarena.xyz/discord-callback",
   "https://tarena.xyz/settings",
   "https://tarena.xyz/onboarding",
   "https://tarena.xyz/link-socials",
+  "https://www.tarena.xyz/discord-callback",
   "https://www.tarena.xyz/settings",
   "https://www.tarena.xyz/onboarding",
   "https://www.tarena.xyz/link-socials",
+  "http://localhost:3000/discord-callback",
   "http://localhost:3000/settings",
   "http://localhost:3000/onboarding",
   "http://localhost:3000/link-socials",

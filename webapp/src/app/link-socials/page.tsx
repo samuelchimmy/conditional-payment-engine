@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { TelegramLoginWidget } from "@/components/TelegramLoginWidget";
 import { supabase } from "@/lib/supabaseClient";
 import { getProfile } from "@/lib/dbProxy";
+import { randomVerifier, challengeFromVerifier } from "@/lib/pkce";
 
 export default function LinkSocials() {
   const router = useRouter();
@@ -113,7 +114,8 @@ export default function LinkSocials() {
     if (platform === "discord") {
       const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
       if (!clientId || clientId === "YOUR_DISCORD_CLIENT_ID") {
-        setTimeout(() => { setLinkedStatus(prev => ({ ...prev, discord: true })); setLoading(null); }, 1000);
+        toast.error("Discord linking is not configured.");
+        setLoading(null);
         return;
       }
       const redirectUri = encodeURIComponent(`${window.location.origin}/discord-callback`);
@@ -123,12 +125,16 @@ export default function LinkSocials() {
     } else if (platform === "twitter") {
       const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID;
       if (!clientId || clientId === "YOUR_X_CLIENT_ID") {
-        setTimeout(() => { setLinkedStatus(prev => ({ ...prev, twitter: true })); setLoading(null); }, 1000);
+        toast.error("X linking is not configured.");
+        setLoading(null);
         return;
       }
+      // Real S256 PKCE — X rejects the old plain "challenge" verifier.
+      const codeVerifier = randomVerifier();
+      const codeChallenge = await challengeFromVerifier(codeVerifier);
       const redirectUri = encodeURIComponent(`${window.location.origin}/x-callback`);
-      const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier: "challenge" }));
-      const oauthUrl = `https://x.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=challenge&code_challenge_method=plain`;
+      const state = btoa(JSON.stringify({ walletAddress: address, codeVerifier }));
+      const oauthUrl = `https://x.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=tweet.read%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
       window.open(oauthUrl, "Connect twitter", `width=${width},height=${height},left=${left},top=${top}`);
     }
   };
